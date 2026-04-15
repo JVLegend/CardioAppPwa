@@ -1,0 +1,98 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.icon {
+  font-size: 64px;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--cardio-red);
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.form {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.error {
+  background: rgba(212, 46, 46, 0.15);
+  border: 1px solid var(--cardio-red);
+  color: var(--cardio-red);
+  padding: 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  text-align: center;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.input {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  color: var(--text-primary);
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: var(--cardio-red);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.button {
+  background: var(--cardio-red);
+  color: white;
+  padding: 16px;
+  border-radius: var(--radius);
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 8px;
+  transition: opacity 0.2s;
+}
+
+.button:hover {
+  opacity: 0.9;
+}
+
+.button:disabled {
+  opacity: 0.5;
+}

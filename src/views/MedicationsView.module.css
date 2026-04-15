@@ -1,0 +1,185 @@
+.container {
+  padding: 24px 16px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.addBtn {
+  background: var(--cardio-green);
+  color: white;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.addBtn:hover {
+  opacity: 0.9;
+}
+
+/* Form */
+.formCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.formTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.input {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  color: var(--text-primary);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: var(--cardio-green);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.cancelFormBtn {
+  flex: 1;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.saveFormBtn {
+  flex: 1;
+  padding: 12px;
+  background: var(--cardio-green);
+  color: white;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Section */
+.section {
+  margin-bottom: 20px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+/* Med Item */
+.medItem {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.medInactive {
+  opacity: 0.5;
+}
+
+.medInfo {
+  flex: 1;
+}
+
+.medName {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.medDose {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.medSchedule {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.medActions {
+  display: flex;
+  gap: 8px;
+}
+
+.medToggle, .medDelete {
+  font-size: 18px;
+  padding: 4px;
+}
+
+/* Empty */
+.empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 60px 20px;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.emptyHint {
+  font-size: 13px;
+  margin-top: 8px;
+}

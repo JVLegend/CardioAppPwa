@@ -1,0 +1,15 @@
+export const AppEnvironment = {
+  supabaseURL: import.meta.env.VITE_SUPABASE_URL || 'https://YOUR_PROJECT.supabase.co',
+  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_ANON_KEY',
+  appName: 'CardioApp',
+  defaultReminderHour: 8,
+  defaultReminderMinute: 0,
+  maxOfflineQueueSize: 500,
+  syncRetryAttempts: 3,
+  defaultSystolicHigh: 180,
+  defaultSystolicLow: 90,
+  defaultDiastolicHigh: 110,
+  defaultDiastolicLow: 60,
+  consecutiveOutOfRangeThreshold: 3,
+  adherenceAlertHours: 48,
+}

@@ -1,0 +1,148 @@
+.container {
+  padding: 24px 16px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.settingRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settingLabel {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.settingDesc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Toggle */
+.toggle {
+  width: 48px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--border-light);
+  position: relative;
+  transition: background 0.2s;
+  padding: 0;
+}
+
+.toggleOn {
+  background: var(--cardio-green);
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+}
+
+.toggleOn .toggleKnob {
+  transform: translateX(20px);
+}
+
+/* Hour Picker */
+.hourPicker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hourBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hourValue {
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* Status Badge */
+.statusBadge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+/* About */
+.aboutRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.aboutRow + .aboutRow {
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+/* Sign Out */
+.signOutBtn {
+  width: 100%;
+  padding: 16px;
+  background: transparent;
+  border: 1px solid var(--cardio-red);
+  color: var(--cardio-red);
+  border-radius: var(--radius);
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+
+.signOutBtn:hover {
+  background: var(--cardio-red);
+  color: white;
+}

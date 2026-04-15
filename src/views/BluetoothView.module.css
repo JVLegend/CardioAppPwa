@@ -1,0 +1,166 @@
+.container {
+  padding: 24px 16px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.warning {
+  background: rgba(230, 125, 14, 0.15);
+  border: 1px solid var(--cardio-orange);
+  color: var(--cardio-orange);
+  padding: 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.statusCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.statusIcon {
+  font-size: 32px;
+}
+
+.statusLabel {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.scanBtn {
+  width: 100%;
+  padding: 16px;
+  background: var(--cardio-blue);
+  color: white;
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  transition: opacity 0.2s;
+}
+
+.scanBtn:hover {
+  opacity: 0.9;
+}
+
+.scanBtn:disabled {
+  opacity: 0.4;
+}
+
+.cancelBtn {
+  width: 100%;
+  padding: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.connectedActions {
+  margin-bottom: 16px;
+}
+
+.connectedMsg {
+  color: var(--cardio-green);
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.readingCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid;
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.readingTitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.readingValues {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.readingHR {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.section {
+  margin-top: 20px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.deviceItem {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.deviceIcon {
+  font-size: 24px;
+}
+
+.deviceName {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.deviceDate {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.simulateBtn {
+  width: 100%;
+  padding: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--cardio-purple);
+  color: var(--cardioPurple);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.simulateBtn:hover {
+  opacity: 0.8;
+  background: var(--bg-card-hover);
+}

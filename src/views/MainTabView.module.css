@@ -1,0 +1,54 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px;
+}
+
+.tabBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  padding: 8px 0;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 100;
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0;
+  transition: opacity 0.2s;
+}
+
+.tab.active .tabIcon {
+  transform: scale(1.15);
+}
+
+.tab.active .tabLabel {
+  color: var(--cardio-red);
+}
+
+.tabIcon {
+  font-size: 22px;
+  transition: transform 0.2s;
+}
+
+.tabLabel {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: color 0.2s;
+}

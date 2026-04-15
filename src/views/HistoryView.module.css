@@ -1,0 +1,134 @@
+.container {
+  padding: 24px 16px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.subTabs {
+  display: flex;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 4px;
+  margin-bottom: 16px;
+}
+
+.subTab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.subTabActive {
+  background: var(--cardio-red);
+  color: white;
+}
+
+.periodPicker {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.periodBtn {
+  flex: 1;
+  padding: 8px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.periodActive {
+  background: var(--cardio-red);
+  color: white;
+  border-color: var(--cardio-red);
+}
+
+.chartWrapper {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 8px;
+  margin-bottom: 20px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px;
+}
+
+.listItem {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.listLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.listDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.listBP {
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.listUnit {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.listClass {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.listRight {
+  text-align: right;
+}
+
+.listDate {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.listTime {
+  font-size: 12px;
+  color: var(--text-muted);
+}
