@@ -1,130 +1,244 @@
 .container {
-  padding: 24px 16px;
-  max-width: 480px;
+  padding: 20px 20px 32px;
+  max-width: 500px;
   margin: 0 auto;
+  animation: fadeIn 0.4s ease;
 }
 
+/* Header */
 .header {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .title {
-  font-size: 28px;
+  font-size: 34px;
   font-weight: 700;
-  color: var(--cardio-red);
+  letter-spacing: -0.5px;
 }
 
-.subtitle {
+.date {
+  font-size: 15px;
   color: var(--text-secondary);
+  margin-top: 4px;
+  text-transform: capitalize;
+}
+
+/* Progress Ring */
+.progressSection {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  padding: 28px 24px 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.ringContainer {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px;
+}
+
+.ring {
+  width: 100%;
+  height: 100%;
+}
+
+.ringCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ringCount {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.ringLabel {
   font-size: 13px;
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
-/* Status Card */
-.statusCard {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+.statsRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statValue {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.statDivider {
+  width: 1px;
+  height: 32px;
+  background: var(--border-light);
+}
+
+/* Badge */
+.badgeCard {
+  background: var(--bg-secondary);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 16px 20px;
   margin-bottom: 16px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 14px;
+  animation: scaleIn 0.4s ease;
 }
 
-.streakRow {
+.badgeIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 204, 0, 0.12);
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.streakIcon {
-  font-size: 20px;
+.badgeText {
+  display: flex;
+  flex-direction: column;
 }
 
-.streakText {
-  font-size: 14px;
+.badgeTitle {
+  font-size: 16px;
   font-weight: 600;
 }
 
-.dailyStatus {
+.badgeDesc {
   font-size: 13px;
-}
-
-.statusDone {
-  color: var(--cardio-green);
-}
-
-.statusPending {
-  color: var(--text-muted);
+  color: var(--text-secondary);
+  margin-top: 2px;
 }
 
 /* Measurement Card */
 .measurementCard {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-left: 4px solid;
-  border-radius: var(--radius-lg);
-  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  padding: 24px;
   margin-bottom: 16px;
 }
 
 .measurementHeader {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.measurementLabel {
   font-size: 13px;
   color: var(--text-secondary);
-  margin-bottom: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .measurementTime {
+  font-size: 13px;
   color: var(--text-muted);
 }
 
-.measurementValues {
+.measurementBody {
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.bpValue {
-  font-size: 56px;
+.bpDisplay {
+  display: flex;
+  align-items: baseline;
+}
+
+.bpSys {
+  font-size: 64px;
   font-weight: 700;
   line-height: 1;
+  letter-spacing: -2px;
   font-variant-numeric: tabular-nums;
 }
 
-.bpSeparator {
-  font-size: 32px;
+.bpSlash {
+  font-size: 36px;
   color: var(--text-muted);
-  font-weight: 300;
+  font-weight: 200;
+  margin: 0 2px;
 }
 
-.bpValueSmall {
-  font-size: 36px;
+.bpDia {
+  font-size: 40px;
   font-weight: 600;
   color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .bpUnit {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-muted);
-  margin-left: 8px;
+  font-weight: 400;
+  margin-left: 4px;
+  align-self: flex-end;
+  margin-bottom: 6px;
 }
 
-.classificationRow {
+.classRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.classDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.classLabel {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.hrRow {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
-.heartRate {
-  margin-top: 8px;
-  font-size: 14px;
+.hrValue {
+  font-size: 15px;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 /* Alerts */
@@ -133,101 +247,125 @@
 }
 
 .sectionTitle {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 12px;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  letter-spacing: -0.3px;
 }
 
-.alertItem {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-left: 4px solid;
+.alertCard {
+  background: var(--bg-secondary);
   border-radius: var(--radius);
-  padding: 12px;
-  margin-bottom: 8px;
+  border-left: 4px solid;
+  padding: 16px;
+  margin-bottom: 10px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
 }
 
 .alertIcon {
-  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
-.alertType {
-  font-size: 13px;
+.alertTitle {
+  font-size: 15px;
   font-weight: 600;
-  margin-bottom: 2px;
 }
 
-.alertRule {
-  font-size: 12px;
+.alertDesc {
+  font-size: 14px;
   color: var(--text-secondary);
+  margin-top: 2px;
 }
 
 /* Actions */
 .actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
-.actionBtn {
-  padding: 16px;
+.primaryAction {
+  width: 100%;
+  padding: 18px;
+  background: var(--cardio-red);
   border-radius: var(--radius-lg);
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
   color: white;
-  text-align: center;
-  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.15s;
+  letter-spacing: -0.2px;
 }
 
-.actionBtn:hover {
+.primaryAction:active {
+  transform: scale(0.98);
   opacity: 0.9;
 }
 
-/* Today Items */
-.todayItem {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 16px;
-  margin-bottom: 8px;
+/* Timeline */
+.timeline {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.todayLeft {
+.timelineItem {
+  background: var(--bg-secondary);
+  padding: 16px 20px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
+  animation: fadeIn 0.3s ease both;
 }
 
-.todayBP {
+.timelineItem:first-child {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.timelineItem:last-child {
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.timelineItem:only-child {
+  border-radius: var(--radius-lg);
+}
+
+.timelineDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.timelineContent {
+  flex: 1;
+}
+
+.timelineBP {
+  font-size: 18px;
   font-weight: 600;
-  font-size: 16px;
   font-variant-numeric: tabular-nums;
 }
 
-.todayHR {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.todayRight {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.todaySource {
-  font-size: 14px;
-}
-
-.todayTime {
+.timelineUnit {
   font-size: 13px;
   color: var(--text-muted);
+  font-weight: 400;
+}
+
+.timelineMeta {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.timelineTime {
+  font-size: 15px;
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }

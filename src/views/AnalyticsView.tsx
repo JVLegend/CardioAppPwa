@@ -26,9 +26,9 @@ export default function AnalyticsView({ measurements }: Props) {
   const timeOfDay = useMemo(() => morningVsEvening(measurements), [measurements])
 
   const trendInfo = {
-    improving: { icon: '📉', label: 'Melhorando', color: 'var(--cardio-green)' },
-    stable: { icon: '➡️', label: 'Estavel', color: 'var(--cardio-blue)' },
-    worsening: { icon: '📈', label: 'Piorando', color: 'var(--cardio-red)' },
+    improving: { label: 'Melhorando', color: 'var(--cardio-green)', desc: 'Sua pressao esta diminuindo' },
+    stable: { label: 'Estavel', color: 'var(--cardio-blue)', desc: 'Sua pressao esta estavel' },
+    worsening: { label: 'Piorando', color: 'var(--cardio-red)', desc: 'Sua pressao esta aumentando' },
   }[trend]
 
   const pieData = distribution.map((d) => ({
@@ -42,31 +42,31 @@ export default function AnalyticsView({ measurements }: Props) {
       {/* Averages */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Medias</h2>
-        <div className={styles.averagesGrid}>
-          <div className={styles.avgCard}>
-            <div className={styles.avgPeriod}>7 dias</div>
+        <div className={styles.grid}>
+          <div className={styles.card}>
+            <span className={styles.cardLabel}>7 dias</span>
             {weekly ? (
               <>
-                <div className={styles.avgValue}>
+                <span className={styles.cardValue}>
                   {weekly.systolic}/{weekly.diastolic}
-                </div>
-                <div className={styles.avgCount}>{weekly.count} medicoes</div>
+                </span>
+                <span className={styles.cardMeta}>{weekly.count} medicoes</span>
               </>
             ) : (
-              <div className={styles.avgEmpty}>Sem dados</div>
+              <span className={styles.cardEmpty}>Sem dados</span>
             )}
           </div>
-          <div className={styles.avgCard}>
-            <div className={styles.avgPeriod}>30 dias</div>
+          <div className={styles.card}>
+            <span className={styles.cardLabel}>30 dias</span>
             {monthly ? (
               <>
-                <div className={styles.avgValue}>
+                <span className={styles.cardValue}>
                   {monthly.systolic}/{monthly.diastolic}
-                </div>
-                <div className={styles.avgCount}>{monthly.count} medicoes</div>
+                </span>
+                <span className={styles.cardMeta}>{monthly.count} medicoes</span>
               </>
             ) : (
-              <div className={styles.avgEmpty}>Sem dados</div>
+              <span className={styles.cardEmpty}>Sem dados</span>
             )}
           </div>
         </div>
@@ -76,17 +76,23 @@ export default function AnalyticsView({ measurements }: Props) {
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Tendencia</h2>
         <div className={styles.trendCard}>
-          <span className={styles.trendIcon}>{trendInfo.icon}</span>
-          <span className={styles.trendLabel} style={{ color: trendInfo.color }}>
-            {trendInfo.label}
-          </span>
-          <span className={styles.trendDesc}>
-            {trend === 'improving'
-              ? 'Sua pressao esta diminuindo'
-              : trend === 'worsening'
-              ? 'Sua pressao esta aumentando'
-              : 'Sua pressao esta estavel'}
-          </span>
+          <div className={styles.trendIndicator} style={{ background: trendInfo.color }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+              {trend === 'improving' ? (
+                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
+              ) : trend === 'worsening' ? (
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+              ) : (
+                <line x1="1" y1="12" x2="23" y2="12"/>
+              )}
+            </svg>
+          </div>
+          <div className={styles.trendText}>
+            <span className={styles.trendLabel} style={{ color: trendInfo.color }}>
+              {trendInfo.label}
+            </span>
+            <span className={styles.trendDesc}>{trendInfo.desc}</span>
+          </div>
         </div>
       </div>
 
@@ -94,17 +100,18 @@ export default function AnalyticsView({ measurements }: Props) {
       {pieData.length > 0 && (
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Distribuicao</h2>
-          <div className={styles.pieWrapper}>
+          <div className={styles.pieCard}>
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
+                  innerRadius={55}
                   outerRadius={80}
-                  paddingAngle={2}
+                  paddingAngle={3}
                   dataKey="value"
+                  cornerRadius={4}
                 >
                   {pieData.map((entry, i) => (
                     <Cell key={i} fill={entry.color} />
@@ -117,10 +124,7 @@ export default function AnalyticsView({ measurements }: Props) {
                 const cc = classificationConfig[d.classification]
                 return (
                   <div key={d.classification} className={styles.legendItem}>
-                    <span
-                      className={styles.legendDot}
-                      style={{ background: cc.color }}
-                    />
+                    <span className={styles.legendDot} style={{ background: cc.color }} />
                     <span className={styles.legendLabel}>{cc.label}</span>
                     <span className={styles.legendPct}>{d.percentage}%</span>
                   </div>
@@ -133,26 +137,26 @@ export default function AnalyticsView({ measurements }: Props) {
 
       {/* Time of Day */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Manha vs Noite</h2>
-        <div className={styles.averagesGrid}>
-          <div className={styles.avgCard}>
-            <div className={styles.avgPeriod}>🌅 Manha (5h-12h)</div>
+        <h2 className={styles.sectionTitle}>Periodo do dia</h2>
+        <div className={styles.grid}>
+          <div className={styles.card}>
+            <span className={styles.cardLabel}>Manha (5h-12h)</span>
             {timeOfDay.morning ? (
-              <div className={styles.avgValue}>
+              <span className={styles.cardValue}>
                 {timeOfDay.morning.systolic}/{timeOfDay.morning.diastolic}
-              </div>
+              </span>
             ) : (
-              <div className={styles.avgEmpty}>Sem dados</div>
+              <span className={styles.cardEmpty}>Sem dados</span>
             )}
           </div>
-          <div className={styles.avgCard}>
-            <div className={styles.avgPeriod}>🌙 Noite (17h-23h)</div>
+          <div className={styles.card}>
+            <span className={styles.cardLabel}>Noite (17h-23h)</span>
             {timeOfDay.evening ? (
-              <div className={styles.avgValue}>
+              <span className={styles.cardValue}>
                 {timeOfDay.evening.systolic}/{timeOfDay.evening.diastolic}
-              </div>
+              </span>
             ) : (
-              <div className={styles.avgEmpty}>Sem dados</div>
+              <span className={styles.cardEmpty}>Sem dados</span>
             )}
           </div>
         </div>

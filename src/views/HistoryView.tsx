@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine,
+  LineChart, Line, XAxis, YAxis, ReferenceLine,
   ResponsiveContainer, Tooltip,
 } from 'recharts'
 import { usePatientData } from '../hooks/usePatientData'
@@ -29,8 +29,8 @@ export default function HistoryView() {
           day: '2-digit',
           month: '2-digit',
         }),
-        systolic: m.systolic,
-        diastolic: m.diastolic,
+        sistolica: m.systolic,
+        diastolica: m.diastolic,
       })),
     [filtered]
   )
@@ -39,27 +39,22 @@ export default function HistoryView() {
     <div className={styles.container}>
       <h1 className={styles.title}>Historico</h1>
 
-      {/* Sub tabs */}
       <div className={styles.subTabs}>
-        <button
-          className={`${styles.subTab} ${subTab === 'history' ? styles.subTabActive : ''}`}
-          onClick={() => setSubTab('history')}
-        >
-          Historico
-        </button>
-        <button
-          className={`${styles.subTab} ${subTab === 'analytics' ? styles.subTabActive : ''}`}
-          onClick={() => setSubTab('analytics')}
-        >
-          Analise
-        </button>
+        {(['history', 'analytics'] as SubTab[]).map((t) => (
+          <button
+            key={t}
+            className={`${styles.subTab} ${subTab === t ? styles.subTabActive : ''}`}
+            onClick={() => setSubTab(t)}
+          >
+            {t === 'history' ? 'Medicoes' : 'Analise'}
+          </button>
+        ))}
       </div>
 
       {subTab === 'analytics' ? (
         <AnalyticsView measurements={allMeasurements} />
       ) : (
         <>
-          {/* Period Picker */}
           <div className={styles.periodPicker}>
             {([7, 30, 90] as Period[]).map((p) => (
               <button
@@ -67,92 +62,99 @@ export default function HistoryView() {
                 className={`${styles.periodBtn} ${period === p ? styles.periodActive : ''}`}
                 onClick={() => setPeriod(p)}
               >
-                {p}d
+                {p} dias
               </button>
             ))}
           </div>
 
-          {/* Chart */}
           {chartData.length > 1 && (
-            <div className={styles.chartWrapper}>
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2A2A40" />
+            <div className={styles.chartCard}>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
                   <XAxis
                     dataKey="date"
-                    tick={{ fill: '#6B6B80', fontSize: 11 }}
-                    axisLine={{ stroke: '#2A2A40' }}
+                    tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: '#6B6B80', fontSize: 11 }}
-                    axisLine={{ stroke: '#2A2A40' }}
+                    tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
                     domain={['auto', 'auto']}
                   />
                   <Tooltip
                     contentStyle={{
-                      background: '#1E1E32',
-                      border: '1px solid #2A2A40',
-                      borderRadius: 8,
+                      background: '#2C2C2E',
+                      border: 'none',
+                      borderRadius: 12,
                       color: '#FFF',
+                      fontSize: 14,
+                      boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
                     }}
                   />
-                  <ReferenceLine y={140} stroke="#D42E2E" strokeDasharray="5 5" strokeOpacity={0.5} />
-                  <ReferenceLine y={90} stroke="#2E5AA5" strokeDasharray="5 5" strokeOpacity={0.5} />
+                  <ReferenceLine y={140} stroke="rgba(255,59,48,0.3)" strokeDasharray="4 4" />
+                  <ReferenceLine y={90} stroke="rgba(0,122,255,0.3)" strokeDasharray="4 4" />
                   <Line
                     type="monotone"
-                    dataKey="systolic"
-                    stroke="#D42E2E"
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: '#D42E2E' }}
+                    dataKey="sistolica"
+                    stroke="#FF3B30"
+                    strokeWidth={2.5}
+                    dot={{ r: 3, fill: '#FF3B30', strokeWidth: 0 }}
+                    activeDot={{ r: 5, fill: '#FF3B30' }}
                     name="Sistolica"
                   />
                   <Line
                     type="monotone"
-                    dataKey="diastolic"
-                    stroke="#2E5AA5"
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: '#2E5AA5' }}
+                    dataKey="diastolica"
+                    stroke="#007AFF"
+                    strokeWidth={2.5}
+                    dot={{ r: 3, fill: '#007AFF', strokeWidth: 0 }}
+                    activeDot={{ r: 5, fill: '#007AFF' }}
                     name="Diastolica"
                   />
                 </LineChart>
               </ResponsiveContainer>
+              <div className={styles.chartLegend}>
+                <span className={styles.legendItem}>
+                  <span className={styles.legendDot} style={{ background: '#FF3B30' }} />
+                  Sistolica
+                </span>
+                <span className={styles.legendItem}>
+                  <span className={styles.legendDot} style={{ background: '#007AFF' }} />
+                  Diastolica
+                </span>
+              </div>
             </div>
           )}
 
-          {/* Measurement List */}
           <div className={styles.list}>
             {filtered.length === 0 ? (
-              <div className={styles.empty}>Nenhuma medicao neste periodo</div>
+              <div className={styles.empty}>
+                <p className={styles.emptyTitle}>Sem medicoes</p>
+                <p className={styles.emptyDesc}>Nenhuma medicao nos ultimos {period} dias</p>
+              </div>
             ) : (
               filtered.map((m) => {
                 const c = classifyBP(m.systolic, m.diastolic)
                 const cc = classificationConfig[c]
                 return (
                   <div key={m.id} className={styles.listItem}>
-                    <div className={styles.listLeft}>
-                      <span
-                        className={styles.listDot}
-                        style={{ background: cc.color }}
-                      />
-                      <div>
-                        <div className={styles.listBP}>
-                          {m.systolic}/{m.diastolic}{' '}
-                          <span className={styles.listUnit}>mmHg</span>
-                        </div>
-                        <div className={styles.listClass} style={{ color: cc.color }}>
-                          {cc.emoji} {cc.label}
-                        </div>
+                    <div className={styles.listDot} style={{ background: cc.color }} />
+                    <div className={styles.listContent}>
+                      <div className={styles.listBP}>
+                        {m.systolic}/{m.diastolic}
+                        <span className={styles.listUnit}> mmHg</span>
+                      </div>
+                      <div className={styles.listClass} style={{ color: cc.color }}>
+                        {cc.label}
+                        {m.heartRate && <span className={styles.listHR}> · {m.heartRate} bpm</span>}
                       </div>
                     </div>
-                    <div className={styles.listRight}>
-                      <div className={styles.listDate}>
-                        {new Date(m.measuredAt).toLocaleDateString('pt-BR')}
-                      </div>
-                      <div className={styles.listTime}>
-                        {new Date(m.measuredAt).toLocaleTimeString('pt-BR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                    <div className={styles.listTime}>
+                      <div>{new Date(m.measuredAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</div>
+                      <div className={styles.listHour}>
+                        {new Date(m.measuredAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
                   </div>

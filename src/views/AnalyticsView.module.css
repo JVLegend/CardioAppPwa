@@ -4,66 +4,79 @@
   gap: 8px;
 }
 
-.section {
-  margin-bottom: 12px;
-}
+.section { margin-bottom: 8px; }
 
 .sectionTitle {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 12px;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  letter-spacing: -0.3px;
 }
 
-.averagesGrid {
+.grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
 }
 
-.avgCard {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+.card {
+  background: var(--bg-secondary);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
 }
 
-.avgPeriod {
-  font-size: 12px;
+.cardLabel {
+  font-size: 13px;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  font-weight: 500;
+  margin-bottom: 10px;
 }
 
-.avgValue {
-  font-size: 22px;
+.cardValue {
+  font-size: 28px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
 }
 
-.avgCount {
-  font-size: 11px;
+.cardMeta {
+  font-size: 12px;
   color: var(--text-muted);
   margin-top: 4px;
 }
 
-.avgEmpty {
-  font-size: 14px;
+.cardEmpty {
+  font-size: 15px;
   color: var(--text-muted);
 }
 
 /* Trend */
 .trendCard {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: var(--bg-secondary);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
-.trendIcon {
-  font-size: 28px;
+.trendIndicator {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.trendText {
+  display: flex;
+  flex-direction: column;
 }
 
 .trendLabel {
@@ -72,44 +85,45 @@
 }
 
 .trendDesc {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
+  margin-top: 2px;
 }
 
 /* Pie */
-.pieWrapper {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+.pieCard {
+  background: var(--bg-secondary);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 20px;
 }
 
 .legend {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  margin-top: 8px;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .legendItem {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 10px;
+  font-size: 14px;
 }
 
 .legendDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
   flex-shrink: 0;
 }
 
 .legendLabel {
+  flex: 1;
   color: var(--text-secondary);
 }
 
 .legendPct {
-  font-weight: 600;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }

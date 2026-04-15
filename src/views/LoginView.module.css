@@ -4,74 +4,85 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 24px;
+  padding: 32px 24px;
+  animation: fadeIn 0.6s ease;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 48px;
 }
 
-.icon {
-  font-size: 64px;
-  margin-bottom: 12px;
+.logoRing {
+  width: 88px;
+  height: 88px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #FF3B30 0%, #FF2D55 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 8px 32px rgba(255, 59, 48, 0.3);
+}
+
+.logoSvg {
+  width: 48px;
+  height: 48px;
+  filter: brightness(10);
 }
 
 .title {
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 700;
-  color: var(--cardio-red);
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
   color: var(--text-secondary);
-  margin-top: 4px;
-  font-size: 14px;
+  margin-top: 6px;
+  font-size: 17px;
+  font-weight: 400;
 }
 
 .form {
   width: 100%;
-  max-width: 360px;
+  max-width: 380px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .error {
-  background: rgba(212, 46, 46, 0.15);
-  border: 1px solid var(--cardio-red);
+  background: rgba(255, 59, 48, 0.12);
+  border: 1px solid rgba(255, 59, 48, 0.3);
   color: var(--cardio-red);
-  padding: 12px;
+  padding: 14px 16px;
   border-radius: var(--radius);
-  font-size: 14px;
+  font-size: 15px;
   text-align: center;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.label {
-  font-size: 13px;
-  color: var(--text-secondary);
   font-weight: 500;
 }
 
-.input {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  color: var(--text-primary);
-  font-size: 16px;
-  outline: none;
-  transition: border-color 0.2s;
+.inputGroup {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
-.input:focus {
-  border-color: var(--cardio-red);
+.inputDivider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 16px;
+}
+
+.input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 18px 20px;
+  color: var(--text-primary);
+  font-size: 17px;
+  outline: none;
 }
 
 .input::placeholder {
@@ -81,18 +92,25 @@
 .button {
   background: var(--cardio-red);
   color: white;
-  padding: 16px;
+  padding: 18px;
   border-radius: var(--radius);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
-  margin-top: 8px;
-  transition: opacity 0.2s;
+  letter-spacing: -0.2px;
+  transition: all 0.2s;
 }
 
-.button:hover {
+.button:active {
+  transform: scale(0.98);
   opacity: 0.9;
 }
 
 .button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
+}
+
+.footer {
+  margin-top: 48px;
+  font-size: 13px;
+  color: var(--text-muted);
 }

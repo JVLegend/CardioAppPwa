@@ -1,54 +1,56 @@
 .container {
-  padding: 24px 16px;
-  max-width: 480px;
+  padding: 20px 20px 32px;
+  max-width: 500px;
   margin: 0 auto;
+  animation: fadeIn 0.4s ease;
 }
 
 .title {
-  font-size: 28px;
+  font-size: 34px;
   font-weight: 700;
-  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+  margin-bottom: 20px;
 }
 
 .subTabs {
   display: flex;
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 4px;
-  margin-bottom: 16px;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 20px;
 }
 
 .subTab {
   flex: 1;
-  padding: 10px;
+  padding: 9px;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
-  color: var(--text-muted);
+  font-weight: 600;
+  color: var(--text-secondary);
   text-align: center;
   transition: all 0.2s;
 }
 
 .subTabActive {
-  background: var(--cardio-red);
-  color: white;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
 .periodPicker {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .periodBtn {
   flex: 1;
-  padding: 8px;
-  border-radius: var(--radius);
+  padding: 10px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-muted);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
   text-align: center;
   transition: all 0.2s;
 }
@@ -56,44 +58,69 @@
 .periodActive {
   background: var(--cardio-red);
   color: white;
-  border-color: var(--cardio-red);
 }
 
-.chartWrapper {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 16px 8px;
-  margin-bottom: 20px;
+.chartCard {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  padding: 20px 12px 12px;
+  margin-bottom: 24px;
+}
+
+.chartLegend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 12px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
 }
 
 .empty {
   text-align: center;
+  padding: 48px 20px;
+}
+
+.emptyTitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.emptyDesc {
+  font-size: 15px;
   color: var(--text-muted);
-  padding: 40px;
 }
 
 .listItem {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 16px;
+  background: var(--bg-secondary);
+  padding: 16px 20px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 14px;
 }
 
-.listLeft {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.listItem:first-child { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.listItem:last-child { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+.listItem:only-child { border-radius: var(--radius-lg); }
 
 .listDot {
   width: 10px;
@@ -102,33 +129,41 @@
   flex-shrink: 0;
 }
 
+.listContent {
+  flex: 1;
+}
+
 .listBP {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .listUnit {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   font-weight: 400;
 }
 
 .listClass {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   margin-top: 2px;
 }
 
-.listRight {
-  text-align: right;
-}
-
-.listDate {
-  font-size: 13px;
-  color: var(--text-secondary);
+.listHR {
+  color: var(--text-muted);
 }
 
 .listTime {
-  font-size: 12px;
+  text-align: right;
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.listHour {
+  font-size: 13px;
   color: var(--text-muted);
+  margin-top: 1px;
 }

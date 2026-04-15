@@ -20,18 +20,16 @@ export default function SettingsView() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Configuracoes</h1>
+      <h1 className={styles.title}>Ajustes</h1>
 
       {/* Reminders */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Lembretes</h2>
-        <div className={styles.card}>
-          <div className={styles.settingRow}>
-            <div>
-              <div className={styles.settingLabel}>Lembrete Diario</div>
-              <div className={styles.settingDesc}>
-                Notificacao para medir pressao
-              </div>
+        <div className={styles.group}>
+          <div className={styles.row}>
+            <div className={styles.rowText}>
+              <span className={styles.rowLabel}>Lembrete diario</span>
+              <span className={styles.rowDesc}>Notificacao para medir</span>
             </div>
             <button
               className={`${styles.toggle} ${reminderEnabled ? styles.toggleOn : ''}`}
@@ -41,55 +39,39 @@ export default function SettingsView() {
             </button>
           </div>
           {reminderEnabled && (
-            <div className={styles.settingRow} style={{ marginTop: 12 }}>
-              <span className={styles.settingLabel}>Horario</span>
-              <div className={styles.hourPicker}>
-                <button
-                  className={styles.hourBtn}
-                  onClick={() => setReminderHour(Math.max(5, reminderHour - 1))}
-                >
-                  -
-                </button>
-                <span className={styles.hourValue}>{reminderHour}:00</span>
-                <button
-                  className={styles.hourBtn}
-                  onClick={() => setReminderHour(Math.min(22, reminderHour + 1))}
-                >
-                  +
-                </button>
+            <>
+              <div className={styles.divider} />
+              <div className={styles.row}>
+                <span className={styles.rowLabel}>Horario</span>
+                <div className={styles.stepper}>
+                  <button className={styles.stepBtn} onClick={() => setReminderHour(Math.max(5, reminderHour - 1))}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-red)" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                  <span className={styles.stepValue}>{String(reminderHour).padStart(2, '0')}:00</span>
+                  <button className={styles.stepBtn} onClick={() => setReminderHour(Math.min(22, reminderHour + 1))}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-red)" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
 
-      {/* Device */}
+      {/* Status */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Aparelho</h2>
-        <div className={styles.card}>
-          <div className={styles.settingRow}>
-            <span className={styles.settingLabel}>Web Bluetooth</span>
-            <span
-              className={styles.statusBadge}
-              style={{
-                background: isWebBluetoothSupported()
-                  ? 'var(--cardio-green)'
-                  : 'var(--cardio-orange)',
-              }}
-            >
-              {isWebBluetoothSupported() ? 'Suportado' : 'Nao suportado'}
+        <h2 className={styles.sectionTitle}>Status</h2>
+        <div className={styles.group}>
+          <div className={styles.row}>
+            <span className={styles.rowLabel}>Bluetooth</span>
+            <span className={styles.badge} style={{ color: isWebBluetoothSupported() ? 'var(--cardio-green)' : 'var(--text-muted)' }}>
+              {isWebBluetoothSupported() ? 'Suportado' : 'Indisponivel'}
             </span>
           </div>
-          <div className={styles.settingRow} style={{ marginTop: 8 }}>
-            <span className={styles.settingLabel}>Conexao</span>
-            <span
-              className={styles.statusBadge}
-              style={{
-                background: getIsOnline()
-                  ? 'var(--cardio-green)'
-                  : 'var(--cardio-red)',
-              }}
-            >
+          <div className={styles.divider} />
+          <div className={styles.row}>
+            <span className={styles.rowLabel}>Conexao</span>
+            <span className={styles.badge} style={{ color: getIsOnline() ? 'var(--cardio-green)' : 'var(--cardio-red)' }}>
               {getIsOnline() ? 'Online' : 'Offline'}
             </span>
           </div>
@@ -99,21 +81,24 @@ export default function SettingsView() {
       {/* About */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Sobre</h2>
-        <div className={styles.card}>
-          <div className={styles.aboutRow}>
-            <span className={styles.settingLabel}>Versao</span>
-            <span className={styles.settingDesc}>1.0.0 (PWA)</span>
+        <div className={styles.group}>
+          <div className={styles.row}>
+            <span className={styles.rowLabel}>Versao</span>
+            <span className={styles.rowValue}>1.0.0</span>
           </div>
-          <div className={styles.aboutRow}>
-            <span className={styles.settingLabel}>Paciente</span>
-            <span className={styles.settingDesc}>
-              {currentPatient?.name || '—'}
-            </span>
+          <div className={styles.divider} />
+          <div className={styles.row}>
+            <span className={styles.rowLabel}>Paciente</span>
+            <span className={styles.rowValue}>{currentPatient?.name || '—'}</span>
+          </div>
+          <div className={styles.divider} />
+          <div className={styles.row}>
+            <span className={styles.rowLabel}>Tipo</span>
+            <span className={styles.rowValue}>Progressive Web App</span>
           </div>
         </div>
       </div>
 
-      {/* Sign Out */}
       <button className={styles.signOutBtn} onClick={logout}>
         Sair
       </button>

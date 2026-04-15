@@ -28,7 +28,6 @@ export default function PatientListView() {
   const handleAddPatient = (e: FormEvent) => {
     e.preventDefault()
     if (!newName || !currentPatient) return
-
     const patient: Patient = {
       id: crypto.randomUUID(),
       operatorId: currentPatient.id,
@@ -54,13 +53,12 @@ export default function PatientListView() {
     return (
       <div>
         <div className={styles.patientBar}>
-          <button
-            className={styles.backBtn}
-            onClick={() => setSelectedPatient(null)}
-          >
-            ← Pacientes
+          <button className={styles.backBtn} onClick={() => setSelectedPatient(null)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-red)" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Pacientes
           </button>
           <span className={styles.patientName}>{selectedPatient.name}</span>
+          <div style={{ width: 80 }} />
         </div>
         <MainTabView />
       </div>
@@ -71,77 +69,55 @@ export default function PatientListView() {
     <div className={styles.container}>
       <div className={styles.headerRow}>
         <h1 className={styles.title}>Pacientes</h1>
-        <button className={styles.logoutBtn} onClick={logout}>
-          Sair
-        </button>
+        <button className={styles.logoutBtn} onClick={logout}>Sair</button>
       </div>
 
-      {/* Search */}
       <input
         className={styles.searchInput}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="🔍 Buscar paciente..."
+        placeholder="Buscar paciente..."
       />
 
-      {/* Add */}
       <button className={styles.addBtn} onClick={() => setShowAdd(true)}>
-        + Adicionar Paciente
+        Adicionar paciente
       </button>
 
       {showAdd && (
         <div className={styles.formCard}>
-          <form onSubmit={handleAddPatient} className={styles.form}>
-            <input
-              className={styles.input}
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Nome do paciente"
-              required
-            />
-            <input
-              className={styles.input}
-              value={newPhone}
-              onChange={(e) => setNewPhone(e.target.value)}
-              placeholder="Telefone (opcional)"
-            />
+          <form onSubmit={handleAddPatient}>
+            <div className={styles.inputGroup}>
+              <input className={styles.input} value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nome do paciente" required />
+              <div className={styles.inputDivider} />
+              <input className={styles.input} value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="Telefone (opcional)" />
+            </div>
             <div className={styles.formActions}>
-              <button
-                type="button"
-                className={styles.cancelBtn}
-                onClick={() => setShowAdd(false)}
-              >
-                Cancelar
-              </button>
-              <button type="submit" className={styles.saveBtn}>
-                Salvar
-              </button>
+              <button type="button" className={styles.cancelBtn} onClick={() => setShowAdd(false)}>Cancelar</button>
+              <button type="submit" className={styles.saveBtn}>Salvar</button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Patient List */}
       <div className={styles.list}>
         {filtered.length === 0 ? (
           <div className={styles.empty}>Nenhum paciente encontrado</div>
         ) : (
-          filtered.map((p) => (
+          filtered.map((p, i) => (
             <button
               key={p.id}
               className={styles.patientItem}
               onClick={() => handleSelectPatient(p)}
+              style={{ animationDelay: `${i * 0.04}s` }}
             >
               <div className={styles.avatar}>
                 {p.name.charAt(0).toUpperCase()}
               </div>
               <div className={styles.patientInfo}>
                 <div className={styles.patientItemName}>{p.name}</div>
-                {p.phone && (
-                  <div className={styles.patientPhone}>{p.phone}</div>
-                )}
+                {p.phone && <div className={styles.patientPhone}>{p.phone}</div>}
               </div>
-              <span className={styles.chevron}>›</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
           ))
         )}

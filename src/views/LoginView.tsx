@@ -15,35 +15,38 @@ export default function LoginView() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <div className={styles.icon}>❤️</div>
+        <div className={styles.logoRing}>
+          <svg viewBox="0 0 48 48" className={styles.logoSvg}>
+            <path
+              d="M24 8C18 8 14 12 14 16c0 8 10 20 10 20s10-12 10-20c0-4-4-8-10-8z"
+              fill="var(--cardio-red)"
+            />
+          </svg>
+        </div>
         <h1 className={styles.title}>CardioApp</h1>
-        <p className={styles.subtitle}>Monitoramento de Pressão Arterial</p>
+        <p className={styles.subtitle}>Monitoramento Inteligente</p>
       </div>
 
       <form className={styles.form} onSubmit={handleSubmit}>
         {errorMessage && <div className={styles.error}>{errorMessage}</div>}
 
-        <div className={styles.field}>
-          <label className={styles.label}>Email</label>
+        <div className={styles.inputGroup}>
           <input
             className={styles.input}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="seu@email.com"
+            placeholder="Email"
             autoComplete="email"
             required
           />
-        </div>
-
-        <div className={styles.field}>
-          <label className={styles.label}>Senha</label>
+          <div className={styles.inputDivider} />
           <input
             className={styles.input}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder="Senha"
             autoComplete="current-password"
             required
           />
@@ -53,6 +56,10 @@ export default function LoginView() {
           {isLoading ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
+
+      <p className={styles.footer}>
+        Pressao arterial sob controle
+      </p>
     </div>
   )
 }

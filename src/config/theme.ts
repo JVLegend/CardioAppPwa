@@ -1,22 +1,24 @@
 export const colors = {
-  cardioRed: '#D42E2E',
-  cardioBlue: '#2E5AA5',
-  cardioGreen: '#2E8C56',
-  cardioOrange: '#E67D0E',
-  cardioPurple: '#8F1F8F',
-  cardioYellow: '#E6C60E',
+  cardioRed: '#FF3B30',
+  cardioBlue: '#007AFF',
+  cardioGreen: '#34C759',
+  cardioOrange: '#FF9500',
+  cardioPurple: '#AF52DE',
+  cardioYellow: '#FFCC00',
+  cardioTeal: '#5AC8FA',
+  cardioPink: '#FF2D55',
 
-  bgPrimary: '#0F0F1A',
-  bgSecondary: '#1A1A2E',
-  bgCard: '#1E1E32',
-  bgCardHover: '#252540',
+  bgPrimary: '#000000',
+  bgSecondary: '#1C1C1E',
+  bgCard: '#1C1C1E',
+  bgCardHover: '#2C2C2E',
 
   textPrimary: '#FFFFFF',
-  textSecondary: '#A0A0B8',
-  textMuted: '#6B6B80',
+  textSecondary: 'rgba(255,255,255,0.6)',
+  textMuted: 'rgba(255,255,255,0.35)',
 
-  border: '#2A2A40',
-  borderLight: '#3A3A55',
+  border: 'rgba(255,255,255,0.08)',
+  borderLight: 'rgba(255,255,255,0.12)',
 }
 
 export type BPClassification =
@@ -27,13 +29,38 @@ export type BPClassification =
   | 'crisis'
 
 export const classificationConfig: Record<BPClassification, {
-  label: string; color: string; emoji: string
+  label: string; color: string; icon: string; gradient: string
 }> = {
-  normal: { label: 'Normal', color: colors.cardioGreen, emoji: '💚' },
-  prehypertension: { label: 'Pré-hipertensão', color: colors.cardioYellow, emoji: '💛' },
-  stage1: { label: 'Hipertensão Estágio 1', color: colors.cardioOrange, emoji: '🧡' },
-  stage2: { label: 'Hipertensão Estágio 2', color: colors.cardioRed, emoji: '❤️' },
-  crisis: { label: 'Crise Hipertensiva', color: colors.cardioPurple, emoji: '💜' },
+  normal: {
+    label: 'Normal',
+    color: '#34C759',
+    icon: '●',
+    gradient: 'linear-gradient(135deg, #34C759 0%, #30D158 100%)',
+  },
+  prehypertension: {
+    label: 'Pre-hipertensao',
+    color: '#FFCC00',
+    icon: '●',
+    gradient: 'linear-gradient(135deg, #FFCC00 0%, #FFD60A 100%)',
+  },
+  stage1: {
+    label: 'Hipertensao I',
+    color: '#FF9500',
+    icon: '●',
+    gradient: 'linear-gradient(135deg, #FF9500 0%, #FF9F0A 100%)',
+  },
+  stage2: {
+    label: 'Hipertensao II',
+    color: '#FF3B30',
+    icon: '●',
+    gradient: 'linear-gradient(135deg, #FF3B30 0%, #FF453A 100%)',
+  },
+  crisis: {
+    label: 'Crise Hipertensiva',
+    color: '#AF52DE',
+    icon: '●',
+    gradient: 'linear-gradient(135deg, #AF52DE 0%, #BF5AF2 100%)',
+  },
 }
 
 export function classifyBP(systolic: number, diastolic: number): BPClassification {

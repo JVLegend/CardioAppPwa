@@ -30,12 +30,7 @@ export default function BluetoothView() {
 
   const handleReading = (reading: BloodPressureReading) => {
     setLastReading(reading)
-    addMeasurement(
-      reading.systolic,
-      reading.diastolic,
-      reading.pulseRate,
-      'ble'
-    )
+    addMeasurement(reading.systolic, reading.diastolic, reading.pulseRate, 'ble')
   }
 
   const handleScan = async () => {
@@ -71,94 +66,79 @@ export default function BluetoothView() {
     setLastReading(reading)
   }
 
-  const readingClassification = lastReading
-    ? classifyBP(lastReading.systolic, lastReading.diastolic)
-    : null
-  const readingConfig = readingClassification
-    ? classificationConfig[readingClassification]
-    : null
+  const readingClass = lastReading ? classifyBP(lastReading.systolic, lastReading.diastolic) : null
+  const readingConfig = readingClass ? classificationConfig[readingClass] : null
 
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Aparelho</h1>
 
       {!bleSupported && (
-        <div className={styles.warning}>
-          ⚠️ Web Bluetooth nao e suportado neste navegador. Use Chrome no Android ou computador.
+        <div className={styles.infoCard}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-orange)" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div>
+            <div className={styles.infoTitle}>Bluetooth nao disponivel</div>
+            <div className={styles.infoDesc}>
+              Web Bluetooth nao e suportado neste navegador. No iPhone, use o registro manual. No Android, use o Chrome.
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Connection Status */}
+      {/* Status */}
       <div className={styles.statusCard}>
-        <div className={styles.statusIcon}>
-          {connectionState === 'connected'
-            ? '✅'
-            : connectionState === 'scanning'
-            ? '🔍'
-            : connectionState === 'connecting'
-            ? '⏳'
-            : connectionState === 'error'
-            ? '❌'
-            : '📱'}
-        </div>
-        <div>
-          <div className={styles.statusLabel}>
-            {connectionState === 'connected'
-              ? `Conectado: ${device?.name || 'Aparelho'}`
-              : connectionState === 'scanning'
-              ? 'Buscando aparelhos...'
-              : connectionState === 'connecting'
-              ? 'Conectando...'
-              : connectionState === 'error'
-              ? 'Erro na conexao'
-              : 'Nenhum aparelho conectado'}
-          </div>
+        <div className={styles.statusIndicator} style={{
+          background: connectionState === 'connected' ? 'var(--cardio-green)'
+            : connectionState === 'error' ? 'var(--cardio-red)'
+            : 'var(--text-muted)',
+        }} />
+        <div className={styles.statusText}>
+          {connectionState === 'connected' ? `Conectado: ${device?.name || 'Aparelho'}`
+            : connectionState === 'scanning' ? 'Buscando aparelhos...'
+            : connectionState === 'connecting' ? 'Conectando...'
+            : connectionState === 'error' ? 'Erro na conexao'
+            : 'Nenhum aparelho conectado'}
         </div>
       </div>
 
       {/* Actions */}
       {connectionState === 'idle' || connectionState === 'error' ? (
-        <button
-          className={styles.scanBtn}
-          onClick={handleScan}
-          disabled={!bleSupported}
-        >
-          🔍 Buscar Aparelho de Pressao
+        <button className={styles.scanBtn} onClick={handleScan} disabled={!bleSupported}>
+          Buscar Aparelho
         </button>
-      ) : connectionState === 'scanning' ? (
-        <button className={styles.cancelBtn} onClick={handleDisconnect}>
-          Cancelar Busca
+      ) : connectionState === 'scanning' || connectionState === 'connecting' ? (
+        <button className={styles.secondaryBtn} onClick={handleDisconnect}>
+          Cancelar
         </button>
       ) : connectionState === 'connected' ? (
-        <div className={styles.connectedActions}>
-          <div className={styles.connectedMsg}>
-            Aguardando medicao do aparelho...
-          </div>
-          <button className={styles.cancelBtn} onClick={handleDisconnect}>
+        <>
+          <div className={styles.waitingMsg}>Aguardando medicao do aparelho...</div>
+          <button className={styles.secondaryBtn} onClick={handleDisconnect}>
             Desconectar
           </button>
-        </div>
+        </>
       ) : null}
 
-      {/* Last BLE Reading */}
+      {/* Last Reading */}
       {lastReading && readingConfig && (
-        <div className={styles.readingCard} style={{ borderColor: readingConfig.color }}>
-          <h3 className={styles.readingTitle}>Ultima Leitura BLE</h3>
+        <div className={styles.readingCard}>
+          <span className={styles.readingLabel}>Ultima leitura</span>
           <div className={styles.readingValues}>
-            <span style={{ color: readingConfig.color, fontSize: 40, fontWeight: 700 }}>
+            <span className={styles.readingSys} style={{ color: readingConfig.color }}>
               {lastReading.systolic}
             </span>
-            <span style={{ color: 'var(--text-muted)', fontSize: 24 }}>/</span>
-            <span style={{ fontSize: 28, fontWeight: 600 }}>
-              {lastReading.diastolic}
-            </span>
-            <span style={{ color: 'var(--text-muted)', fontSize: 14, marginLeft: 8 }}>mmHg</span>
+            <span className={styles.readingSlash}>/</span>
+            <span className={styles.readingDia}>{lastReading.diastolic}</span>
+            <span className={styles.readingUnit}>mmHg</span>
           </div>
-          <div style={{ color: readingConfig.color, fontSize: 14 }}>
-            {readingConfig.emoji} {readingConfig.label}
+          <div className={styles.readingClass}>
+            <span className={styles.readingDot} style={{ background: readingConfig.color }} />
+            <span style={{ color: readingConfig.color }}>{readingConfig.label}</span>
           </div>
           {lastReading.pulseRate && (
-            <div className={styles.readingHR}>❤️ {lastReading.pulseRate} bpm</div>
+            <div className={styles.readingHR}>{lastReading.pulseRate} bpm</div>
           )}
         </div>
       )}
@@ -166,28 +146,34 @@ export default function BluetoothView() {
       {/* Saved Devices */}
       {savedDevices.length > 0 && (
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Aparelhos Salvos</h2>
-          {savedDevices.map((d) => (
-            <div key={d.id} className={styles.deviceItem}>
-              <span className={styles.deviceIcon}>📱</span>
-              <div>
-                <div className={styles.deviceName}>{d.model}</div>
-                {d.lastConnectedAt && (
-                  <div className={styles.deviceDate}>
-                    Ultimo uso: {new Date(d.lastConnectedAt).toLocaleDateString('pt-BR')}
-                  </div>
-                )}
+          <h2 className={styles.sectionTitle}>Aparelhos salvos</h2>
+          <div className={styles.deviceList}>
+            {savedDevices.map((d, i) => (
+              <div key={d.id} className={styles.deviceItem} style={{ animationDelay: `${i * 0.05}s` }}>
+                <div className={styles.deviceIcon}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-blue)" strokeWidth="2">
+                    <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"/>
+                  </svg>
+                </div>
+                <div className={styles.deviceInfo}>
+                  <div className={styles.deviceName}>{d.model}</div>
+                  {d.lastConnectedAt && (
+                    <div className={styles.deviceDate}>
+                      {new Date(d.lastConnectedAt).toLocaleDateString('pt-BR')}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Simulate for testing */}
+      {/* Simulate */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Teste / Simulacao</h2>
+        <h2 className={styles.sectionTitle}>Teste</h2>
         <button className={styles.simulateBtn} onClick={handleSimulate}>
-          🧪 Simular Medicao
+          Simular medicao
         </button>
       </div>
     </div>
