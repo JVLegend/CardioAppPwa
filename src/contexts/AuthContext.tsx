@@ -1,9 +1,11 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import type { Patient } from '../models/types'
-import * as auth from '../services/authService'
 import * as db from '../services/database'
-import * as repo from '../services/supabaseRepository'
-import { pullFromServer } from '../services/syncEngine'
+
+const FIXED_EMAIL = 'kneipapps@gmail.com'
+const FIXED_PASSWORD = 'Phygital'
+const FIXED_USER_ID = 'fixed-user-001'
+const AUTH_KEY = 'cardioapp_auth'
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -23,66 +25,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentPatient, setCurrentPatient] = useState<Patient | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const setupPatient = useCallback(async (userId: string) => {
-    // Try local first
-    let patient = await db.fetchPatientByUserId(userId)
+  const setupPatient = useCallback(async () => {
+    let patient = await db.fetchPatientByUserId(FIXED_USER_ID)
     if (!patient) {
-      // Try remote
-      patient = (await repo.fetchPatientRemote(userId)) ?? undefined
-      if (patient) {
-        await db.savePatient(patient)
-      } else {
-        // Create new patient
-        patient = {
-          id: crypto.randomUUID(),
-          operatorId: '',
-          userId,
-          name: 'Paciente',
-          role: 'patient',
-          createdAt: new Date().toISOString(),
-        }
-        await db.savePatient(patient)
-        await repo.upsertPatientRemote(patient).catch(() => {})
+      patient = {
+        id: crypto.randomUUID(),
+        operatorId: '',
+        userId: FIXED_USER_ID,
+        name: 'Paciente',
+        role: 'patient',
+        createdAt: new Date().toISOString(),
       }
+      await db.savePatient(patient)
     }
-    setCurrentPatient(patient!)
-    pullFromServer(patient!.id).catch(() => {})
+    setCurrentPatient(patient)
   }, [])
 
   useEffect(() => {
-    auth.getSession().then((session) => {
-      if (session?.user) {
-        setIsAuthenticated(true)
-        setupPatient(session.user.id)
-      }
+    const saved = localStorage.getItem(AUTH_KEY)
+    if (saved === 'true') {
+      setIsAuthenticated(true)
+      setupPatient().finally(() => setIsLoading(false))
+    } else {
       setIsLoading(false)
-    })
+    }
   }, [setupPatient])
 
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     setErrorMessage(null)
-    try {
-      const session = await auth.signIn(email, password)
+    if (email === FIXED_EMAIL && password === FIXED_PASSWORD) {
+      localStorage.setItem(AUTH_KEY, 'true')
       setIsAuthenticated(true)
-      await setupPatient(session!.user.id)
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Erro ao fazer login'
-      setErrorMessage(msg)
-    } finally {
-      setIsLoading(false)
+      await setupPatient()
+    } else {
+      setErrorMessage('Email ou senha incorretos')
     }
+    setIsLoading(false)
   }
 
   const logout = async () => {
-    await auth.signOut().catch(() => {})
+    localStorage.removeItem(AUTH_KEY)
     setIsAuthenticated(false)
     setCurrentPatient(null)
   }
 
   const selectPatient = (patient: Patient) => {
     setCurrentPatient(patient)
-    pullFromServer(patient.id).catch(() => {})
   }
 
   return (
