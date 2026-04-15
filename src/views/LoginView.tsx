@@ -4,8 +4,8 @@ import styles from './LoginView.module.css'
 
 export default function LoginView() {
   const { login, isLoading, errorMessage } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('kneipapps@gmail.com')
+  const [password, setPassword] = useState('Phygital')
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
