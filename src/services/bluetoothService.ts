@@ -35,8 +35,10 @@ export async function scanAndConnect(
 
   try {
     onStateChange('scanning')
+    // TEMP DIAGNOSTIC: accept all devices so we can see Omron proprietary advertisers.
+    // Revert to filters:[{services:[BP_SERVICE_UUID]}] after diagnosis.
     const device = await navigator.bluetooth.requestDevice({
-      filters: [{ services: [BP_SERVICE_UUID] }],
+      acceptAllDevices: true,
       optionalServices: [BP_SERVICE_UUID],
     })
 
