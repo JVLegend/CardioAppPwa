@@ -370,3 +370,102 @@
   .distRow { grid-template-columns: 110px 1fr 36px; gap: 8px; }
   .distLabel { font-size: 12px; }
 }
+
+/* ===== Desktop layout ===== */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1400px;
+    padding: 40px 48px 80px;
+  }
+
+  .header {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .title {
+    font-size: 42px;
+  }
+
+  /* Top row: insight (8 cols) + KPIs stacked (4 cols) */
+  .topGrid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+    align-items: stretch;
+  }
+
+  .insightCard {
+    margin-bottom: 0;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .insightBody {
+    flex: 1;
+  }
+
+  .insightBody p {
+    font-size: 15.5px;
+    line-height: 1.65;
+  }
+
+  .kpiGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 0;
+  }
+
+  .kpiCard {
+    padding: 20px;
+  }
+
+  .kpiValue {
+    font-size: 42px;
+  }
+
+  /* Actions in 3-col grid */
+  .actionsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 14px;
+  }
+
+  .actionCard {
+    margin-bottom: 0;
+    padding: 22px;
+  }
+
+  .sectionTitle {
+    font-size: 26px;
+    margin-bottom: 18px;
+  }
+
+  .distGrid {
+    padding: 24px 28px;
+  }
+
+  .distRow {
+    grid-template-columns: 180px 1fr 60px;
+  }
+
+  .distLabel { font-size: 14px; }
+  .distValue { font-size: 22px; }
+
+  /* Two-column bottom: actions left, distribution right */
+  .bottomGrid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+
+  .bottomGrid .section {
+    margin-bottom: 0;
+  }
+}
+

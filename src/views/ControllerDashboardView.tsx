@@ -205,6 +205,7 @@ export default function ControllerDashboardView() {
         </button>
       </header>
 
+      <div className={styles.topGrid}>
       <section className={styles.insightCard}>
         <div className={styles.insightHeader}>
           <span className={styles.insightBadge}>IA · Insight diário</span>
@@ -234,7 +235,7 @@ export default function ControllerDashboardView() {
         </div>
       </section>
 
-      <section className={styles.kpiGrid}>
+      <section className={styles.kpiGrid} data-role="kpi">
         <div className={styles.kpiCard}>
           <div className={styles.kpiLabel}>Pacientes monitorados</div>
           <div className={styles.kpiValue}>{agg.totalPatients}</div>
@@ -258,9 +259,12 @@ export default function ControllerDashboardView() {
           <div className={styles.kpiHint}>{agg.nonAdhering} sem medição 3d</div>
         </div>
       </section>
+      </div>
 
+      <div className={styles.bottomGrid}>
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Ações prioritárias</h2>
+        <div className={styles.actionsGrid}>
 
         {agg.critical > 0 && (
           <div className={`${styles.actionCard} ${styles.actionCritical}`}>
@@ -316,6 +320,7 @@ export default function ControllerDashboardView() {
             ✓ Nenhuma ação crítica no momento. Operação estável.
           </div>
         )}
+        </div>
       </section>
 
       <section className={styles.section}>
@@ -365,6 +370,7 @@ export default function ControllerDashboardView() {
           </div>
         </div>
       </section>
+      </div>
 
       <footer className={styles.footer}>
         CardioApp · Painel do Controlador · Protótipo
