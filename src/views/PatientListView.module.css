@@ -990,3 +990,136 @@
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(196, 18, 48, 0.3);
 }
+
+/* ==========================
+   Desktop layout (>= 1024px)
+   ========================== */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 40px;
+    padding-bottom: 32px;
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    grid-template-areas:
+      "header header"
+      "main   aside";
+    column-gap: 28px;
+    row-gap: 24px;
+    align-items: start;
+  }
+
+  .header {
+    grid-area: header;
+    border-radius: var(--radius-lg);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 28px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .headerTitle {
+    font-size: 34px;
+  }
+
+  .kpiSection {
+    grid-area: main;
+    padding: 0;
+    min-width: 0;
+  }
+
+  .kpiSection .sectionTitle:first-of-type {
+    margin-top: 0;
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .kpiCardTotal {
+    padding: 24px 28px;
+  }
+
+  .kpiTotalValue {
+    font-size: 64px;
+  }
+
+  .listSection {
+    grid-area: aside;
+    padding: 0;
+    position: sticky;
+    top: 32px;
+    max-height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .listSection .list {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding-right: 4px;
+  }
+
+  .patientItem:hover {
+    background: var(--bg-card-hover);
+    transform: translateY(-1px);
+    cursor: pointer;
+  }
+
+  .statCard:hover {
+    transform: translateY(-1px);
+    cursor: pointer;
+  }
+
+  .kpiCardTotal:hover {
+    transform: translateY(-1px);
+  }
+
+  /* Detail drawer: dock to right edge on desktop */
+  .drawerOverlay {
+    align-items: stretch;
+    justify-content: flex-end;
+  }
+
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 520px;
+    max-width: 520px;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    padding: 20px 28px 32px;
+    animation: slideInRight 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: -10px 0 40px rgba(28, 25, 23, 0.2);
+  }
+
+  .drawerHandle {
+    display: none;
+  }
+
+  /* Keep push modal centered on desktop */
+  .drawerOverlay:has(.pushModal) {
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pushModal {
+    margin: 0;
+  }
+}
