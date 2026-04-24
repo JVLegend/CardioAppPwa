@@ -2,6 +2,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import LoginView from './views/LoginView'
 import MainTabView from './views/MainTabView'
 import PatientListView from './views/PatientListView'
+import ControllerDashboardView from './views/ControllerDashboardView'
 
 function AppContent() {
   const { isAuthenticated, isLoading, currentPatient } = useAuth()
@@ -21,6 +22,7 @@ function AppContent() {
   if (!isAuthenticated) return <LoginView />
 
   if (currentPatient?.role === 'operator') return <PatientListView />
+  if (currentPatient?.role === 'controller') return <ControllerDashboardView />
 
   return <MainTabView />
 }

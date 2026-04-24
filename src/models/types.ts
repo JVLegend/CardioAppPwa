@@ -1,7 +1,9 @@
-export type UserRole = 'patient' | 'operator'
+export type UserRole = 'patient' | 'operator' | 'controller'
 export type MeasurementSource = 'ble' | 'manual'
 export type AlertType = 'urgent' | 'attention' | 'adherence'
 export type AlertStatus = 'pending' | 'acknowledged' | 'resolved'
+
+export type PlanStatus = 'adimplente' | 'inadimplente' | 'pendente'
 
 export interface Patient {
   id: string
@@ -12,6 +14,9 @@ export interface Patient {
   phone?: string
   createdAt?: string
   role: UserRole
+  comorbidities?: string[]
+  planStatus?: PlanStatus
+  inTreatmentPlan?: boolean
 }
 
 export interface Measurement {

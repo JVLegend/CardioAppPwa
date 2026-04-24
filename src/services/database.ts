@@ -115,26 +115,41 @@ export async function fetchLatestMeasurementForPatient(
 export async function fetchOperatorPatientStats(patientIds: string[]): Promise<{
   latestMeasurements: Map<string, Measurement>
   measuredToday: Set<string>
+  activeMedicationCount: Map<string, number>
+  measuredLast3Days: Set<string>
 }> {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  const threeDaysAgo = new Date(today)
+  threeDaysAgo.setDate(today.getDate() - 3)
 
   const latestMeasurements = new Map<string, Measurement>()
   const measuredToday = new Set<string>()
+  const measuredLast3Days = new Set<string>()
+  const activeMedicationCount = new Map<string, number>()
 
   await Promise.all(
     patientIds.map(async (pid) => {
-      const latest = await fetchLatestMeasurementForPatient(pid)
+      const [latest, meds] = await Promise.all([
+        fetchLatestMeasurementForPatient(pid),
+        fetchMedications(pid),
+      ])
       if (latest) {
         latestMeasurements.set(pid, latest)
-        if (new Date(latest.measuredAt) >= today) {
-          measuredToday.add(pid)
-        }
+        const measuredAt = new Date(latest.measuredAt)
+        if (measuredAt >= today) measuredToday.add(pid)
+        if (measuredAt >= threeDaysAgo) measuredLast3Days.add(pid)
       }
+      const activeCount = meds.filter((m) => {
+        if (!m.active) return false
+        if (m.endDate && new Date(m.endDate) < today) return false
+        return true
+      }).length
+      activeMedicationCount.set(pid, activeCount)
     })
   )
 
-  return { latestMeasurements, measuredToday }
+  return { latestMeasurements, measuredToday, activeMedicationCount, measuredLast3Days }
 }
 
 // ---- Medication helpers ----

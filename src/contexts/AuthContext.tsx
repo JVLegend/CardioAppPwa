@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
-import type { Patient } from '../models/types'
+import type { Patient, UserRole } from '../models/types'
 import * as db from '../services/database'
 
 interface HardcodedUser {
@@ -7,12 +7,61 @@ interface HardcodedUser {
   password: string
   userId: string
   name: string
+  role: UserRole
+  patientId: string
+  operatorPatientId?: string
+  phone?: string
+  comorbidities?: string[]
+  planStatus?: 'adimplente' | 'inadimplente' | 'pendente'
+  inTreatmentPlan?: boolean
 }
 
+// Kneip é operadora; Toco e JV são pacientes vinculados à Kneip
+const OPERATOR_KNEIP_ID = 'operator-kneipapps-001'
+
 const USERS: HardcodedUser[] = [
-  { email: 'kneipapps@gmail.com', password: 'Phygital', userId: 'fixed-user-001', name: 'Kneip' },
-  { email: 'tocoapps@gmail.com', password: '123456', userId: 'fixed-user-002', name: 'Toco' },
-  { email: 'jvapps@gmail.com', password: '123456', userId: 'fixed-user-003', name: 'JV' },
+  {
+    email: 'kneipapps@gmail.com',
+    password: 'Phygital',
+    userId: 'fixed-user-001',
+    name: 'Dra. Kneip',
+    role: 'operator',
+    patientId: OPERATOR_KNEIP_ID,
+  },
+  {
+    email: 'tocoapps@gmail.com',
+    password: '123456',
+    userId: 'fixed-user-002',
+    name: 'Toco Silva',
+    role: 'patient',
+    patientId: 'patient-toco-001',
+    operatorPatientId: OPERATOR_KNEIP_ID,
+    phone: '(11) 98765-4321',
+    comorbidities: ['Diabetes tipo 2', 'Dislipidemia'],
+    planStatus: 'adimplente',
+    inTreatmentPlan: true,
+  },
+  {
+    email: 'jvapps@gmail.com',
+    password: '123456',
+    userId: 'fixed-user-003',
+    name: 'JV Santos',
+    role: 'patient',
+    patientId: 'patient-jv-001',
+    operatorPatientId: OPERATOR_KNEIP_ID,
+    phone: '(11) 91234-5678',
+    comorbidities: ['Obesidade'],
+    planStatus: 'inadimplente',
+    inTreatmentPlan: false,
+  },
+  {
+    email: 'controlapps@gmail.com',
+    password: '123456',
+    userId: 'fixed-user-004',
+    name: 'Controlador Saúde',
+    role: 'controller',
+    patientId: 'controller-control-001',
+  },
 ]
 
 const AUTH_KEY = 'cardioapp_auth'
@@ -25,7 +74,8 @@ interface AuthContextType {
   errorMessage: string | null
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
-  selectPatient: (patient: Patient) => void
+  selectPatient: (patient: Patient | null) => void
+  restoreSelf: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -37,17 +87,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const setupPatient = useCallback(async (user: HardcodedUser) => {
-    let patient = await db.fetchPatientByUserId(user.userId)
+    let patient = await db.fetchPatient(user.patientId)
     if (!patient) {
       patient = {
-        id: crypto.randomUUID(),
-        operatorId: '',
+        id: user.patientId,
+        operatorId: user.operatorPatientId ?? '',
         userId: user.userId,
         name: user.name,
-        role: 'patient',
+        role: user.role,
         createdAt: new Date().toISOString(),
+        phone: user.phone,
+        comorbidities: user.comorbidities,
+        planStatus: user.planStatus,
+        inTreatmentPlan: user.inTreatmentPlan,
       }
       await db.savePatient(patient)
+    } else {
+      // Mantém sincronia de campos vindos do seed (útil para contas novas/atualizadas)
+      const updated: Patient = {
+        ...patient,
+        name: user.name,
+        role: user.role,
+        operatorId: user.operatorPatientId ?? patient.operatorId,
+        phone: patient.phone ?? user.phone,
+        comorbidities: patient.comorbidities ?? user.comorbidities,
+        planStatus: patient.planStatus ?? user.planStatus,
+        inTreatmentPlan: patient.inTreatmentPlan ?? user.inTreatmentPlan,
+      }
+      if (JSON.stringify(updated) !== JSON.stringify(patient)) {
+        await db.savePatient(updated)
+      }
+      patient = updated
     }
     setCurrentPatient(patient)
   }, [])
@@ -90,8 +160,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCurrentPatient(null)
   }
 
-  const selectPatient = (patient: Patient) => {
+  const selectPatient = (patient: Patient | null) => {
     setCurrentPatient(patient)
+  }
+
+  const restoreSelf = async () => {
+    const savedUserId = localStorage.getItem(AUTH_USER_KEY)
+    if (!savedUserId) return
+    const user = USERS.find((u) => u.userId === savedUserId)
+    if (user) await setupPatient(user)
   }
 
   return (
@@ -104,6 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         selectPatient,
+        restoreSelf,
       }}
     >
       {children}
