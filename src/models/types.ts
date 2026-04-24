@@ -35,6 +35,9 @@ export interface Medication {
   frequency: string
   schedule?: string[]
   active: boolean
+  startDate?: string
+  endDate?: string
+  notes?: string
 }
 
 export interface BPAlert {
@@ -66,4 +69,14 @@ export interface SyncOperation {
   payload?: string
   createdAt: string
   attempts: number
+}
+
+export interface ChatMessage {
+  id: string
+  operatorId: string
+  patientId: string
+  fromRole: 'operator' | 'patient'
+  content: string
+  sentAt: string
+  read: boolean
 }

@@ -2,10 +2,21 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import type { Patient } from '../models/types'
 import * as db from '../services/database'
 
-const FIXED_EMAIL = 'kneipapps@gmail.com'
-const FIXED_PASSWORD = 'Phygital'
-const FIXED_USER_ID = 'fixed-user-001'
+interface HardcodedUser {
+  email: string
+  password: string
+  userId: string
+  name: string
+}
+
+const USERS: HardcodedUser[] = [
+  { email: 'kneipapps@gmail.com', password: 'Phygital', userId: 'fixed-user-001', name: 'Kneip' },
+  { email: 'tocoapps@gmail.com', password: '123456', userId: 'fixed-user-002', name: 'Toco' },
+  { email: 'jvapps@gmail.com', password: '123456', userId: 'fixed-user-003', name: 'JV' },
+]
+
 const AUTH_KEY = 'cardioapp_auth'
+const AUTH_USER_KEY = 'cardioapp_auth_user'
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -25,14 +36,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentPatient, setCurrentPatient] = useState<Patient | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const setupPatient = useCallback(async () => {
-    let patient = await db.fetchPatientByUserId(FIXED_USER_ID)
+  const setupPatient = useCallback(async (user: HardcodedUser) => {
+    let patient = await db.fetchPatientByUserId(user.userId)
     if (!patient) {
       patient = {
         id: crypto.randomUUID(),
         operatorId: '',
-        userId: FIXED_USER_ID,
-        name: 'Paciente',
+        userId: user.userId,
+        name: user.name,
         role: 'patient',
         createdAt: new Date().toISOString(),
       }
@@ -43,21 +54,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem(AUTH_KEY)
-    if (saved === 'true') {
-      setIsAuthenticated(true)
-      setupPatient().finally(() => setIsLoading(false))
-    } else {
-      setIsLoading(false)
+    const savedUserId = localStorage.getItem(AUTH_USER_KEY)
+    if (saved === 'true' && savedUserId) {
+      const user = USERS.find((u) => u.userId === savedUserId)
+      if (user) {
+        setIsAuthenticated(true)
+        setupPatient(user).finally(() => setIsLoading(false))
+        return
+      }
     }
+    setIsLoading(false)
   }, [setupPatient])
 
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     setErrorMessage(null)
-    if (email === FIXED_EMAIL && password === FIXED_PASSWORD) {
+    const user = USERS.find(
+      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+    )
+    if (user) {
       localStorage.setItem(AUTH_KEY, 'true')
+      localStorage.setItem(AUTH_USER_KEY, user.userId)
       setIsAuthenticated(true)
-      await setupPatient()
+      await setupPatient(user)
     } else {
       setErrorMessage('Email ou senha incorretos')
     }
@@ -66,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     localStorage.removeItem(AUTH_KEY)
+    localStorage.removeItem(AUTH_USER_KEY)
     setIsAuthenticated(false)
     setCurrentPatient(null)
   }

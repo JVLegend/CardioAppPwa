@@ -6,6 +6,7 @@ import type {
   BPDevice,
   Patient,
   SyncOperation,
+  ChatMessage,
 } from '../models/types'
 
 class CardioDatabase extends Dexie {
@@ -15,6 +16,7 @@ class CardioDatabase extends Dexie {
   devices!: Table<BPDevice, string>
   patients!: Table<Patient, string>
   syncOperations!: Table<SyncOperation, string>
+  chatMessages!: Table<ChatMessage, string>
 
   constructor() {
     super('CardioAppDB')
@@ -25,6 +27,15 @@ class CardioDatabase extends Dexie {
       devices: 'id, patientId',
       patients: 'id, userId, operatorId',
       syncOperations: 'id, entityType, createdAt, attempts',
+    })
+    this.version(2).stores({
+      measurements: 'id, patientId, measuredAt, source',
+      medications: 'id, patientId, active',
+      alerts: 'id, patientId, status, type, createdAt',
+      devices: 'id, patientId',
+      patients: 'id, userId, operatorId',
+      syncOperations: 'id, entityType, createdAt, attempts',
+      chatMessages: 'id, operatorId, patientId, sentAt, read',
     })
   }
 }
@@ -91,6 +102,39 @@ export async function fetchStreak(patientId: string): Promise<number> {
     }
   }
   return streak
+}
+
+// ---- Operator stats helpers ----
+export async function fetchLatestMeasurementForPatient(
+  patientId: string
+): Promise<Measurement | undefined> {
+  const all = await fetchAllMeasurements(patientId)
+  return all[0]
+}
+
+export async function fetchOperatorPatientStats(patientIds: string[]): Promise<{
+  latestMeasurements: Map<string, Measurement>
+  measuredToday: Set<string>
+}> {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const latestMeasurements = new Map<string, Measurement>()
+  const measuredToday = new Set<string>()
+
+  await Promise.all(
+    patientIds.map(async (pid) => {
+      const latest = await fetchLatestMeasurementForPatient(pid)
+      if (latest) {
+        latestMeasurements.set(pid, latest)
+        if (new Date(latest.measuredAt) >= today) {
+          measuredToday.add(pid)
+        }
+      }
+    })
+  )
+
+  return { latestMeasurements, measuredToday }
 }
 
 // ---- Medication helpers ----
@@ -162,6 +206,37 @@ export async function fetchPatientByUserId(userId: string): Promise<Patient | un
 
 export async function fetchPatientsByOperator(operatorId: string): Promise<Patient[]> {
   return db.patients.where('operatorId').equals(operatorId).toArray()
+}
+
+// ---- Chat helpers ----
+export async function saveChatMessage(msg: ChatMessage) {
+  await db.chatMessages.put(msg)
+}
+
+export async function fetchChatMessages(
+  operatorId: string,
+  patientId: string
+): Promise<ChatMessage[]> {
+  return db.chatMessages
+    .where({ operatorId, patientId })
+    .sortBy('sentAt')
+}
+
+export async function markMessagesRead(operatorId: string, patientId: string, readerRole: 'operator' | 'patient') {
+  const msgs = await db.chatMessages
+    .where({ operatorId, patientId })
+    .toArray()
+  const toMark = msgs.filter((m) => m.fromRole !== readerRole && !m.read)
+  await Promise.all(toMark.map((m) => db.chatMessages.update(m.id, { read: true })))
+}
+
+export async function fetchUnreadCountForPatient(
+  operatorId: string,
+  patientId: string,
+  readerRole: 'operator' | 'patient'
+): Promise<number> {
+  const msgs = await db.chatMessages.where({ operatorId, patientId }).toArray()
+  return msgs.filter((m) => m.fromRole !== readerRole && !m.read).length
 }
 
 // ---- Sync queue helpers ----

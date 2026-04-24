@@ -17,13 +17,14 @@
   left: 0;
   right: 0;
   display: flex;
-  background: rgba(28, 28, 30, 0.92);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
   padding: 6px 0 2px;
   padding-bottom: max(6px, env(safe-area-inset-bottom));
   z-index: 100;
+  box-shadow: 0 -4px 20px rgba(28, 25, 23, 0.06);
 }
 
 .tab {

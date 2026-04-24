@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Sora:wght@300;400;500;600&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -6,47 +8,50 @@
 }
 
 :root {
-  --cardio-red: #FF3B30;
-  --cardio-blue: #007AFF;
-  --cardio-green: #34C759;
-  --cardio-orange: #FF9500;
-  --cardio-purple: #AF52DE;
-  --cardio-yellow: #FFCC00;
-  --cardio-teal: #5AC8FA;
-  --cardio-pink: #FF2D55;
+  --cardio-red: #C41230;
+  --cardio-blue: #1D4ED8;
+  --cardio-green: #16A34A;
+  --cardio-orange: #D97706;
+  --cardio-purple: #7C3AED;
+  --cardio-yellow: #CA8A04;
+  --cardio-teal: #0891B2;
+  --cardio-pink: #DB2777;
 
-  --bg-primary: #000000;
-  --bg-secondary: #1C1C1E;
-  --bg-card: #1C1C1E;
-  --bg-card-hover: #2C2C2E;
-  --bg-elevated: #2C2C2E;
+  --bg-primary: #F7F4EF;
+  --bg-secondary: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F5F1EB;
+  --bg-elevated: #FFFFFF;
 
-  --text-primary: #FFFFFF;
-  --text-secondary: rgba(255, 255, 255, 0.6);
-  --text-muted: rgba(255, 255, 255, 0.35);
+  --text-primary: #1C1917;
+  --text-secondary: rgba(28, 25, 23, 0.58);
+  --text-muted: rgba(28, 25, 23, 0.35);
 
-  --border: rgba(255, 255, 255, 0.08);
-  --border-light: rgba(255, 255, 255, 0.12);
-  --separator: rgba(255, 255, 255, 0.06);
+  --border: rgba(28, 25, 23, 0.08);
+  --border-light: rgba(28, 25, 23, 0.12);
+  --separator: rgba(28, 25, 23, 0.06);
+
+  --shadow-sm: 0 1px 3px rgba(28, 25, 23, 0.07), 0 1px 2px rgba(28, 25, 23, 0.04);
+  --shadow-md: 0 4px 16px rgba(28, 25, 23, 0.08), 0 2px 4px rgba(28, 25, 23, 0.04);
+  --shadow-lg: 0 8px 32px rgba(28, 25, 23, 0.10), 0 4px 8px rgba(28, 25, 23, 0.05);
 
   --radius: 14px;
   --radius-lg: 18px;
   --radius-xl: 22px;
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html, body, #root {
   height: 100%;
-  font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', BlinkMacSystemFont,
-    'Helvetica Neue', sans-serif;
+  font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  font-size: 17px;
-  line-height: 1.4;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 #root {
@@ -86,20 +91,30 @@ a {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.92); }
+  from { opacity: 0; transform: scale(0.94); }
   to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  50% { opacity: 0.55; }
 }
 
 @keyframes progressFill {
   from { stroke-dashoffset: 283; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }

@@ -93,7 +93,10 @@ export function usePatientData() {
     name: string,
     dose: string,
     frequency: string,
-    schedule?: string[]
+    schedule?: string[],
+    startDate?: string,
+    endDate?: string,
+    notes?: string
   ) => {
     if (!patientId) return
     const med: Medication = {
@@ -104,6 +107,9 @@ export function usePatientData() {
       frequency,
       schedule,
       active: true,
+      startDate,
+      endDate,
+      notes,
     }
     await db.saveMedication(med)
     setMedications((prev) => [...prev, med])
