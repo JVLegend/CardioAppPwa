@@ -198,16 +198,20 @@ export default function PatientListView() {
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" /></svg>
         </div>
 
-        <h2 className={styles.sectionTitle}>Atividade de Hoje</h2>
-        <div className={styles.kpiGrid}>
-          <StatCard value={mt} label="Em dia" sub="Realizaram medição hoje" color="#16A34A" active={drillFilter === 'measuredToday'} onClick={() => setDrillFilter(drillFilter === 'measuredToday' ? 'all' : 'measuredToday')} />
-          <StatCard value={nmt} label="Faltando" sub="Sem medição hoje" color="#D97706" active={drillFilter === 'notMeasuredToday'} onClick={() => setDrillFilter(drillFilter === 'notMeasuredToday' ? 'all' : 'notMeasuredToday')} />
+        <div className={styles.metricGroup}>
+          <h2 className={styles.sectionTitle}>Atividade de Hoje</h2>
+          <div className={styles.kpiGrid}>
+            <StatCard value={mt} label="Em dia" sub="Realizaram medição hoje" color="#16A34A" active={drillFilter === 'measuredToday'} onClick={() => setDrillFilter(drillFilter === 'measuredToday' ? 'all' : 'measuredToday')} />
+            <StatCard value={nmt} label="Faltando" sub="Sem medição hoje" color="#D97706" active={drillFilter === 'notMeasuredToday'} onClick={() => setDrillFilter(drillFilter === 'notMeasuredToday' ? 'all' : 'notMeasuredToday')} />
+          </div>
         </div>
 
-        <h2 className={styles.sectionTitle}>Pressão Arterial</h2>
-        <div className={styles.kpiGrid}>
-          <StatCard value={inGoal} label="Dentro da Meta" sub="Normal ou pré-hipertensão" color="#16A34A" active={drillFilter === 'inGoal'} onClick={() => setDrillFilter(drillFilter === 'inGoal' ? 'all' : 'inGoal')} />
-          <StatCard value={outOfGoal} label="Fora da Meta" sub="Hipertensão I, II ou crise" color="#C41230" active={drillFilter === 'outOfGoal'} onClick={() => setDrillFilter(drillFilter === 'outOfGoal' ? 'all' : 'outOfGoal')} />
+        <div className={styles.metricGroup}>
+          <h2 className={styles.sectionTitle}>Pressão Arterial</h2>
+          <div className={styles.kpiGrid}>
+            <StatCard value={inGoal} label="Dentro da Meta" sub="Normal ou pré-hipertensão" color="#16A34A" active={drillFilter === 'inGoal'} onClick={() => setDrillFilter(drillFilter === 'inGoal' ? 'all' : 'inGoal')} />
+            <StatCard value={outOfGoal} label="Fora da Meta" sub="Hipertensão I, II ou crise" color="#C41230" active={drillFilter === 'outOfGoal'} onClick={() => setDrillFilter(drillFilter === 'outOfGoal' ? 'all' : 'outOfGoal')} />
+          </div>
         </div>
         {critical > 0 && (
           <button
@@ -225,24 +229,30 @@ export default function PatientListView() {
           </button>
         )}
 
-        <h2 className={styles.sectionTitle}>Aderência à Medicação</h2>
-        <div className={styles.kpiGrid}>
-          <StatCard value={adhering} label="Aderentes" sub="Tomando corretamente" color="#0891B2" active={drillFilter === 'adhering'} onClick={() => setDrillFilter(drillFilter === 'adhering' ? 'all' : 'adhering')} />
-          <StatCard value={nonAdhering} label="Não Aderentes" sub="Precisam atenção" color="#D97706" active={drillFilter === 'nonAdhering'} onClick={() => setDrillFilter(drillFilter === 'nonAdhering' ? 'all' : 'nonAdhering')} />
+        <div className={styles.metricGroup}>
+          <h2 className={styles.sectionTitle}>Aderência à Medicação</h2>
+          <div className={styles.kpiGrid}>
+            <StatCard value={adhering} label="Aderentes" sub="Tomando corretamente" color="#0891B2" active={drillFilter === 'adhering'} onClick={() => setDrillFilter(drillFilter === 'adhering' ? 'all' : 'adhering')} />
+            <StatCard value={nonAdhering} label="Não Aderentes" sub="Precisam atenção" color="#D97706" active={drillFilter === 'nonAdhering'} onClick={() => setDrillFilter(drillFilter === 'nonAdhering' ? 'all' : 'nonAdhering')} />
+          </div>
         </div>
 
-        <h2 className={styles.sectionTitle}>
-          Plano Financeiro <span className={styles.comingSoonTag}>API em breve</span>
-        </h2>
-        <div className={styles.kpiGrid}>
-          <StatCard value={adimplente} label="Adimplentes" sub="Plano em dia" color="#16A34A" active={drillFilter === 'adimplente'} onClick={() => setDrillFilter(drillFilter === 'adimplente' ? 'all' : 'adimplente')} />
-          <StatCard value={inadimplente} label="Inadimplentes" sub="Pendências financeiras" color="#C41230" active={drillFilter === 'inadimplente'} onClick={() => setDrillFilter(drillFilter === 'inadimplente' ? 'all' : 'inadimplente')} />
+        <div className={styles.metricGroup}>
+          <h2 className={styles.sectionTitle}>
+            Plano Financeiro <span className={styles.comingSoonTag}>API em breve</span>
+          </h2>
+          <div className={styles.kpiGrid}>
+            <StatCard value={adimplente} label="Adimplentes" sub="Plano em dia" color="#16A34A" active={drillFilter === 'adimplente'} onClick={() => setDrillFilter(drillFilter === 'adimplente' ? 'all' : 'adimplente')} />
+            <StatCard value={inadimplente} label="Inadimplentes" sub="Pendências financeiras" color="#C41230" active={drillFilter === 'inadimplente'} onClick={() => setDrillFilter(drillFilter === 'inadimplente' ? 'all' : 'inadimplente')} />
+          </div>
         </div>
 
-        <h2 className={styles.sectionTitle}>Plano de Tratamento</h2>
-        <div className={styles.kpiGrid}>
-          <StatCard value={inTreatment} label="Em Tratamento" sub="Plano ativo na operadora" color="#1D4ED8" active={drillFilter === 'inTreatment'} onClick={() => setDrillFilter(drillFilter === 'inTreatment' ? 'all' : 'inTreatment')} />
-          <StatCard value={outOfTreatment} label="Sem Plano" sub="Não estão em tratamento" color="#78716C" active={drillFilter === 'outOfTreatment'} onClick={() => setDrillFilter(drillFilter === 'outOfTreatment' ? 'all' : 'outOfTreatment')} />
+        <div className={`${styles.metricGroup} ${styles.metricGroupWide}`}>
+          <h2 className={styles.sectionTitle}>Plano de Tratamento</h2>
+          <div className={styles.kpiGrid}>
+            <StatCard value={inTreatment} label="Em Tratamento" sub="Plano ativo na operadora" color="#1D4ED8" active={drillFilter === 'inTreatment'} onClick={() => setDrillFilter(drillFilter === 'inTreatment' ? 'all' : 'inTreatment')} />
+            <StatCard value={outOfTreatment} label="Sem Plano" sub="Não estão em tratamento" color="#78716C" active={drillFilter === 'outOfTreatment'} onClick={() => setDrillFilter(drillFilter === 'outOfTreatment' ? 'all' : 'outOfTreatment')} />
+          </div>
         </div>
       </div>
 

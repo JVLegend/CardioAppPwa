@@ -992,104 +992,581 @@
 }
 
 /* ==========================
-   Desktop layout (>= 1024px)
+   Desktop — Editorial Clinical
    ========================== */
 @keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0.6;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(100%); opacity: 0.6; }
+  to   { transform: translateX(0);    opacity: 1; }
 }
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* metricGroup is transparent on mobile; desktop turns it into a grid cell */
+.metricGroup { display: block; }
 
 @media (min-width: 1024px) {
   .container {
-    max-width: 1400px;
+    max-width: 1280px;
     margin: 0 auto;
-    padding: 32px 40px;
-    padding-bottom: 32px;
-    display: grid;
-    grid-template-columns: 1fr 420px;
-    grid-template-areas:
-      "header header"
-      "main   aside";
-    column-gap: 28px;
-    row-gap: 24px;
-    align-items: start;
+    padding: 48px 56px 96px;
+    background: var(--bg-primary);
+    position: relative;
   }
 
+  /* Soft editorial atmosphere — hairline color washes */
+  .container::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 800px 400px at 0% 0%, rgba(196, 18, 48, 0.035), transparent 70%),
+      radial-gradient(ellipse 600px 500px at 100% 100%, rgba(29, 78, 216, 0.025), transparent 70%);
+    z-index: 0;
+  }
+
+  .container > * { position: relative; z-index: 1; }
+
+  /* ===== Header: newspaper nameplate ===== */
   .header {
-    grid-area: header;
-    border-radius: var(--radius-lg);
-    border-bottom: 1px solid var(--border);
-    padding: 24px 28px;
-    box-shadow: var(--shadow-sm);
+    background: transparent;
+    border: none;
+    padding: 0 0 28px;
+    margin-bottom: 48px;
+    box-shadow: none;
+    align-items: flex-end;
+    position: relative;
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 1px;
+    background:
+      linear-gradient(to right,
+        var(--cardio-red) 0,
+        var(--cardio-red) 72px,
+        var(--border) 72px,
+        var(--border) 100%);
+  }
+
+  .headerLabel {
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    font-weight: 600;
+    color: var(--cardio-red);
+    margin-bottom: 18px;
   }
 
   .headerTitle {
-    font-size: 34px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 60px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 12px;
   }
 
+  .headerDate {
+    font-family: 'Sora', sans-serif;
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: capitalize;
+  }
+
+  .logoutBtn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 11px 20px;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .logoutBtn:hover {
+    border-color: var(--cardio-red);
+    color: var(--cardio-red);
+    letter-spacing: 0.24em;
+  }
+
+  .logoutBtn svg { display: none; }
+
+  /* ===== KPI Section: 2-col editorial grid ===== */
   .kpiSection {
-    grid-area: main;
     padding: 0;
-    min-width: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 48px;
+    row-gap: 44px;
+    margin-bottom: 64px;
   }
 
-  .kpiSection .sectionTitle:first-of-type {
-    margin-top: 0;
+  .kpiSection .sectionTitle:first-of-type { margin-top: 0; }
+
+  .metricGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
-  .kpiGrid {
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px;
-  }
+  .metricGroupWide { grid-column: 1 / -1; }
 
+  /* ===== Hero banner: N° monumental ===== */
   .kpiCardTotal {
-    padding: 24px 28px;
+    grid-column: 1 / -1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 44px 52px 40px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+    justify-content: flex-start;
+    gap: 56px;
+    cursor: pointer;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+
+  .kpiCardTotal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 120px;
+    height: 3px;
+    background: var(--cardio-red);
+  }
+
+  .kpiCardTotal::after {
+    content: 'N°';
+    position: absolute;
+    top: 44px;
+    left: 52px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 24px;
+    font-weight: 500;
+    color: rgba(28, 25, 23, 0.35);
+    letter-spacing: -0.01em;
+  }
+
+  .kpiCardTotal > div:first-child {
+    padding-left: 48px;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .kpiCardTotal:hover {
+    border-color: rgba(196, 18, 48, 0.4);
+    box-shadow: var(--shadow-md);
+    transform: none;
   }
 
   .kpiTotalValue {
-    font-size: 64px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 140px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 0.88;
+    letter-spacing: -0.035em;
+    font-feature-settings: 'tnum', 'lnum';
+    background: none;
+    -webkit-text-fill-color: initial;
   }
 
-  .listSection {
-    grid-area: aside;
-    padding: 0;
-    position: sticky;
-    top: 32px;
-    max-height: calc(100vh - 64px);
+  .kpiTotalLabel {
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 18px;
+    line-height: 1;
+  }
+
+  .kpiCardTotal > svg { display: none; }
+
+  /* ===== Section eyebrows ===== */
+  .sectionTitle {
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    position: relative;
     display: flex;
-    flex-direction: column;
-    min-height: 0;
+    align-items: center;
+    gap: 10px;
   }
 
-  .listSection .list {
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-    padding-right: 4px;
+  .sectionTitle::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 0;
+    width: 40px;
+    height: 1px;
+    background: var(--cardio-red);
   }
 
-  .patientItem:hover {
-    background: var(--bg-card-hover);
-    transform: translateY(-1px);
+  .comingSoonTag {
+    margin-left: auto;
+    background: transparent;
+    color: var(--cardio-blue);
+    border: 1px solid rgba(29, 78, 216, 0.35);
+    padding: 3px 9px;
+    border-radius: 2px;
+    font-size: 8.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  /* ===== Stat cards: number + text pair ===== */
+  .kpiGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .statCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 24px 26px;
+    box-shadow: none;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 22px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     cursor: pointer;
+    min-height: 96px;
+  }
+
+  .statCard::before {
+    width: 0;
+    height: 2px;
+    top: 0;
+    left: 0;
+    right: auto;
+    bottom: auto;
+    background: var(--card-accent);
+    transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .statCard:hover {
     transform: translateY(-1px);
+    border-color: rgba(28, 25, 23, 0.16);
+    box-shadow: 0 6px 20px rgba(28, 25, 23, 0.04);
+  }
+
+  .statCard:hover::before { width: 56px; }
+
+  .statCardActive {
+    border-color: var(--card-accent);
+    box-shadow: 0 0 0 1px var(--card-accent), 0 8px 22px rgba(28, 25, 23, 0.06);
+  }
+
+  .statCardActive::before { width: 56px; }
+
+  .statValue {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 56px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    font-feature-settings: 'tnum', 'lnum';
+    min-width: 64px;
+    text-align: left;
+  }
+
+  .statLabel {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    letter-spacing: 0;
+  }
+
+  .statSub {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.35;
+    letter-spacing: 0.01em;
+  }
+
+  /* ===== Critical alert ===== */
+  .alertCard {
+    grid-column: 1 / -1;
+    background: var(--bg-card);
+    border: 1px solid var(--cardio-red);
+    border-radius: 3px;
+    padding: 22px 28px 22px 72px;
+    margin-top: 0;
+    position: relative;
+    box-shadow: 0 8px 28px rgba(196, 18, 48, 0.1);
+    gap: 0;
+  }
+
+  .alertCard::before {
+    content: 'ALERTA CRÍTICO';
+    position: absolute;
+    top: -9px;
+    left: 24px;
+    background: var(--cardio-red);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.24em;
+    font-weight: 700;
+    padding: 4px 11px 3px;
+    border-radius: 1px;
+  }
+
+  .alertIconWrap {
+    position: absolute;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    background: var(--cardio-red);
+    box-shadow: none;
+  }
+
+  .alertTitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  .alertSub {
+    font-family: 'Sora', sans-serif;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .alertCard > svg:last-child {
+    margin-left: auto;
+  }
+
+  .alertCardActive {
+    background: rgba(196, 18, 48, 0.04);
+  }
+
+  /* ===== Patient list: data table ===== */
+  .listSection {
+    padding: 0;
+    position: static;
+    max-height: none;
+    display: block;
+  }
+
+  .listHeader {
+    align-items: flex-end;
+    margin-bottom: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    position: relative;
+  }
+
+  .listHeader::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 0;
+    width: 40px;
+    height: 1px;
+    background: var(--cardio-red);
+  }
+
+  .listHeader .sectionTitle {
+    margin: 0;
+    padding: 0;
+    border: none;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 40px;
+    letter-spacing: -0.015em;
+    text-transform: none;
+    font-weight: 500;
+    color: var(--text-primary);
+    display: block;
+  }
+
+  .listHeader .sectionTitle::before { display: none; }
+
+  .listCount {
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 8px;
+    font-weight: 600;
+  }
+
+  .clearFilter {
+    background: transparent;
+    color: var(--cardio-red);
+    border: 1px solid var(--cardio-red);
+    border-radius: 2px;
+    padding: 7px 14px;
+    font-family: 'Sora', sans-serif;
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
     cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
   }
 
-  .kpiCardTotal:hover {
-    transform: translateY(-1px);
+  .clearFilter:hover {
+    background: var(--cardio-red);
+    color: #fff;
   }
 
-  /* Detail drawer: dock to right edge on desktop */
+  .searchWrap {
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    box-shadow: none;
+    background: var(--bg-card);
+    padding: 0 18px;
+    transition: border-color 0.18s;
+    margin-bottom: 20px;
+  }
+
+  .searchWrap:focus-within { border-color: var(--cardio-red); }
+
+  .searchInput {
+    padding: 14px 0;
+    font-size: 14px;
+    letter-spacing: 0.01em;
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .patientItem {
+    display: grid;
+    grid-template-columns: 44px 1fr auto 20px;
+    align-items: center;
+    gap: 22px;
+    padding: 22px 28px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: 1px solid var(--border);
+    animation: riseIn 0.35s ease both;
+    transition: background 0.2s ease;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .patientItem:last-child { border-bottom: none; }
+
+  .patientItem:hover {
+    background: var(--bg-primary);
+    transform: none;
+  }
+
+  .patientItem:active { transform: none; }
+
+  .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1.5px solid var(--cardio-red);
+    color: var(--cardio-red);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    box-shadow: none;
+    letter-spacing: -0.02em;
+  }
+
+  .patientName {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    line-height: 1.1;
+  }
+
+  .patientMeta { gap: 6px; }
+
+  .bpBadge {
+    font-family: 'Sora', sans-serif;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    letter-spacing: 0.04em;
+    font-feature-settings: 'tnum', 'lnum';
+    font-weight: 600;
+  }
+
+  .measureBadge {
+    font-size: 9.5px;
+    padding: 3px 9px;
+    border-radius: 2px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .patientItem > svg:last-child {
+    justify-self: end;
+    opacity: 0.35;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .patientItem:hover > svg:last-child {
+    opacity: 1;
+    transform: translateX(4px);
+  }
+
+  .empty {
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    border-radius: 3px;
+    padding: 80px 40px;
+  }
+
+  .skeleton {
+    border-radius: 3px;
+  }
+
+  /* ===== Detail drawer: reading pane ===== */
   .drawerOverlay {
     align-items: stretch;
     justify-content: flex-end;
@@ -1099,21 +1576,353 @@
     position: fixed;
     top: 0;
     right: 0;
-    width: 520px;
-    max-width: 520px;
+    width: 560px;
+    max-width: 560px;
     height: 100vh;
     max-height: 100vh;
     border-radius: 0;
-    padding: 20px 28px 32px;
-    animation: slideInRight 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-    box-shadow: -10px 0 40px rgba(28, 25, 23, 0.2);
+    padding: 52px 48px 48px;
+    animation: slideInRight 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: -24px 0 64px rgba(28, 25, 23, 0.18);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
   }
 
-  .drawerHandle {
-    display: none;
+  .drawer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 72px;
+    height: 3px;
+    background: var(--cardio-red);
   }
 
-  /* Keep push modal centered on desktop */
+  .drawerHandle { display: none; }
+
+  .drawerHeader {
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .drawerAvatar {
+    width: 64px;
+    height: 64px;
+    background: transparent;
+    border: 2px solid var(--cardio-red);
+    color: var(--cardio-red);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 600;
+    box-shadow: none;
+  }
+
+  .drawerName {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.08;
+  }
+
+  .drawerPhone {
+    font-family: 'Sora', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-top: 8px;
+    color: var(--text-muted);
+  }
+
+  .closeBtn {
+    border: 1px solid var(--border);
+    background: transparent;
+    border-radius: 2px;
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.18s;
+    color: var(--text-secondary);
+  }
+
+  .closeBtn:hover {
+    border-color: var(--cardio-red);
+    color: var(--cardio-red);
+  }
+
+  .drawerSection { padding: 28px 0; }
+  .drawerSection:last-of-type { padding-bottom: 0; }
+
+  .drawerSectionTitle {
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.26em;
+    font-weight: 600;
+    color: var(--cardio-red);
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    position: relative;
+    margin-bottom: 18px;
+    text-transform: uppercase;
+  }
+
+  .drawerSectionTitle::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 0;
+    width: 28px;
+    height: 1px;
+    background: var(--cardio-red);
+  }
+
+  .drawerMeasureCard {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 24px 26px;
+    border-left-width: 3px;
+  }
+
+  .drawerBP { align-items: baseline; gap: 8px; }
+
+  .drawerBPValue {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 52px;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    line-height: 1;
+    font-feature-settings: 'tnum';
+  }
+
+  .drawerBPUnit {
+    font-family: 'Sora', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .drawerBPClass {
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-top: 12px;
+  }
+
+  .drawerBPTime {
+    font-family: 'Sora', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    margin-top: 6px;
+    color: var(--text-muted);
+  }
+
+  .drawerReason {
+    border-radius: 0;
+    border-left: 2px solid var(--cardio-red);
+    background: rgba(196, 18, 48, 0.05);
+    margin-top: 18px;
+    padding: 14px 18px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .drawerInfoGrid {
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .drawerInfoItem {
+    background: var(--bg-card);
+    border-radius: 0;
+    padding: 16px 18px;
+    gap: 6px;
+  }
+
+  .drawerInfoLabel {
+    font-size: 9px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .drawerInfoValue {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin-top: 2px;
+  }
+
+  .drawerComorb {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 16px 18px;
+    margin-top: 16px;
+  }
+
+  .drawerComorb .drawerInfoLabel {
+    font-size: 9px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .chip {
+    font-family: 'Sora', sans-serif;
+    font-size: 10.5px;
+    padding: 5px 11px;
+    border-radius: 2px;
+    letter-spacing: 0.06em;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  /* Edit inputs */
+  .editBtn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 11px 18px;
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    color: var(--text-secondary);
+  }
+
+  .editBtn:hover {
+    border-color: var(--cardio-red);
+    color: var(--cardio-red);
+  }
+
+  .editForm {
+    border-radius: 3px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+  }
+
+  .editLabel {
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .editSave {
+    border-radius: 2px;
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 14px;
+    background: var(--cardio-red);
+    box-shadow: 0 4px 16px rgba(196, 18, 48, 0.24);
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+
+  .editSave:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(196, 18, 48, 0.32);
+  }
+
+  .editCancel {
+    border-radius: 2px;
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 14px;
+    cursor: pointer;
+  }
+
+  /* Communication */
+  .commActions { gap: 12px; }
+
+  .pushBtn {
+    background: var(--cardio-red);
+    border-radius: 2px;
+    padding: 16px;
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    font-weight: 700;
+    box-shadow: 0 6px 18px rgba(196, 18, 48, 0.26);
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.2s;
+    gap: 10px;
+  }
+
+  .pushBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(196, 18, 48, 0.34);
+  }
+
+  .whatsBtn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 16px;
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    gap: 8px;
+  }
+
+  .soonTag {
+    font-size: 8px;
+    letter-spacing: 0.14em;
+    padding: 2px 7px;
+    border-radius: 1px;
+  }
+
+  .fullProfileBtn {
+    background: var(--text-primary);
+    border: 1px solid var(--text-primary);
+    color: var(--bg-card);
+    border-radius: 2px;
+    padding: 17px;
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-top: 28px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    gap: 10px;
+  }
+
+  .fullProfileBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(28, 25, 23, 0.18);
+  }
+
+  /* Push modal stays centered */
   .drawerOverlay:has(.pushModal) {
     align-items: center;
     justify-content: center;
@@ -1121,5 +1930,86 @@
 
   .pushModal {
     margin: 0;
+    border-radius: 3px;
+    max-width: 480px;
+    padding: 44px 48px;
+    border: 1px solid var(--border);
+    position: relative;
   }
+
+  .pushModal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: var(--cardio-red);
+  }
+
+  .pushTitle {
+    font-size: 34px;
+    letter-spacing: -0.015em;
+    font-weight: 500;
+    line-height: 1.1;
+  }
+
+  .pushSub {
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    font-weight: 600;
+  }
+
+  .pushLabel {
+    font-size: 9.5px;
+    letter-spacing: 0.26em;
+  }
+
+  .pushInput, .pushTextarea {
+    border-radius: 2px;
+    font-size: 14px;
+    padding: 13px 16px;
+  }
+
+  .pushInput:focus, .pushTextarea:focus {
+    border-color: var(--cardio-red);
+    box-shadow: 0 0 0 3px rgba(196, 18, 48, 0.08);
+  }
+
+  /* Patient bar (when viewing patient profile) */
+  .patientBar {
+    padding: 20px 40px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .backBtn {
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .patientBarName {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Extra-wide: amplify the hero */
+@media (min-width: 1440px) {
+  .container {
+    max-width: 1340px;
+    padding: 56px 64px 96px;
+  }
+
+  .kpiTotalValue { font-size: 160px; }
+  .headerTitle { font-size: 68px; }
+  .listHeader .sectionTitle { font-size: 44px; }
 }
