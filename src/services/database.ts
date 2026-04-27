@@ -275,3 +275,23 @@ export async function incrementSyncAttempts(id: string) {
     await db.syncOperations.update(id, { attempts: op.attempts + 1 })
   }
 }
+
+// ---- Account deletion (LGPD art. 18 / App Review 5.1.1(v)) ----
+/**
+ * Apaga TODOS os dados clínicos locais do usuário. Chamado em
+ * "Excluir minha conta". Limpa também localStorage de auth.
+ */
+export async function wipeAccountData() {
+  await Promise.all([
+    db.measurements.clear(),
+    db.medications.clear(),
+    db.alerts.clear(),
+    db.devices.clear(),
+    db.patients.clear(),
+    db.chatMessages.clear(),
+    db.syncOperations.clear(),
+  ])
+  localStorage.removeItem('cardioapp_auth')
+  localStorage.removeItem('cardioapp_auth_user')
+  localStorage.removeItem('cardioapp_disclaimer_accepted')
+}

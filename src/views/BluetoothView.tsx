@@ -3,7 +3,6 @@ import {
   isWebBluetoothSupported,
   scanAndConnect,
   disconnect,
-  simulateMeasurement,
   type BloodPressureReading,
   type BLEConnectionState,
 } from '../services/bluetoothService'
@@ -11,6 +10,7 @@ import { usePatientData } from '../hooks/usePatientData'
 import { classifyBP, classificationConfig } from '../config/theme'
 import * as db from '../services/database'
 import { useAuth } from '../contexts/AuthContext'
+import ManualEntryView from './ManualEntryView'
 import styles from './BluetoothView.module.css'
 
 export default function BluetoothView() {
@@ -20,6 +20,7 @@ export default function BluetoothView() {
   const [device, setDevice] = useState<BluetoothDevice | null>(null)
   const [lastReading, setLastReading] = useState<BloodPressureReading | null>(null)
   const [savedDevices, setSavedDevices] = useState<{ id: string; model: string; lastConnectedAt?: string }[]>([])
+  const [showManual, setShowManual] = useState(false)
   const bleSupported = isWebBluetoothSupported()
 
   useEffect(() => {
@@ -60,11 +61,6 @@ export default function BluetoothView() {
     setConnectionState('idle')
   }
 
-  const handleSimulate = () => {
-    const reading = simulateMeasurement()
-    handleReading(reading)
-    setLastReading(reading)
-  }
 
   const readingClass = lastReading ? classifyBP(lastReading.systolic, lastReading.diastolic) : null
   const readingConfig = readingClass ? classificationConfig[readingClass] : null
@@ -169,13 +165,31 @@ export default function BluetoothView() {
         </div>
       )}
 
-      {/* Simulate */}
+      {/* Fallback manual */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Teste</h2>
-        <button className={styles.simulateBtn} onClick={handleSimulate}>
-          Simular medicao
+        <h2 className={styles.sectionTitle}>Sem aparelho compatível?</h2>
+        <button className={styles.simulateBtn} onClick={() => setShowManual(true)}>
+          Inserir medição manualmente
         </button>
       </div>
+
+      {showManual && currentPatient && (
+        <ManualEntryView
+          onSave={async (systolic, diastolic, heartRate) => {
+            const reading: BloodPressureReading = {
+              systolic,
+              diastolic,
+              meanArterialPressure: Math.round((systolic + 2 * diastolic) / 3),
+              pulseRate: heartRate,
+              timestamp: new Date(),
+            }
+            await handleReading(reading)
+            setLastReading(reading)
+            setShowManual(false)
+          }}
+          onCancel={() => setShowManual(false)}
+        />
+      )}
     </div>
   )
 }

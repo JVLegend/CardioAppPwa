@@ -143,3 +143,77 @@
 .signOutBtn:active {
   background: var(--bg-card-hover);
 }
+
+/* Legal links */
+.linkRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 14px 16px;
+  font-size: 15px;
+  color: var(--text-primary);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.linkRow:active { background: var(--bg-card-hover); }
+.chevron { color: var(--text-muted); font-size: 20px; }
+
+/* Delete account */
+.deleteBtn {
+  width: 100%;
+  padding: 16px;
+  background: transparent;
+  border: 1px solid rgba(196, 18, 48, 0.35);
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--cardio-red);
+  margin-top: 8px;
+  cursor: pointer;
+}
+.deleteBtn:active { background: rgba(196, 18, 48, 0.06); }
+
+.errorText {
+  color: var(--cardio-red);
+  font-size: 13px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Confirm dialogs */
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28,25,23,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+}
+.confirmCard {
+  background: var(--bg-secondary, #fff);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 420px;
+  width: 100%;
+}
+.confirmCard h3 { margin: 0 0 8px; font-size: 18px; color: var(--text-primary); }
+.confirmCard p { margin: 0 0 16px; font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+.confirmRow { display: flex; gap: 8px; }
+.cancelBtn, .dangerBtn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border: 0;
+  cursor: pointer;
+}
+.cancelBtn { background: var(--bg-card-hover, #F5F1EB); color: var(--text-primary); }
+.dangerBtn { background: var(--cardio-red, #C41230); color: white; }
+.cancelBtn:disabled, .dangerBtn:disabled { opacity: 0.6; cursor: not-allowed; }

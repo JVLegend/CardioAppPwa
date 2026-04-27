@@ -1,0 +1,108 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 25, 23, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadein 0.18s ease-out;
+}
+
+.sheet {
+  background: var(--bg-primary, #F7F4EF);
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  border-radius: 24px 24px 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideup 0.22s ease-out;
+}
+
+.header {
+  padding: 28px 24px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(196, 18, 48, 0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary, #1C1917);
+  margin: 4px 0 0;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: var(--text-secondary, rgba(28,25,23,0.58));
+  margin: 0;
+}
+
+.body {
+  padding: 12px 24px 16px;
+  overflow-y: auto;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-primary, #1C1917);
+}
+
+.body p { margin: 0 0 12px; }
+.body a { color: var(--cardio-red, #C41230); text-decoration: underline; }
+
+.warn {
+  background: rgba(196, 18, 48, 0.08);
+  border-left: 4px solid var(--cardio-red, #C41230);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 8px 0 14px;
+  font-size: 14px;
+}
+
+.footnote {
+  font-size: 13px;
+  color: var(--text-secondary, rgba(28,25,23,0.58));
+}
+
+.footer {
+  padding: 12px 20px max(20px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border, rgba(28,25,23,0.08));
+}
+
+.primaryBtn {
+  width: 100%;
+  background: var(--cardio-red, #C41230);
+  color: white;
+  border: 0;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primaryBtn:active { transform: scale(0.985); }
+
+@keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideup { from { transform: translateY(40px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+
+@media (min-width: 640px) {
+  .overlay { align-items: center; }
+  .sheet { border-radius: 24px; max-height: 80vh; }
+}

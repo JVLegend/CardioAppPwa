@@ -20,6 +20,20 @@ interface HardcodedUser {
 const OPERATOR_KNEIP_ID = 'operator-kneipapps-001'
 
 const USERS: HardcodedUser[] = [
+  // Conta-demo apresentada à Apple App Review (espelha a do Swift app)
+  {
+    email: 'demo@cardioapp.app',
+    password: 'Reviewer2026!',
+    userId: 'fixed-user-demo',
+    name: 'Reviewer Demo',
+    role: 'patient',
+    patientId: 'patient-demo-001',
+    operatorPatientId: OPERATOR_KNEIP_ID,
+    phone: '(11) 90000-0000',
+    comorbidities: ['Hipertensão'],
+    planStatus: 'adimplente',
+    inTreatmentPlan: true,
+  },
   {
     email: 'kneipapps@gmail.com',
     password: 'Phygital',
