@@ -34,7 +34,7 @@ export default function DisclaimerView({ variant, onAccept, onClose }: Props) {
           <p>
             As classificações exibidas (Normal, Pré-hipertensão, Hipertensão I, II e
             Crise Hipertensiva) seguem a <strong>Diretriz Brasileira de Hipertensão
-            Arterial (SBC, 2020)</strong> e têm caráter <strong>informativo</strong>.
+            Arterial (SBC, 2025)</strong> e têm caráter <strong>informativo</strong>.
           </p>
           <div className={styles.warn}>
             <strong>⚠️ Em PA ≥ 180/110 mmHg</strong> ou sintomas como dor no peito,
@@ -48,8 +48,8 @@ export default function DisclaimerView({ variant, onAccept, onClose }: Props) {
           </p>
           <p className={styles.footnote}>
             Ao continuar você aceita nossos{' '}
-            <a href="https://cardioapp.app/terms" target="_blank" rel="noreferrer">Termos de Uso</a>{' '}e a{' '}
-            <a href="https://cardioapp.app/privacy" target="_blank" rel="noreferrer">Política de Privacidade</a>.
+            <a href="/terms.html" target="_blank" rel="noreferrer">Termos de Uso</a>{' '}e a{' '}
+            <a href="/privacy.html" target="_blank" rel="noreferrer">Política de Privacidade</a>.
           </p>
         </div>
 

@@ -6,6 +6,7 @@ import {
   fetchActiveAlerts,
 } from '../services/database'
 import type { Patient, Measurement, BPAlert } from '../models/types'
+import DashboardCharts from './DashboardCharts'
 import styles from './ControllerDashboardView.module.css'
 
 type BPClass = 'normal' | 'prehypertension' | 'stage1' | 'stage2' | 'crisis'
@@ -95,14 +96,16 @@ function fallbackInsight(agg: Aggregates): string {
 export default function ControllerDashboardView() {
   const { logout, currentPatient } = useAuth()
   const [agg, setAgg] = useState<Aggregates | null>(null)
+  const [allPatients, setAllPatients] = useState<Patient[]>([])
   const [insight, setInsight] = useState<string>('')
   const [loadingInsight, setLoadingInsight] = useState(false)
   const [loading, setLoading] = useState(true)
 
   async function loadAll() {
     setLoading(true)
-    const allPatients = await db.patients.toArray()
-    const patients = allPatients.filter((p) => p.role === 'patient')
+    const dbPatients = await db.patients.toArray()
+    const patients = dbPatients.filter((p) => p.role === 'patient')
+    setAllPatients(patients)
     const operatorIds = new Set(patients.map((p) => p.operatorId).filter(Boolean))
     const patientIds = patients.map((p) => p.id)
 
@@ -204,6 +207,8 @@ export default function ControllerDashboardView() {
           Sair
         </button>
       </header>
+
+      <DashboardCharts patients={allPatients} />
 
       <div className={styles.topGrid}>
       <section className={styles.insightCard}>

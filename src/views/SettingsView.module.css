@@ -217,3 +217,24 @@
 .cancelBtn { background: var(--bg-card-hover, #F5F1EB); color: var(--text-primary); }
 .dangerBtn { background: var(--cardio-red, #C41230); color: white; }
 .cancelBtn:disabled, .dangerBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.titleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 4px;
+}
+.headerSignOut {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(196,18,48,0.08);
+  color: var(--cardio-red);
+  border: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.headerSignOut:active { background: rgba(196,18,48,0.14); }

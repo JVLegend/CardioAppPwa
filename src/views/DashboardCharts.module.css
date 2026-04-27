@@ -1,0 +1,127 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, rgba(28,25,23,0.08));
+  border-radius: 14px;
+  padding: 10px;
+}
+
+.searchWrap {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card-hover, #F5F1EB);
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: var(--text-secondary, rgba(28,25,23,0.6));
+}
+.searchInput {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+  color: var(--text-primary, #1C1917);
+  font-family: inherit;
+}
+
+.regionSelect {
+  background: var(--bg-card-hover, #F5F1EB);
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text-primary, #1C1917);
+  cursor: pointer;
+}
+
+.matchHint {
+  font-size: 12px;
+  color: var(--text-muted, rgba(28,25,23,0.5));
+  margin-left: auto;
+  padding-right: 4px;
+}
+
+.chartGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (max-width: 720px) { .chartGrid { grid-template-columns: 1fr; } }
+
+.chartCard, .heatCard {
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, rgba(28,25,23,0.08));
+  border-radius: 14px;
+  padding: 14px 14px 8px;
+}
+
+.chartHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.chartHeader h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #1C1917);
+  font-family: 'Sora', sans-serif;
+}
+.chartHint {
+  font-size: 11px;
+  color: var(--text-muted, rgba(28,25,23,0.45));
+  text-transform: lowercase;
+}
+
+.chart { width: 100%; }
+
+.shimmer {
+  height: 220px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(28,25,23,0.04), rgba(28,25,23,0.10), rgba(28,25,23,0.04));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer { 0% { background-position: 100% 0 } 100% { background-position: -100% 0 } }
+
+/* Heat map */
+.heatGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.heatTile {
+  border: 0;
+  border-radius: 12px;
+  padding: 16px 14px;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: inherit;
+}
+.heatTile:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(196,18,48,0.22); }
+.heatTile[aria-pressed="true"] { outline: 2px solid white; outline-offset: -4px; }
+
+.heatCity { font-size: 13px; font-weight: 500; opacity: 0.95; }
+.heatCount { font-size: 24px; font-weight: 700; line-height: 1; }

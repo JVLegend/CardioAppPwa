@@ -103,7 +103,7 @@
 
   .tabBar::before {
     content: 'CardioApp';
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Sora', sans-serif;
     font-size: 26px;
     font-weight: 600;
     color: var(--cardio-red);

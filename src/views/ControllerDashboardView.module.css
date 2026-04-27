@@ -44,7 +44,7 @@
 }
 
 .title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Sora', sans-serif;
   font-size: 34px;
   font-weight: 600;
   line-height: 1.1;
@@ -184,7 +184,7 @@
 }
 
 .kpiValue {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Sora', sans-serif;
   font-size: 38px;
   font-weight: 600;
   line-height: 1;
@@ -203,7 +203,7 @@
 }
 
 .sectionTitle {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Sora', sans-serif;
   font-size: 22px;
   font-weight: 600;
   color: var(--text-primary);
@@ -254,7 +254,7 @@
 }
 
 .actionCount {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Sora', sans-serif;
   font-size: 26px;
   font-weight: 600;
   color: var(--text-primary);
@@ -348,7 +348,7 @@
 .distFillBlue { background: var(--cardio-blue); }
 
 .distValue {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Sora', sans-serif;
   font-size: 20px;
   font-weight: 600;
   color: var(--text-primary);

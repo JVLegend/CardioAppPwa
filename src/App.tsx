@@ -50,8 +50,11 @@ function AppContent() {
 
   if (!isAuthenticated) return <LoginView />
 
-  if (currentPatient?.role === 'operator') return <PatientListView />
-  if (currentPatient?.role === 'controller') return <ControllerDashboardView />
+  // Inversão pedida pelo usuário:
+  //  • Médico (role=operator) → dashboard BI com gráficos, busca e mapa
+  //  • Operadora de saúde (role=controller) → lista de pacientes
+  if (currentPatient?.role === 'operator') return <ControllerDashboardView />
+  if (currentPatient?.role === 'controller') return <PatientListView />
 
   return <MainTabView />
 }

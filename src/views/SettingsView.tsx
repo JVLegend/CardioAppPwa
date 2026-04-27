@@ -41,7 +41,18 @@ export default function SettingsView() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Ajustes</h1>
+      <div className={styles.titleBar}>
+        <h1 className={styles.title}>Ajustes</h1>
+        <button className={styles.headerSignOut} onClick={logout}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          Sair
+        </button>
+      </div>
 
       {/* Reminders */}
       <div className={styles.section}>
@@ -129,17 +140,17 @@ export default function SettingsView() {
             <span className={styles.chevron}>›</span>
           </button>
           <div className={styles.divider} />
-          <a className={styles.linkRow} href="https://cardioapp.app/privacy" target="_blank" rel="noreferrer">
+          <a className={styles.linkRow} href="/privacy.html" target="_blank" rel="noreferrer">
             <span className={styles.rowLabel}>Política de Privacidade</span>
             <span className={styles.chevron}>›</span>
           </a>
           <div className={styles.divider} />
-          <a className={styles.linkRow} href="https://cardioapp.app/terms" target="_blank" rel="noreferrer">
+          <a className={styles.linkRow} href="/terms.html" target="_blank" rel="noreferrer">
             <span className={styles.rowLabel}>Termos de Uso</span>
             <span className={styles.chevron}>›</span>
           </a>
           <div className={styles.divider} />
-          <a className={styles.linkRow} href="https://cardioapp.app/support" target="_blank" rel="noreferrer">
+          <a className={styles.linkRow} href="/support.html" target="_blank" rel="noreferrer">
             <span className={styles.rowLabel}>Suporte</span>
             <span className={styles.chevron}>›</span>
           </a>

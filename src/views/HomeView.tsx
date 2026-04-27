@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { usePatientData } from '../hooks/usePatientData'
 import { classifyBP, classificationConfig } from '../config/theme'
 import ManualEntryView from './ManualEntryView'
+import FloatingChat from './FloatingChat'
 import styles from './HomeView.module.css'
 
 export default function HomeView() {
@@ -247,6 +248,8 @@ export default function HomeView() {
           </div>
         </div>
       )}
+
+      <FloatingChat />
     </div>
   )
 }
