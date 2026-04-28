@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import type { Patient, Measurement } from '../models/types'
 import * as db from '../services/database'
+import { db as dexieDb } from '../services/database'
 import { classifyBP, classificationConfig, type BPClassification } from '../config/theme'
 import { sendBrowserNotification } from '../services/alertService'
 import MainTabView from './MainTabView'
@@ -54,14 +55,17 @@ export default function PatientListView() {
   const [pushModal, setPushModal] = useState<Patient | null>(null)
 
   useEffect(() => {
-    if (currentPatient?.role === 'operator') loadData()
+    if (currentPatient?.role === 'operator' || currentPatient?.role === 'controller') loadData()
   }, [currentPatient])
 
   async function loadData() {
     if (!currentPatient) return
     setLoading(true)
-    const list = await db.fetchPatientsByOperator(currentPatient.id)
-    setPatients(list)
+    try {
+      const list = currentPatient.role === 'controller'
+        ? (await dexieDb.patients.toArray()).filter((p) => p.role === 'patient')
+        : await db.fetchPatientsByOperator(currentPatient.id)
+      setPatients(list)
     const ids = list.map((p) => p.id)
     const { latestMeasurements, measuredToday, activeMedicationCount, measuredLast3Days } =
       await db.fetchOperatorPatientStats(ids)
@@ -84,8 +88,12 @@ export default function PatientListView() {
         outOfGoalReason: computeReason(c),
       }
     })
-    setStats(s)
-    setLoading(false)
+      setStats(s)
+    } catch (e) {
+      console.error('[PatientListView] loadData FAILED', e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Métricas
@@ -512,8 +520,8 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
           <h3 className={styles.drawerSectionTitle}>Comunicação</h3>
           <div className={styles.commActions}>
             <button className={styles.pushBtn} onClick={onSendPush}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 01-3.46 0" /></svg>
-              Enviar push no app
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
+              Enviar mensagem no chat
             </button>
             <button className={styles.whatsBtn} disabled>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" /></svg>
@@ -533,52 +541,64 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
 }
 
 function PushNotificationModal({ patient, onClose }: { patient: Patient; onClose: () => void }) {
-  const [title, setTitle] = useState('Lembrete da Operadora')
-  const [message, setMessage] = useState(`Olá ${patient.name.split(' ')[0]}, lembre-se de medir sua pressão hoje!`)
+  const [message, setMessage] = useState(
+    `Olá ${patient.name.split(' ')[0]}, lembre-se de medir sua pressão hoje!`
+  )
   const [sent, setSent] = useState(false)
 
   async function handleSend() {
-    // Salva no chat para o paciente ver também
+    // Mensagem entra direto no chat do paciente (Dexie local).
+    // Quando o backend de sync (Supabase realtime) entrar, propaga cross-device.
     const msg = {
       id: crypto.randomUUID(),
       operatorId: patient.operatorId,
       patientId: patient.id,
       fromRole: 'operator' as const,
-      content: `${title}\n${message}`,
+      content: message,
       sentAt: new Date().toISOString(),
       read: false,
     }
     await db.saveChatMessage(msg)
-    // Dispara notificação browser (demo local)
-    sendBrowserNotification(title, message)
     setSent(true)
-    setTimeout(onClose, 1200)
+    setTimeout(onClose, 1400)
   }
 
   return (
     <div className={styles.drawerOverlay} onClick={onClose}>
       <div className={styles.pushModal} onClick={(e) => e.stopPropagation()}>
-        <h3 className={styles.pushTitle}>Enviar notificação push</h3>
-        <p className={styles.pushSub}>Para {patient.name}</p>
+        <h3 className={styles.pushTitle}>Enviar mensagem ao paciente</h3>
+        <p className={styles.pushSub}>Para {patient.name} · aparece no chat dele(a)</p>
 
         {sent ? (
           <div className={styles.sentState}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
-            <p>Notificação enviada!</p>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+                 stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <p>Mensagem entregue ao chat de {patient.name.split(' ')[0]}.</p>
           </div>
         ) : (
           <>
             <div className={styles.pushField}>
-              <label className={styles.pushLabel}>Título</label>
-              <input className={styles.pushInput} value={title} onChange={(e) => setTitle(e.target.value)} />
-            </div>
-            <div className={styles.pushField}>
               <label className={styles.pushLabel}>Mensagem</label>
-              <textarea className={styles.pushTextarea} value={message} onChange={(e) => setMessage(e.target.value)} rows={3} />
+              <textarea
+                className={styles.pushTextarea}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={4}
+                autoFocus
+              />
             </div>
             <div className={styles.pushActions}>
               <button className={styles.editCancel} onClick={onClose}>Cancelar</button>
-              <button className={styles.editSave} onClick={handleSend}>Enviar</button>
+              <button
+                className={styles.editSave}
+                onClick={handleSend}
+                disabled={!message.trim()}
+              >
+                Enviar ao chat
+              </button>
             </div>
           </>
         )}

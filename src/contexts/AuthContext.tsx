@@ -72,7 +72,7 @@ const USERS: HardcodedUser[] = [
     email: 'controlapps@gmail.com',
     password: '123456',
     userId: 'fixed-user-004',
-    name: 'Controlador Saúde',
+    name: 'Ana Costa',
     role: 'controller',
     patientId: 'controller-control-001',
   },
@@ -100,7 +100,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentPatient, setCurrentPatient] = useState<Patient | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  // Garante que todos os pacientes demo existam no Dexie — médico (operator)
+  // e operadora (controller) precisam enxergar a lista completa mesmo sem
+  // que cada paciente individual tenha logado antes.
+  const seedDemoPatients = useCallback(async () => {
+    for (const u of USERS) {
+      if (u.role !== 'patient') continue
+      const existing = await db.fetchPatient(u.patientId)
+      if (existing) continue
+      await db.savePatient({
+        id: u.patientId,
+        operatorId: u.operatorPatientId ?? '',
+        userId: u.userId,
+        name: u.name,
+        role: u.role,
+        createdAt: new Date().toISOString(),
+        phone: u.phone,
+        comorbidities: u.comorbidities,
+        planStatus: u.planStatus,
+        inTreatmentPlan: u.inTreatmentPlan,
+      })
+    }
+  }, [])
+
   const setupPatient = useCallback(async (user: HardcodedUser) => {
+    // Controller/operator precisam da lista completa de demo patients para o painel
+    if (user.role === 'controller' || user.role === 'operator') {
+      await seedDemoPatients()
+    }
+
     let patient = await db.fetchPatient(user.patientId)
     if (!patient) {
       patient = {
@@ -134,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       patient = updated
     }
     setCurrentPatient(patient)
-  }, [])
+  }, [seedDemoPatients])
 
   useEffect(() => {
     const saved = localStorage.getItem(AUTH_KEY)

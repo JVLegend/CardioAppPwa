@@ -199,9 +199,9 @@ export default function ControllerDashboardView() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div>
-          <div className={styles.eyebrow}>Painel do Controlador</div>
-          <h1 className={styles.title}>Visão diária da operação</h1>
-          <div className={styles.subtitle}>{today} · Olá, {currentPatient?.name}</div>
+          <div className={styles.eyebrow}>Painel do Médico</div>
+          <h1 className={styles.title}>Olá, {currentPatient?.name ?? 'Doutor(a)'}</h1>
+          <div className={styles.subtitle}>{today} · Visão diária dos seus pacientes</div>
         </div>
         <button className={styles.logoutBtn} onClick={logout}>
           Sair
@@ -378,7 +378,7 @@ export default function ControllerDashboardView() {
       </div>
 
       <footer className={styles.footer}>
-        CardioApp · Painel do Controlador · Protótipo
+        CardioApp · Painel do Médico · Protótipo
       </footer>
     </div>
   )

@@ -60,12 +60,17 @@ function TreatmentBar({ startDate, endDate }: { startDate?: string; endDate?: st
   )
 }
 
+class MissingGeminiKeyError extends Error {
+  constructor() { super('MISSING_GEMINI_KEY') }
+}
+
 async function analyzePrescritionImage(base64: string, mimeType: string): Promise<Partial<{ name: string; dose: string; frequency: string; notes: string }>> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-  if (!apiKey) throw new Error('VITE_GEMINI_API_KEY não configurada')
+  if (!apiKey) throw new MissingGeminiKeyError()
 
+  // gemini-2.5-flash — bem melhor que 2.0-flash-lite em OCR de receita manuscrita
   const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -75,20 +80,42 @@ async function analyzePrescritionImage(base64: string, mimeType: string): Promis
             parts: [
               { inline_data: { mime_type: mimeType, data: base64 } },
               {
-                text: 'Esta é uma imagem de uma receita médica ou embalagem de medicamento. Extraia: nome do medicamento, dose/concentração, frequência de uso e observações. Responda SOMENTE em JSON válido com as chaves: name, dose, frequency, notes. Sem texto fora do JSON.',
+                text: [
+                  'Esta é uma imagem de uma receita médica ou embalagem de medicamento.',
+                  'Extraia, em português, e SOMENTE a partir do que está visível:',
+                  '• name — princípio ativo + marca quando houver (ex.: "Losartana Potássica 50mg" ou "Atenolol 25mg")',
+                  '• dose — somente a dose por tomada (ex.: "1 comprimido", "10 gotas", "50mg")',
+                  '• frequency — uma destas opções literais: "1x ao dia", "2x ao dia", "3x ao dia", "4x ao dia", "A cada 8h", "A cada 12h", "Conforme necessário"',
+                  '• notes — observações relevantes do prescritor (jejum, durante refeições, suspender em caso de…). Vazio se não houver.',
+                  'Se um campo não estiver legível, deixe string vazia.',
+                  'Responda SOMENTE em JSON válido. Sem markdown, sem ```json, sem texto fora do JSON.',
+                ].join('\n'),
               },
             ],
           },
         ],
+        generationConfig: {
+          temperature: 0.1,
+          response_mime_type: 'application/json',
+        },
       }),
     }
   )
 
-  if (!resp.ok) throw new Error('Erro ao analisar imagem')
+  if (!resp.ok) {
+    const errBody = await resp.text().catch(() => '')
+    console.error('[Gemini] HTTP', resp.status, errBody)
+    throw new Error(`Gemini ${resp.status}`)
+  }
   const data = await resp.json()
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
-  const match = text.match(/\{[\s\S]*\}/)
-  return match ? JSON.parse(match[0]) : {}
+  console.debug('[Gemini] raw response:', text)
+  try {
+    return JSON.parse(text)
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/)
+    return match ? JSON.parse(match[0]) : {}
+  }
 }
 
 export default function MedicationsView() {
@@ -151,8 +178,20 @@ export default function MedicationsView() {
             setFrequency(match ?? frequencyOptions[0])
           }
           if (result.notes) setNotes(result.notes)
+          // Se nenhum campo veio preenchido, alerta o usuário
+          if (!result.name && !result.dose && !result.frequency && !result.notes) {
+            setAiError('A IA não conseguiu identificar nenhum campo. Verifique a foto (legibilidade) ou preencha manualmente.')
+          } else {
+            setAddMode('manual') // troca para o form com os campos prontos para revisão
+          }
         } catch (err) {
-          setAiError('Não foi possível analisar a imagem. Preencha manualmente.')
+          if (err instanceof MissingGeminiKeyError) {
+            setAiError('IA de receita não está configurada (falta VITE_GEMINI_API_KEY no servidor). Preencha manualmente.')
+          } else {
+            const msg = err instanceof Error ? err.message : ''
+            setAiError(`Não foi possível analisar a imagem (${msg}). Preencha manualmente.`)
+          }
+          console.error('[receita-IA]', err)
         } finally {
           setAiLoading(false)
         }
