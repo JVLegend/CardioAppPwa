@@ -184,7 +184,7 @@ export default function PatientListView() {
       {/* Header */}
       <div className={styles.header}>
         <div>
-          <p className={styles.headerLabel}>Painel da Operadora</p>
+          <p className={styles.headerLabel}>Painel da Controladora</p>
           <h1 className={styles.headerTitle}>Olá, {currentPatient?.name?.split(' ')[0] ?? 'Operadora'}</h1>
           <p className={styles.headerDate}>
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
