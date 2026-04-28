@@ -27,7 +27,7 @@ export default function AnalyticsView({ measurements }: Props) {
 
   const trendInfo = {
     improving: { label: 'Melhorando', color: 'var(--cardio-green)', desc: 'Sua pressao esta diminuindo' },
-    stable: { label: 'Estavel', color: 'var(--cardio-blue)', desc: 'Sua pressao esta estavel' },
+    stable: { label: 'Estável', color: 'var(--cardio-blue)', desc: 'Sua pressao esta estável' },
     worsening: { label: 'Piorando', color: 'var(--cardio-red)', desc: 'Sua pressao esta aumentando' },
   }[trend]
 
@@ -50,7 +50,7 @@ export default function AnalyticsView({ measurements }: Props) {
                 <span className={styles.cardValue}>
                   {weekly.systolic}/{weekly.diastolic}
                 </span>
-                <span className={styles.cardMeta}>{weekly.count} medicoes</span>
+                <span className={styles.cardMeta}>{weekly.count} medições</span>
               </>
             ) : (
               <span className={styles.cardEmpty}>Sem dados</span>
@@ -63,7 +63,7 @@ export default function AnalyticsView({ measurements }: Props) {
                 <span className={styles.cardValue}>
                   {monthly.systolic}/{monthly.diastolic}
                 </span>
-                <span className={styles.cardMeta}>{monthly.count} medicoes</span>
+                <span className={styles.cardMeta}>{monthly.count} medições</span>
               </>
             ) : (
               <span className={styles.cardEmpty}>Sem dados</span>

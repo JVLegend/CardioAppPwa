@@ -58,7 +58,7 @@ export default function LoginView() {
       </form>
 
       <p className={styles.footer}>
-        Pressao arterial sob controle
+        Pressão arterial sob controle
       </p>
     </div>
   )

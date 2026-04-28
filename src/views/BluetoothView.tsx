@@ -75,9 +75,9 @@ export default function BluetoothView() {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
           <div>
-            <div className={styles.infoTitle}>Bluetooth nao disponivel</div>
+            <div className={styles.infoTitle}>Bluetooth não disponível</div>
             <div className={styles.infoDesc}>
-              Web Bluetooth nao e suportado neste navegador. No iPhone, use o registro manual. No Android, use o Chrome.
+              Web Bluetooth não é suportado neste navegador. No iPhone, use o registro manual. No Android, use o Chrome.
             </div>
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function BluetoothView() {
           {connectionState === 'connected' ? `Conectado: ${device?.name || 'Aparelho'}`
             : connectionState === 'scanning' ? 'Buscando aparelhos...'
             : connectionState === 'connecting' ? 'Conectando...'
-            : connectionState === 'error' ? 'Erro na conexao'
+            : connectionState === 'error' ? 'Erro na conexão'
             : 'Nenhum aparelho conectado'}
         </div>
       </div>
@@ -110,7 +110,7 @@ export default function BluetoothView() {
         </button>
       ) : connectionState === 'connected' ? (
         <>
-          <div className={styles.waitingMsg}>Aguardando medicao do aparelho...</div>
+          <div className={styles.waitingMsg}>Aguardando medição do aparelho...</div>
           <button className={styles.secondaryBtn} onClick={handleDisconnect}>
             Desconectar
           </button>
@@ -120,7 +120,7 @@ export default function BluetoothView() {
       {/* Last Reading */}
       {lastReading && readingConfig && (
         <div className={styles.readingCard}>
-          <span className={styles.readingLabel}>Ultima leitura</span>
+          <span className={styles.readingLabel}>Última leitura</span>
           <div className={styles.readingValues}>
             <span className={styles.readingSys} style={{ color: readingConfig.color }}>
               {lastReading.systolic}

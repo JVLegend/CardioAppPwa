@@ -60,8 +60,8 @@ export default function SettingsView() {
         <div className={styles.group}>
           <div className={styles.row}>
             <div className={styles.rowText}>
-              <span className={styles.rowLabel}>Lembrete diario</span>
-              <span className={styles.rowDesc}>Notificacao para medir</span>
+              <span className={styles.rowLabel}>Lembrete diário</span>
+              <span className={styles.rowDesc}>Notificação para medir</span>
             </div>
             <button
               className={`${styles.toggle} ${reminderEnabled ? styles.toggleOn : ''}`}
@@ -97,12 +97,12 @@ export default function SettingsView() {
           <div className={styles.row}>
             <span className={styles.rowLabel}>Bluetooth</span>
             <span className={styles.badge} style={{ color: isWebBluetoothSupported() ? 'var(--cardio-green)' : 'var(--text-muted)' }}>
-              {isWebBluetoothSupported() ? 'Suportado' : 'Indisponivel'}
+              {isWebBluetoothSupported() ? 'Suportado' : 'Indisponível'}
             </span>
           </div>
           <div className={styles.divider} />
           <div className={styles.row}>
-            <span className={styles.rowLabel}>Conexao</span>
+            <span className={styles.rowLabel}>Conexão</span>
             <span className={styles.badge} style={{ color: getIsOnline() ? 'var(--cardio-green)' : 'var(--cardio-red)' }}>
               {getIsOnline() ? 'Online' : 'Offline'}
             </span>
@@ -115,7 +115,7 @@ export default function SettingsView() {
         <h2 className={styles.sectionTitle}>Sobre</h2>
         <div className={styles.group}>
           <div className={styles.row}>
-            <span className={styles.rowLabel}>Versao</span>
+            <span className={styles.rowLabel}>Versão</span>
             <span className={styles.rowValue}>1.0.0</span>
           </div>
           <div className={styles.divider} />

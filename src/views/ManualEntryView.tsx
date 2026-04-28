@@ -37,7 +37,7 @@ export default function ManualEntryView({ onSave, onCancel }: Props) {
         <button className={styles.backBtn} onClick={onCancel}>
           Cancelar
         </button>
-        <h1 className={styles.title}>Nova Medicao</h1>
+        <h1 className={styles.title}>Nova Medição</h1>
         <div style={{ width: 70 }} />
       </header>
 
@@ -64,7 +64,7 @@ export default function ManualEntryView({ onSave, onCancel }: Props) {
 
         <div className={styles.inputGroup}>
           <div className={styles.inputRow}>
-            <label className={styles.label}>Sistolica</label>
+            <label className={styles.label}>Sistólica</label>
             <input
               ref={sysRef}
               className={styles.input}
@@ -81,7 +81,7 @@ export default function ManualEntryView({ onSave, onCancel }: Props) {
           </div>
           <div className={styles.divider} />
           <div className={styles.inputRow}>
-            <label className={styles.label}>Diastolica</label>
+            <label className={styles.label}>Diastólica</label>
             <input
               className={styles.input}
               type="number"
@@ -97,7 +97,7 @@ export default function ManualEntryView({ onSave, onCancel }: Props) {
           </div>
           <div className={styles.divider} />
           <div className={styles.inputRow}>
-            <label className={styles.label}>Frequencia cardiaca</label>
+            <label className={styles.label}>Frequencia cardíaca</label>
             <input
               className={styles.input}
               type="number"

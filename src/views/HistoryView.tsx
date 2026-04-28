@@ -29,15 +29,15 @@ export default function HistoryView() {
           day: '2-digit',
           month: '2-digit',
         }),
-        sistolica: m.systolic,
-        diastolica: m.diastolic,
+        sistólica: m.systolic,
+        diastólica: m.diastolic,
       })),
     [filtered]
   )
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Historico</h1>
+      <h1 className={styles.title}>Histórico</h1>
 
       <div className={styles.subTabs}>
         {(['history', 'analytics'] as SubTab[]).map((t) => (
@@ -46,7 +46,7 @@ export default function HistoryView() {
             className={`${styles.subTab} ${subTab === t ? styles.subTabActive : ''}`}
             onClick={() => setSubTab(t)}
           >
-            {t === 'history' ? 'Medicoes' : 'Analise'}
+            {t === 'history' ? 'Medições' : 'Analise'}
           </button>
         ))}
       </div>
@@ -97,32 +97,32 @@ export default function HistoryView() {
                   <ReferenceLine y={90} stroke="rgba(0,122,255,0.3)" strokeDasharray="4 4" />
                   <Line
                     type="monotone"
-                    dataKey="sistolica"
+                    dataKey="sistólica"
                     stroke="#FF3B30"
                     strokeWidth={2.5}
                     dot={{ r: 3, fill: '#FF3B30', strokeWidth: 0 }}
                     activeDot={{ r: 5, fill: '#FF3B30' }}
-                    name="Sistolica"
+                    name="Sistólica"
                   />
                   <Line
                     type="monotone"
-                    dataKey="diastolica"
+                    dataKey="diastólica"
                     stroke="#007AFF"
                     strokeWidth={2.5}
                     dot={{ r: 3, fill: '#007AFF', strokeWidth: 0 }}
                     activeDot={{ r: 5, fill: '#007AFF' }}
-                    name="Diastolica"
+                    name="Diastólica"
                   />
                 </LineChart>
               </ResponsiveContainer>
               <div className={styles.chartLegend}>
                 <span className={styles.legendItem}>
                   <span className={styles.legendDot} style={{ background: '#FF3B30' }} />
-                  Sistolica
+                  Sistólica
                 </span>
                 <span className={styles.legendItem}>
                   <span className={styles.legendDot} style={{ background: '#007AFF' }} />
-                  Diastolica
+                  Diastólica
                 </span>
               </div>
             </div>
@@ -131,8 +131,8 @@ export default function HistoryView() {
           <div className={styles.list}>
             {filtered.length === 0 ? (
               <div className={styles.empty}>
-                <p className={styles.emptyTitle}>Sem medicoes</p>
-                <p className={styles.emptyDesc}>Nenhuma medicao nos ultimos {period} dias</p>
+                <p className={styles.emptyTitle}>Sem medições</p>
+                <p className={styles.emptyDesc}>Nenhuma medição nos ultimos {period} dias</p>
               </div>
             ) : (
               filtered.map((m) => {

@@ -272,7 +272,7 @@ export default function ControllerDashboardView() {
         <div className={styles.actionsGrid}>
 
         {agg.critical > 0 && (
-          <div className={`${styles.actionCard} ${styles.actionCritical}`}>
+          <div className={`${styles.actionCard} ${styles.actionCrítical}`}>
             <div className={styles.actionHeader}>
               <span className={styles.actionBadge}>Urgente</span>
               <span className={styles.actionCount}>{agg.critical}</span>

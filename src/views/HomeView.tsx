@@ -94,7 +94,7 @@ export default function HomeView() {
           <div className={styles.statDivider} />
           <div className={styles.stat}>
             <span className={styles.statValue}>{allMeasurements.length}</span>
-            <span className={styles.statLabel}>total medicoes</span>
+            <span className={styles.statLabel}>total medições</span>
           </div>
           <div className={styles.statDivider} />
           <div className={styles.stat}>
@@ -116,14 +116,14 @@ export default function HomeView() {
           </div>
           <div className={styles.badgeText}>
             <span className={styles.badgeTitle}>
-              {streak >= 30 ? 'Mestre da Saude' : streak >= 14 ? 'Dedicado' : streak >= 7 ? 'Consistente' : streak >= 3 ? 'Boa fase' : 'Iniciando'}
+              {streak >= 30 ? 'Mestre da Saúde' : streak >= 14 ? 'Dedicado' : streak >= 7 ? 'Consistente' : streak >= 3 ? 'Boa fase' : 'Iniciando'}
             </span>
             <span className={styles.badgeDesc}>
               {streak >= 30
-                ? `${streak} dias seguidos, incrivel!`
+                ? `${streak} dias seguidos, incrível!`
                 : streak >= 7
                 ? `Continue assim! ${streak} dias`
-                : `${streak} dia${streak > 1 ? 's' : ''} — nao pare!`}
+                : `${streak} dia${streak > 1 ? 's' : ''} — não pare!`}
             </span>
           </div>
         </div>
@@ -133,7 +133,7 @@ export default function HomeView() {
       {lastMeasurement && classConfig && (
         <div className={styles.measurementCard}>
           <div className={styles.measurementHeader}>
-            <span className={styles.measurementLabel}>Ultima medicao</span>
+            <span className={styles.measurementLabel}>Última medição</span>
             <span className={styles.measurementTime}>
               {formatRelativeTime(lastMeasurement.measuredAt)}
             </span>
@@ -207,7 +207,7 @@ export default function HomeView() {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          Nova Medicao
+          Nova Medição
         </button>
       </div>
 
@@ -260,7 +260,7 @@ function formatRelativeTime(isoDate: string): string {
   if (minutes < 1) return 'agora'
   if (minutes < 60) return `${minutes}min`
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h atras`
+  if (hours < 24) return `${hours}h atrás`
   const days = Math.floor(hours / 24)
-  return `${days}d atras`
+  return `${days}d atrás`
 }
