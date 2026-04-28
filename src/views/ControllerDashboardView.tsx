@@ -199,7 +199,7 @@ export default function ControllerDashboardView() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div>
-          <div className={styles.eyebrow}>Painel do Médico</div>
+          <div className={styles.eyebrow}>Painel da Operadora</div>
           <h1 className={styles.title}>Olá, {currentPatient?.name ?? 'Doutor(a)'}</h1>
           <div className={styles.subtitle}>{today} · Visão diária dos seus pacientes</div>
         </div>
@@ -378,7 +378,7 @@ export default function ControllerDashboardView() {
       </div>
 
       <footer className={styles.footer}>
-        CardioApp · Painel do Médico · Protótipo
+        CardioApp · Painel da Operadora · Protótipo
       </footer>
     </div>
   )
