@@ -2,15 +2,17 @@ import { useState } from 'react'
 import HomeView from './HomeView'
 import HistoryView from './HistoryView'
 import BluetoothView from './BluetoothView'
+import GlucoseView from './GlucoseView'
 import MedicationsView from './MedicationsView'
 import SettingsView from './SettingsView'
 import ChatView from './ChatView'
 import styles from './MainTabView.module.css'
 
-type Tab = 'home' | 'history' | 'bluetooth' | 'medications' | 'chat' | 'settings'
+type Tab = 'home' | 'history' | 'bluetooth' | 'glucose' | 'medications' | 'chat' | 'settings'
 
 const tabs: { id: Tab; label: string }[] = [
-  { id: 'bluetooth', label: 'Medir' },
+  { id: 'bluetooth', label: 'Pressão' },
+  { id: 'glucose', label: 'Glicose' },
   { id: 'home', label: 'Início' },
   { id: 'history', label: 'Histórico' },
   { id: 'medications', label: 'Remédios' },
@@ -35,6 +37,11 @@ const tabIcons: Record<Tab, (active: boolean) => JSX.Element> = {
   bluetooth: (a) => (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? ACTIVE : INACTIVE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5" />
+    </svg>
+  ),
+  glucose: (a) => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? ACTIVE : INACTIVE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2.5s-6 7-6 12a6 6 0 0012 0c0-5-6-12-6-12z" />
     </svg>
   ),
   medications: (a) => (
@@ -65,6 +72,7 @@ export default function MainTabView() {
       case 'home': return <HomeView />
       case 'history': return <HistoryView />
       case 'bluetooth': return <BluetoothView />
+      case 'glucose': return <GlucoseView />
       case 'medications': return <MedicationsView />
       case 'chat': return <ChatView />
       case 'settings': return <SettingsView />

@@ -1,5 +1,6 @@
 export type UserRole = 'patient' | 'operator' | 'controller'
-export type MeasurementSource = 'ble' | 'manual'
+export type MeasurementSource = 'ble' | 'manual' | 'photo'
+export type MealContext = 'jejum' | 'pre_refeicao' | 'pos_refeicao' | 'aleatorio'
 export type AlertType = 'urgent' | 'attention' | 'adherence'
 export type AlertStatus = 'pending' | 'acknowledged' | 'resolved'
 
@@ -30,6 +31,19 @@ export interface Measurement {
   source: MeasurementSource
   measuredAt: string
   syncedAt?: string
+}
+
+export interface GlucoseMeasurement {
+  id: string
+  patientId: string
+  deviceId?: string
+  /** mg/dL */
+  value: number
+  context: MealContext
+  source: MeasurementSource
+  measuredAt: string
+  syncedAt?: string
+  notes?: string
 }
 
 export interface Medication {

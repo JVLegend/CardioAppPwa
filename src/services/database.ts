@@ -1,6 +1,7 @@
 import Dexie, { type Table } from 'dexie'
 import type {
   Measurement,
+  GlucoseMeasurement,
   Medication,
   BPAlert,
   BPDevice,
@@ -11,6 +12,7 @@ import type {
 
 class CardioDatabase extends Dexie {
   measurements!: Table<Measurement, string>
+  glucoseMeasurements!: Table<GlucoseMeasurement, string>
   medications!: Table<Medication, string>
   alerts!: Table<BPAlert, string>
   devices!: Table<BPDevice, string>
@@ -30,6 +32,16 @@ class CardioDatabase extends Dexie {
     })
     this.version(2).stores({
       measurements: 'id, patientId, measuredAt, source',
+      medications: 'id, patientId, active',
+      alerts: 'id, patientId, status, type, createdAt',
+      devices: 'id, patientId',
+      patients: 'id, userId, operatorId',
+      syncOperations: 'id, entityType, createdAt, attempts',
+      chatMessages: 'id, operatorId, patientId, sentAt, read',
+    })
+    this.version(3).stores({
+      measurements: 'id, patientId, measuredAt, source',
+      glucoseMeasurements: 'id, patientId, measuredAt, context, source',
       medications: 'id, patientId, active',
       alerts: 'id, patientId, status, type, createdAt',
       devices: 'id, patientId',
@@ -150,6 +162,30 @@ export async function fetchOperatorPatientStats(patientIds: string[]): Promise<{
   )
 
   return { latestMeasurements, measuredToday, activeMedicationCount, measuredLast3Days }
+}
+
+// ---- Glucose helpers ----
+export async function saveGlucoseMeasurement(g: GlucoseMeasurement) {
+  await db.glucoseMeasurements.put(g)
+}
+
+export async function fetchAllGlucose(patientId: string): Promise<GlucoseMeasurement[]> {
+  return db.glucoseMeasurements
+    .where('patientId')
+    .equals(patientId)
+    .reverse()
+    .sortBy('measuredAt')
+}
+
+export async function fetchTodayGlucose(patientId: string): Promise<GlucoseMeasurement[]> {
+  const startOfDay = new Date()
+  startOfDay.setHours(0, 0, 0, 0)
+  const all = await fetchAllGlucose(patientId)
+  return all.filter((g) => new Date(g.measuredAt) >= startOfDay)
+}
+
+export async function deleteGlucoseMeasurement(id: string) {
+  await db.glucoseMeasurements.delete(id)
 }
 
 // ---- Medication helpers ----
@@ -284,6 +320,7 @@ export async function incrementSyncAttempts(id: string) {
 export async function wipeAccountData() {
   await Promise.all([
     db.measurements.clear(),
+    db.glucoseMeasurements.clear(),
     db.medications.clear(),
     db.alerts.clear(),
     db.devices.clear(),
