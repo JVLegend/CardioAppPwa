@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import { usePatientData } from '../hooks/usePatientData'
 import { classifyBP, classificationConfig } from '../config/theme'
 import ManualEntryView from './ManualEntryView'
 import FloatingChat from './FloatingChat'
+import { readBpFromImage, MissingGeminiKeyError, type BpReading } from '../services/bpOcr'
 import styles from './HomeView.module.css'
 
 export default function HomeView() {
@@ -15,6 +16,10 @@ export default function HomeView() {
   } = usePatientData()
 
   const [showManualEntry, setShowManualEntry] = useState(false)
+  const [photoReading, setPhotoReading] = useState<BpReading | null>(null)
+  const [ocrLoading, setOcrLoading] = useState(false)
+  const [ocrError, setOcrError] = useState('')
+  const cameraRef = useRef<HTMLInputElement>(null)
 
   const lastMeasurement = allMeasurements[0]
   const classification = lastMeasurement
@@ -30,13 +35,52 @@ export default function HomeView() {
   const handleSaveMeasurement = (sys: number, dia: number, hr?: number) => {
     addMeasurement(sys, dia, hr, 'manual')
     setShowManualEntry(false)
+    setPhotoReading(null)
+  }
+
+  const handlePhotoCapture = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setOcrLoading(true)
+    setOcrError('')
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (ev) => resolve(ev.target?.result as string)
+        reader.onerror = () => reject(reader.error)
+        reader.readAsDataURL(file)
+      })
+      const base64 = dataUrl.split(',')[1]
+      const mimeType = file.type || 'image/jpeg'
+      const reading = await readBpFromImage(base64, mimeType)
+      if (reading.systolic === null && reading.diastolic === null && reading.heartRate === null) {
+        setOcrError('A IA não conseguiu ler nenhum número. Tente outra foto ou registre manualmente.')
+      } else {
+        setPhotoReading(reading)
+        setShowManualEntry(true)
+      }
+    } catch (err) {
+      console.error(err)
+      if (err instanceof MissingGeminiKeyError) {
+        setOcrError('Leitura por foto não está configurada (falta VITE_GEMINI_API_KEY).')
+      } else {
+        setOcrError('Erro ao ler a foto. Tente novamente.')
+      }
+    } finally {
+      setOcrLoading(false)
+    }
   }
 
   if (showManualEntry) {
     return (
       <ManualEntryView
         onSave={handleSaveMeasurement}
-        onCancel={() => setShowManualEntry(false)}
+        onCancel={() => { setShowManualEntry(false); setPhotoReading(null) }}
+        initialSystolic={photoReading?.systolic ?? undefined}
+        initialDiastolic={photoReading?.diastolic ?? undefined}
+        initialHeartRate={photoReading?.heartRate ?? undefined}
+        fromPhoto={!!photoReading}
       />
     )
   }
@@ -209,7 +253,57 @@ export default function HomeView() {
           </svg>
           Nova Medição
         </button>
+
+        <button
+          className={styles.primaryAction}
+          style={{ background: 'var(--cardio-blue, #2563eb)', marginTop: 8 }}
+          onClick={() => cameraRef.current?.click()}
+          disabled={ocrLoading}
+        >
+          {ocrLoading ? (
+            <>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}>
+                <path d="M21 12a9 9 0 11-6.219-8.56"/>
+              </svg>
+              Lendo aparelho...
+            </>
+          ) : (
+            <>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              Tirar foto do aparelho
+            </>
+          )}
+        </button>
+
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: 'none' }}
+          onChange={handlePhotoCapture}
+        />
+
+        {ocrError && (
+          <div
+            style={{
+              marginTop: 8,
+              padding: '10px 14px',
+              borderRadius: 12,
+              background: '#fee2e2',
+              color: '#991b1b',
+              fontSize: 14,
+            }}
+          >
+            {ocrError}
+          </div>
+        )}
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* Today's Timeline */}
       {todayMeasurements.length > 0 && (

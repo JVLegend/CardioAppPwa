@@ -5,12 +5,23 @@ import styles from './ManualEntryView.module.css'
 interface Props {
   onSave: (systolic: number, diastolic: number, heartRate?: number) => void
   onCancel: () => void
+  initialSystolic?: number | null
+  initialDiastolic?: number | null
+  initialHeartRate?: number | null
+  fromPhoto?: boolean
 }
 
-export default function ManualEntryView({ onSave, onCancel }: Props) {
-  const [systolic, setSystolic] = useState('')
-  const [diastolic, setDiastolic] = useState('')
-  const [heartRate, setHeartRate] = useState('')
+export default function ManualEntryView({
+  onSave,
+  onCancel,
+  initialSystolic,
+  initialDiastolic,
+  initialHeartRate,
+  fromPhoto,
+}: Props) {
+  const [systolic, setSystolic] = useState(initialSystolic ? String(initialSystolic) : '')
+  const [diastolic, setDiastolic] = useState(initialDiastolic ? String(initialDiastolic) : '')
+  const [heartRate, setHeartRate] = useState(initialHeartRate ? String(initialHeartRate) : '')
   const sysRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -37,11 +48,27 @@ export default function ManualEntryView({ onSave, onCancel }: Props) {
         <button className={styles.backBtn} onClick={onCancel}>
           Cancelar
         </button>
-        <h1 className={styles.title}>Nova Medição</h1>
+        <h1 className={styles.title}>{fromPhoto ? 'Confirmar leitura' : 'Nova Medição'}</h1>
         <div style={{ width: 70 }} />
       </header>
 
       <form className={styles.form} onSubmit={handleSubmit}>
+        {fromPhoto && (
+          <div
+            style={{
+              background: 'var(--cardio-yellow-bg, #fff8e1)',
+              border: '1px solid var(--cardio-yellow, #f5b700)',
+              color: '#7a5a00',
+              padding: '12px 14px',
+              borderRadius: 12,
+              fontSize: 14,
+              lineHeight: 1.4,
+              margin: '0 16px 12px',
+            }}
+          >
+            📷 Valores lidos pela IA da foto do aparelho. <b>Confira</b> os números antes de registrar.
+          </div>
+        )}
         {/* Preview */}
         <div className={styles.preview}>
           <div className={styles.previewValues}>
@@ -111,7 +138,7 @@ export default function ManualEntryView({ onSave, onCancel }: Props) {
         </div>
 
         <button className={styles.saveBtn} type="submit" disabled={!isValid}>
-          Registrar
+          {fromPhoto ? 'Confirmar e Registrar' : 'Registrar'}
         </button>
       </form>
     </div>
