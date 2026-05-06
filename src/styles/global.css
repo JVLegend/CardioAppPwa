@@ -82,12 +82,10 @@ a {
   display: none;
 }
 
-@supports (padding-top: env(safe-area-inset-top)) {
-  body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
+/* Safe-area is applied per-component (.container top, .tabBar bottom).
+   Avoid putting it on body — combined with fixed tab bar + 100vh containers
+   it adds dead space and causes content to be cut off behind the tab bar
+   on iPhones with a home indicator. */
 
 /* Animations */
 @keyframes fadeIn {

@@ -3,6 +3,7 @@ import { usePatientData } from '../hooks/usePatientData'
 import { classifyBP, classificationConfig } from '../config/theme'
 import ManualEntryView from './ManualEntryView'
 import FloatingChat from './FloatingChat'
+import BluetoothView from './BluetoothView'
 import { readBpFromImage, MissingGeminiKeyError, type BpReading } from '../services/bpOcr'
 import styles from './HomeView.module.css'
 
@@ -342,6 +343,11 @@ export default function HomeView() {
           </div>
         </div>
       )}
+
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>Aparelho Bluetooth</h2>
+        <BluetoothView />
+      </div>
 
       <FloatingChat />
     </div>

@@ -1,19 +1,17 @@
 import { useState } from 'react'
 import HomeView from './HomeView'
 import HistoryView from './HistoryView'
-import BluetoothView from './BluetoothView'
 import GlucoseView from './GlucoseView'
 import MedicationsView from './MedicationsView'
 import SettingsView from './SettingsView'
 import ChatView from './ChatView'
 import styles from './MainTabView.module.css'
 
-type Tab = 'home' | 'history' | 'bluetooth' | 'glucose' | 'medications' | 'chat' | 'settings'
+type Tab = 'home' | 'history' | 'glucose' | 'medications' | 'chat' | 'settings'
 
 const tabs: { id: Tab; label: string }[] = [
-  { id: 'bluetooth', label: 'Pressão' },
+  { id: 'home', label: 'Pressão' },
   { id: 'glucose', label: 'Glicose' },
-  { id: 'home', label: 'Início' },
   { id: 'history', label: 'Histórico' },
   { id: 'medications', label: 'Remédios' },
   { id: 'chat', label: 'Chat' },
@@ -25,18 +23,13 @@ const INACTIVE = 'rgba(28,25,23,0.3)'
 
 const tabIcons: Record<Tab, (active: boolean) => JSX.Element> = {
   home: (a) => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? ACTIVE : INACTIVE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill={a ? ACTIVE : 'none'} stroke={a ? ACTIVE : INACTIVE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
     </svg>
   ),
   history: (a) => (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? ACTIVE : INACTIVE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-    </svg>
-  ),
-  bluetooth: (a) => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a ? ACTIVE : INACTIVE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5" />
     </svg>
   ),
   glucose: (a) => (
@@ -65,13 +58,12 @@ const tabIcons: Record<Tab, (active: boolean) => JSX.Element> = {
 }
 
 export default function MainTabView() {
-  const [activeTab, setActiveTab] = useState<Tab>('bluetooth')
+  const [activeTab, setActiveTab] = useState<Tab>('home')
 
   const renderTab = () => {
     switch (activeTab) {
       case 'home': return <HomeView />
       case 'history': return <HistoryView />
-      case 'bluetooth': return <BluetoothView />
       case 'glucose': return <GlucoseView />
       case 'medications': return <MedicationsView />
       case 'chat': return <ChatView />
