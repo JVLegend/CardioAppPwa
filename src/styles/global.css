@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Sora:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Sora:wght@300;400;500;600;700&display=swap');
 
 * {
   margin: 0;
@@ -8,36 +8,49 @@
 }
 
 :root {
-  --cardio-red: #C41230;
+  /* Paleta LeveSaúde — verde-petróleo + ameixa + creme */
+  --leve-teal: #007367;
+  --leve-teal-bright: #109685;
+  --leve-teal-deep: #0B6156;
+  --leve-plum: #451e44;
+  --leve-cream: #eaf3ee;
+  --leve-pale-yellow: #f1e6b2;
+  --leve-warm-gray: #7f766e;
+
+  /* "cardio-*" mantém os nomes mas re-skin para tema LeveSaúde.
+     Vermelho é reservado para alertas clínicos (hipertensão grave). */
+  --cardio-red: var(--leve-teal);          /* CTA principal (era vermelho) */
+  --cardio-red-alert: #C41230;             /* Vermelho clínico — só alertas */
   --cardio-blue: #1D4ED8;
   --cardio-green: #16A34A;
   --cardio-orange: #D97706;
   --cardio-purple: #7C3AED;
   --cardio-yellow: #CA8A04;
-  --cardio-teal: #0891B2;
+  --cardio-teal: var(--leve-teal-bright);
   --cardio-pink: #DB2777;
 
-  --bg-primary: #F7F4EF;
+  --bg-primary: var(--leve-cream);
   --bg-secondary: #FFFFFF;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #F5F1EB;
+  --bg-card-hover: #f4faf6;
   --bg-elevated: #FFFFFF;
 
-  --text-primary: #1C1917;
-  --text-secondary: rgba(28, 25, 23, 0.58);
-  --text-muted: rgba(28, 25, 23, 0.35);
+  --text-primary: var(--leve-plum);
+  --text-secondary: rgba(69, 30, 68, 0.66);
+  --text-muted: rgba(69, 30, 68, 0.42);
 
-  --border: rgba(28, 25, 23, 0.08);
-  --border-light: rgba(28, 25, 23, 0.12);
-  --separator: rgba(28, 25, 23, 0.06);
+  --border: rgba(69, 30, 68, 0.08);
+  --border-light: rgba(69, 30, 68, 0.14);
+  --separator: rgba(69, 30, 68, 0.06);
 
-  --shadow-sm: 0 1px 3px rgba(28, 25, 23, 0.07), 0 1px 2px rgba(28, 25, 23, 0.04);
-  --shadow-md: 0 4px 16px rgba(28, 25, 23, 0.08), 0 2px 4px rgba(28, 25, 23, 0.04);
-  --shadow-lg: 0 8px 32px rgba(28, 25, 23, 0.10), 0 4px 8px rgba(28, 25, 23, 0.05);
+  --shadow-sm: 0 1px 3px rgba(11, 97, 86, 0.07), 0 1px 2px rgba(11, 97, 86, 0.04);
+  --shadow-md: 0 4px 16px rgba(11, 97, 86, 0.10), 0 2px 4px rgba(11, 97, 86, 0.05);
+  --shadow-lg: 0 8px 32px rgba(11, 97, 86, 0.12), 0 4px 8px rgba(11, 97, 86, 0.06);
 
   --radius: 14px;
   --radius-lg: 18px;
   --radius-xl: 22px;
+  --radius-pill: 999px;
 
   color-scheme: light;
 }
