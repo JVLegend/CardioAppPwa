@@ -5,11 +5,22 @@ import { isWebBluetoothSupported } from '../services/bluetoothService'
 import { wipeAccountData } from '../services/database'
 import DisclaimerView from './DisclaimerView'
 import ReminderControls from './ReminderControls'
+import DocumentSheetView from './DocumentSheetView'
+import {
+  PrivacyContent,
+  TermsContent,
+  SupportContent,
+  PRIVACY_SUBTITLE,
+  TERMS_SUBTITLE,
+} from './legalContent'
 import styles from './SettingsView.module.css'
+
+type LegalDoc = 'privacy' | 'terms' | 'support'
 
 export default function SettingsView() {
   const { logout, currentPatient } = useAuth()
   const [showDisclaimer, setShowDisclaimer] = useState(false)
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null)
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -102,20 +113,20 @@ export default function SettingsView() {
             <span className={styles.chevron}>›</span>
           </button>
           <div className={styles.divider} />
-          <a className={styles.linkRow} href="/privacy.html" target="_blank" rel="noreferrer">
+          <button className={styles.linkRow} onClick={() => setLegalDoc('privacy')}>
             <span className={styles.rowLabel}>Política de Privacidade</span>
             <span className={styles.chevron}>›</span>
-          </a>
+          </button>
           <div className={styles.divider} />
-          <a className={styles.linkRow} href="/terms.html" target="_blank" rel="noreferrer">
+          <button className={styles.linkRow} onClick={() => setLegalDoc('terms')}>
             <span className={styles.rowLabel}>Termos de Uso</span>
             <span className={styles.chevron}>›</span>
-          </a>
+          </button>
           <div className={styles.divider} />
-          <a className={styles.linkRow} href="/support.html" target="_blank" rel="noreferrer">
+          <button className={styles.linkRow} onClick={() => setLegalDoc('support')}>
             <span className={styles.rowLabel}>Suporte</span>
             <span className={styles.chevron}>›</span>
-          </a>
+          </button>
         </div>
       </div>
 
@@ -137,6 +148,34 @@ export default function SettingsView() {
       {/* Modal: aviso médico reabrível */}
       {showDisclaimer && (
         <DisclaimerView variant="modal" onClose={() => setShowDisclaimer(false)} />
+      )}
+
+      {/* Modais de documentos legais e suporte */}
+      {legalDoc === 'privacy' && (
+        <DocumentSheetView
+          title="Política de Privacidade"
+          subtitle={PRIVACY_SUBTITLE}
+          onClose={() => setLegalDoc(null)}
+        >
+          <PrivacyContent />
+        </DocumentSheetView>
+      )}
+      {legalDoc === 'terms' && (
+        <DocumentSheetView
+          title="Termos de Uso"
+          subtitle={TERMS_SUBTITLE}
+          onClose={() => setLegalDoc(null)}
+        >
+          <TermsContent />
+        </DocumentSheetView>
+      )}
+      {legalDoc === 'support' && (
+        <DocumentSheetView
+          title="Suporte"
+          onClose={() => setLegalDoc(null)}
+        >
+          <SupportContent />
+        </DocumentSheetView>
       )}
 
       {/* Confirmação 1/2 */}
