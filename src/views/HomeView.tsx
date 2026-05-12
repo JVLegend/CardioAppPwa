@@ -4,6 +4,7 @@ import { classifyBP, classificationConfig } from '../config/theme'
 import ManualEntryView from './ManualEntryView'
 import FloatingChat from './FloatingChat'
 import BluetoothView from './BluetoothView'
+import ReminderControls from './ReminderControls'
 import { readBpFromImage, MissingGeminiKeyError, type BpReading } from '../services/bpOcr'
 import styles from './HomeView.module.css'
 
@@ -344,9 +345,16 @@ export default function HomeView() {
         </div>
       )}
 
+      <div className={styles.bluetoothSection}>
+        <div className={styles.bluetoothHeader}>
+          <h2 className={styles.bluetoothTitle}>Aparelho Bluetooth</h2>
+          <p className={styles.bluetoothSubtitle}>Conectar e receber medições automaticamente</p>
+        </div>
+        <BluetoothView embedded />
+      </div>
+
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Aparelho Bluetooth</h2>
-        <BluetoothView />
+        <ReminderControls />
       </div>
 
       <FloatingChat />

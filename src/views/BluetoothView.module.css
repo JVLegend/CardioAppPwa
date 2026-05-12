@@ -5,6 +5,12 @@
   animation: fadeIn 0.4s ease;
 }
 
+/* Quando embutido dentro de outra tela (ex.: HomeView), sem padding nem max-width
+   próprios — o container externo cuida disso. */
+.containerEmbedded {
+  animation: fadeIn 0.3s ease;
+}
+
 .title {
   font-size: 34px;
   font-weight: 700;

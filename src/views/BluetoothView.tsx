@@ -13,7 +13,12 @@ import { useAuth } from '../contexts/AuthContext'
 import ManualEntryView from './ManualEntryView'
 import styles from './BluetoothView.module.css'
 
-export default function BluetoothView() {
+interface Props {
+  /** Quando renderizado dentro de outra tela, omite o título "Aparelho" e o padding externo. */
+  embedded?: boolean
+}
+
+export default function BluetoothView({ embedded = false }: Props = {}) {
   const { addMeasurement } = usePatientData()
   const { currentPatient } = useAuth()
   const [connectionState, setConnectionState] = useState<BLEConnectionState>('idle')
@@ -66,8 +71,8 @@ export default function BluetoothView() {
   const readingConfig = readingClass ? classificationConfig[readingClass] : null
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Aparelho</h1>
+    <div className={embedded ? styles.containerEmbedded : styles.container}>
+      {!embedded && <h1 className={styles.title}>Aparelho</h1>}
 
       {!bleSupported && (
         <div className={styles.infoCard}>

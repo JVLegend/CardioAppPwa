@@ -1,16 +1,14 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { requestNotificationPermission } from '../services/alertService'
 import { getIsOnline } from '../services/syncEngine'
 import { isWebBluetoothSupported } from '../services/bluetoothService'
 import { wipeAccountData } from '../services/database'
 import DisclaimerView from './DisclaimerView'
+import ReminderControls from './ReminderControls'
 import styles from './SettingsView.module.css'
 
 export default function SettingsView() {
   const { logout, currentPatient } = useAuth()
-  const [reminderEnabled, setReminderEnabled] = useState(false)
-  const [reminderHour, setReminderHour] = useState(8)
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0)
   const [deleting, setDeleting] = useState(false)
@@ -31,14 +29,6 @@ export default function SettingsView() {
     }
   }
 
-  const handleToggleReminder = async () => {
-    if (!reminderEnabled) {
-      const granted = await requestNotificationPermission()
-      if (!granted) return
-    }
-    setReminderEnabled(!reminderEnabled)
-  }
-
   return (
     <div className={styles.container}>
       <div className={styles.titleBar}>
@@ -57,37 +47,9 @@ export default function SettingsView() {
       {/* Reminders */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Lembretes</h2>
-        <div className={styles.group}>
-          <div className={styles.row}>
-            <div className={styles.rowText}>
-              <span className={styles.rowLabel}>Lembrete diário</span>
-              <span className={styles.rowDesc}>Notificação para medir</span>
-            </div>
-            <button
-              className={`${styles.toggle} ${reminderEnabled ? styles.toggleOn : ''}`}
-              onClick={handleToggleReminder}
-            >
-              <span className={styles.toggleKnob} />
-            </button>
-          </div>
-          {reminderEnabled && (
-            <>
-              <div className={styles.divider} />
-              <div className={styles.row}>
-                <span className={styles.rowLabel}>Horário</span>
-                <div className={styles.stepper}>
-                  <button className={styles.stepBtn} onClick={() => setReminderHour(Math.max(5, reminderHour - 1))}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-red)" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  </button>
-                  <span className={styles.stepValue}>{String(reminderHour).padStart(2, '0')}:00</span>
-                  <button className={styles.stepBtn} onClick={() => setReminderHour(Math.min(22, reminderHour + 1))}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-red)" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+        <ReminderControls
+          showTitle={false}
+        />
       </div>
 
       {/* Status */}
