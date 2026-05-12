@@ -1,7 +1,7 @@
 export const AppEnvironment = {
   supabaseURL: import.meta.env.VITE_SUPABASE_URL || 'https://YOUR_PROJECT.supabase.co',
   supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_ANON_KEY',
-  appName: 'CardioApp',
+  appName: 'Leve Control',
   defaultReminderHour: 8,
   defaultReminderMinute: 0,
   maxOfflineQueueSize: 500,

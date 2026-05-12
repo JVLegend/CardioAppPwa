@@ -104,7 +104,7 @@
   }
 
   .tabBar::before {
-    content: 'CardioApp';
+    content: 'Leve Control';
     font-family: 'Sora', sans-serif;
     font-size: 26px;
     font-weight: 600;

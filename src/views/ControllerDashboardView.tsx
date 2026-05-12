@@ -378,7 +378,7 @@ export default function ControllerDashboardView() {
       </div>
 
       <footer className={styles.footer}>
-        CardioApp · Painel da Operadora · Protótipo
+        Leve Control · Painel da Operadora · Protótipo
       </footer>
     </div>
   )

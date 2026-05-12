@@ -91,7 +91,7 @@ export default function HomeView() {
       {/* Header */}
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>CardioApp</h1>
+          <h1 className={styles.title}>Leve Control</h1>
           <p className={styles.date}>
             {new Date().toLocaleDateString('pt-BR', {
               weekday: 'long',

@@ -18,7 +18,7 @@ export default function DisclaimerView({ variant, onAccept, onClose }: Props) {
             </svg>
           </div>
           <h1 className={styles.title}>
-            {variant === 'onboarding' ? 'Bem-vindo ao CardioApp' : 'Aviso médico'}
+            {variant === 'onboarding' ? 'Bem-vindo ao Leve Control' : 'Aviso médico'}
           </h1>
           {variant === 'onboarding' && (
             <p className={styles.subtitle}>Antes de começar, leia este aviso.</p>
@@ -27,7 +27,7 @@ export default function DisclaimerView({ variant, onAccept, onClose }: Props) {
 
         <div className={styles.body}>
           <p>
-            O CardioApp é uma ferramenta de <strong>monitoramento e registro</strong>{' '}
+            O Leve Control é uma ferramenta de <strong>monitoramento e registro</strong>{' '}
             de medições de pressão arterial. Ele <strong>não substitui</strong>{' '}
             consulta, diagnóstico ou tratamento médico.
           </p>

@@ -43,7 +43,7 @@
 }
 
 .title {
-  font-family: 'Cormorant Garamond', 'Sora', serif;
+  font-family: 'Sora', sans-serif;
   font-size: 30px;
   font-weight: 600;
   color: var(--leve-plum);
