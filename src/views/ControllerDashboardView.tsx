@@ -8,6 +8,7 @@ import {
 import type { Patient, Measurement, BPAlert } from '../models/types'
 import DashboardCharts from './DashboardCharts'
 import LeveSaudeLogo from './LeveSaudeLogo'
+import PatientManagementSection from './PatientManagementSection'
 import styles from './ControllerDashboardView.module.css'
 
 type BPClass = 'normal' | 'prehypertension' | 'stage1' | 'stage2' | 'crisis'
@@ -380,6 +381,8 @@ export default function ControllerDashboardView() {
         </div>
       </section>
       </div>
+
+      <PatientManagementSection />
 
       <footer className={styles.footer}>
         Leve Control · Painel da Operadora · Protótipo

@@ -50,14 +50,22 @@ function AppContent() {
 
   if (!isAuthenticated) return <LoginView />
 
-  // Inversão pedida pelo usuário:
-  //  • Médico (role=operator) → dashboard BI com gráficos, busca e mapa
-  //  • Operadora de saúde (role=controller) → lista de pacientes
-  if (currentPatient?.role === 'operator') return <ControllerDashboardView />
-  if (currentPatient?.role === 'controller') return <PatientListView />
+  // Operadora de saúde (role=operator) → dashboard unificado: BI + gestão
+  // de pacientes no mesmo painel.
+  //
+  // Controladora (role=controller) está desativada conforme decisão do cliente
+  // — mas mantemos PatientListView no código pra reativar depois se for o
+  // caso. O usuário controller acessa o mesmo painel da operadora.
+  if (currentPatient?.role === 'operator' || currentPatient?.role === 'controller') {
+    return <ControllerDashboardView />
+  }
 
   return <MainTabView />
 }
+
+// PatientListView é referenciado aqui só para preservar a importação enquanto
+// a view não está roteada (cliente pediu pra manter o arquivo no código).
+void PatientListView
 
 export default function App() {
   return (
