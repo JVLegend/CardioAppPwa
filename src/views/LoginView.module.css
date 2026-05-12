@@ -17,12 +17,12 @@
   width: 88px;
   height: 88px;
   border-radius: 22px;
-  background: linear-gradient(135deg, #FF3B30 0%, #FF2D55 100%);
+  background: linear-gradient(135deg, var(--leve-teal) 0%, var(--leve-teal-bright) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
-  box-shadow: 0 8px 32px rgba(255, 59, 48, 0.3);
+  box-shadow: 0 8px 32px rgba(232, 78, 27, 0.32);
 }
 
 .logoSvg {
@@ -32,9 +32,12 @@
 }
 
 .title {
-  font-size: 34px;
-  font-weight: 700;
+  font-family: 'Cormorant Garamond', 'Sora', serif;
+  font-size: 42px;
+  font-weight: 600;
   letter-spacing: -0.5px;
+  color: var(--leve-plum);
+  line-height: 1;
 }
 
 .subtitle {
@@ -90,14 +93,15 @@
 }
 
 .button {
-  background: var(--cardio-red);
+  background: var(--leve-teal);
   color: white;
   padding: 18px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.2px;
   transition: all 0.2s;
+  box-shadow: 0 6px 18px rgba(232, 78, 27, 0.22);
 }
 
 .button:active {

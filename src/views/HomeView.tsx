@@ -257,7 +257,7 @@ export default function HomeView() {
 
         <button
           className={styles.primaryAction}
-          style={{ background: 'var(--cardio-blue, #2563eb)', marginTop: 8 }}
+          style={{ background: 'var(--leve-plum)', marginTop: 8 }}
           onClick={() => cameraRef.current?.click()}
           disabled={ocrLoading}
         >

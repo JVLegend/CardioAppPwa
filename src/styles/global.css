@@ -8,44 +8,50 @@
 }
 
 :root {
-  /* Paleta LeveSaúde — verde-petróleo + ameixa + creme */
-  --leve-teal: #007367;
-  --leve-teal-bright: #109685;
-  --leve-teal-deep: #0B6156;
-  --leve-plum: #451e44;
-  --leve-cream: #eaf3ee;
-  --leve-pale-yellow: #f1e6b2;
-  --leve-warm-gray: #7f766e;
+  /* Paleta LeveSaúde — ameixa + coral + off-white (extraída do logo) */
+  --leve-plum: #4A1340;          /* "Leve saúde" — ameixa profunda */
+  --leve-plum-deep: #2E0826;     /* Hover / sombra */
+  --leve-coral: #E84E1B;         /* Arco + "O plano da sua vida" */
+  --leve-coral-bright: #F26B3F;  /* Estados hover/destaque */
+  --leve-coral-soft: #FFE3D6;    /* Fundos suaves coral */
+  --leve-cream: #FAF6F1;         /* Background principal — off-white quente */
+  --leve-pale-yellow: #FBE9C8;   /* Avisos / chamadas suaves */
+  --leve-warm-gray: #8A7F7A;
+
+  /* Aliases legados (--leve-teal*) mapeados para coral pra não quebrar CSS antigo */
+  --leve-teal: var(--leve-coral);
+  --leve-teal-bright: var(--leve-coral-bright);
+  --leve-teal-deep: var(--leve-plum);
 
   /* "cardio-*" mantém os nomes mas re-skin para tema LeveSaúde.
-     Vermelho é reservado para alertas clínicos (hipertensão grave). */
-  --cardio-red: var(--leve-teal);          /* CTA principal (era vermelho) */
+     Vermelho clínico é reservado para alertas (hipertensão grave). */
+  --cardio-red: var(--leve-coral);         /* CTA principal */
   --cardio-red-alert: #C41230;             /* Vermelho clínico — só alertas */
   --cardio-blue: #1D4ED8;
   --cardio-green: #16A34A;
-  --cardio-orange: #D97706;
-  --cardio-purple: #7C3AED;
+  --cardio-orange: var(--leve-coral);
+  --cardio-purple: var(--leve-plum);
   --cardio-yellow: #CA8A04;
-  --cardio-teal: var(--leve-teal-bright);
+  --cardio-teal: var(--leve-coral-bright);
   --cardio-pink: #DB2777;
 
   --bg-primary: var(--leve-cream);
   --bg-secondary: #FFFFFF;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #f4faf6;
+  --bg-card-hover: #F5EFE8;
   --bg-elevated: #FFFFFF;
 
   --text-primary: var(--leve-plum);
-  --text-secondary: rgba(69, 30, 68, 0.66);
-  --text-muted: rgba(69, 30, 68, 0.42);
+  --text-secondary: rgba(74, 19, 64, 0.66);
+  --text-muted: rgba(74, 19, 64, 0.42);
 
-  --border: rgba(69, 30, 68, 0.08);
-  --border-light: rgba(69, 30, 68, 0.14);
-  --separator: rgba(69, 30, 68, 0.06);
+  --border: rgba(74, 19, 64, 0.08);
+  --border-light: rgba(74, 19, 64, 0.14);
+  --separator: rgba(74, 19, 64, 0.06);
 
-  --shadow-sm: 0 1px 3px rgba(11, 97, 86, 0.07), 0 1px 2px rgba(11, 97, 86, 0.04);
-  --shadow-md: 0 4px 16px rgba(11, 97, 86, 0.10), 0 2px 4px rgba(11, 97, 86, 0.05);
-  --shadow-lg: 0 8px 32px rgba(11, 97, 86, 0.12), 0 4px 8px rgba(11, 97, 86, 0.06);
+  --shadow-sm: 0 1px 3px rgba(74, 19, 64, 0.07), 0 1px 2px rgba(74, 19, 64, 0.04);
+  --shadow-md: 0 4px 16px rgba(74, 19, 64, 0.10), 0 2px 4px rgba(74, 19, 64, 0.05);
+  --shadow-lg: 0 8px 32px rgba(74, 19, 64, 0.12), 0 4px 8px rgba(74, 19, 64, 0.06);
 
   --radius: 14px;
   --radius-lg: 18px;

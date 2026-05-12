@@ -139,14 +139,15 @@
 
 /* Save */
 .saveBtn {
-  background: var(--cardio-green);
+  background: var(--leve-teal);
   color: white;
   padding: 18px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-pill);
   font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.2px;
   transition: all 0.15s;
+  box-shadow: 0 6px 18px rgba(232, 78, 27, 0.22);
 }
 
 .saveBtn:active {

@@ -36,17 +36,19 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: rgba(196, 18, 48, 0.10);
+  background: rgba(232, 78, 27, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .title {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--text-primary, #1C1917);
+  font-family: 'Cormorant Garamond', 'Sora', serif;
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--leve-plum);
   margin: 4px 0 0;
+  line-height: 1.1;
 }
 
 .subtitle {
@@ -67,9 +69,9 @@
 .body a { color: var(--cardio-red, #C41230); text-decoration: underline; }
 
 .warn {
-  background: rgba(196, 18, 48, 0.08);
-  border-left: 4px solid var(--cardio-red, #C41230);
-  border-radius: 8px;
+  background: var(--leve-pale-yellow);
+  border-left: 4px solid #b8860b;
+  border-radius: 12px;
   padding: 12px 14px;
   margin: 8px 0 14px;
   font-size: 14px;
@@ -87,14 +89,15 @@
 
 .primaryBtn {
   width: 100%;
-  background: var(--cardio-red, #C41230);
+  background: var(--leve-teal);
   color: white;
   border: 0;
-  border-radius: 14px;
+  border-radius: var(--radius-pill, 999px);
   padding: 16px;
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 6px 18px rgba(232, 78, 27, 0.22);
 }
 
 .primaryBtn:active { transform: scale(0.985); }

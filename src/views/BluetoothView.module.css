@@ -60,13 +60,14 @@
 .scanBtn {
   width: 100%;
   padding: 18px;
-  background: var(--cardio-blue);
+  background: var(--leve-teal);
   color: white;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-pill);
   font-size: 17px;
   font-weight: 600;
   margin-bottom: 16px;
   transition: all 0.15s;
+  box-shadow: 0 6px 18px rgba(232, 78, 27, 0.22);
 }
 
 .scanBtn:active { transform: scale(0.98); }
@@ -186,10 +187,11 @@
   width: 100%;
   padding: 16px;
   background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--leve-teal);
+  border-radius: var(--radius-pill);
   font-size: 16px;
   font-weight: 500;
-  color: var(--cardio-purple);
+  color: var(--leve-teal);
   transition: all 0.15s;
 }
 
