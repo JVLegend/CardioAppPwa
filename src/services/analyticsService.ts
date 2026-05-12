@@ -118,3 +118,19 @@ export function morningVsEvening(
   })
   return { morning: average(morning), evening: average(evening) }
 }
+
+/** Manhã (5h-12h) · Tarde (12h-18h) · Noite (18h-5h, cobre madrugada também) */
+export function byTimeOfDay(
+  measurements: Measurement[]
+): { morning: BPAverage | null; afternoon: BPAverage | null; evening: BPAverage | null } {
+  const morning: Measurement[] = []
+  const afternoon: Measurement[] = []
+  const evening: Measurement[] = []
+  for (const m of measurements) {
+    const h = new Date(m.measuredAt).getHours()
+    if (h >= 5 && h < 12) morning.push(m)
+    else if (h >= 12 && h < 18) afternoon.push(m)
+    else evening.push(m)
+  }
+  return { morning: average(morning), afternoon: average(afternoon), evening: average(evening) }
+}

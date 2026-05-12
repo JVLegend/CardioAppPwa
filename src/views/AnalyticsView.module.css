@@ -19,6 +19,24 @@
   gap: 10px;
 }
 
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.grid3 .card {
+  padding: 16px 8px;
+}
+
+.grid3 .cardLabel {
+  font-size: 12px;
+}
+
+.grid3 .cardValue {
+  font-size: 22px;
+}
+
 .card {
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);

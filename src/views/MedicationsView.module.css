@@ -30,31 +30,33 @@
 
 .addActions {
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
   align-items: center;
 }
 
 .aiBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 14px;
-  background: linear-gradient(135deg, #1D4ED8, #3B82F6);
+  gap: 5px;
+  padding: 8px 12px;
+  background: var(--leve-plum);
   color: white;
-  border-radius: 12px;
+  border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.3);
+  box-shadow: 0 2px 8px rgba(74, 19, 64, 0.22);
 }
 
 .addBtn {
-  padding: 9px 14px;
+  padding: 8px 14px;
   background: var(--cardio-red);
   color: white;
-  border-radius: 12px;
+  border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(196, 18, 48, 0.3);
+  box-shadow: 0 2px 8px rgba(232, 78, 27, 0.3);
 }
 
 /* Form */
@@ -143,6 +145,17 @@
   margin-bottom: 14px;
   color: var(--cardio-red);
   font-size: 13px;
+}
+
+.aiNotice {
+  padding: 12px 14px;
+  background: var(--leve-pale-yellow);
+  border: 1px solid #b8860b;
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  color: #6b4a00;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .retakeBtn {

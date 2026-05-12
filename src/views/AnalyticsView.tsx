@@ -6,7 +6,7 @@ import {
   monthlyAverage,
   trendAnalysis,
   classificationDistribution,
-  morningVsEvening,
+  byTimeOfDay,
 } from '../services/analyticsService'
 import { classificationConfig } from '../config/theme'
 import styles from './AnalyticsView.module.css'
@@ -23,7 +23,7 @@ export default function AnalyticsView({ measurements }: Props) {
     () => classificationDistribution(measurements),
     [measurements]
   )
-  const timeOfDay = useMemo(() => morningVsEvening(measurements), [measurements])
+  const timeOfDay = useMemo(() => byTimeOfDay(measurements), [measurements])
 
   const trendInfo = {
     improving: { label: 'Melhorando', color: 'var(--cardio-green)', desc: 'Sua pressão está diminuindo' },
@@ -41,7 +41,7 @@ export default function AnalyticsView({ measurements }: Props) {
     <div className={styles.container}>
       {/* Averages */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Medias</h2>
+        <h2 className={styles.sectionTitle}>Médias</h2>
         <div className={styles.grid}>
           <div className={styles.card}>
             <span className={styles.cardLabel}>7 dias</span>
@@ -74,7 +74,7 @@ export default function AnalyticsView({ measurements }: Props) {
 
       {/* Trend */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Tendencia</h2>
+        <h2 className={styles.sectionTitle}>Tendência</h2>
         <div className={styles.trendCard}>
           <div className={styles.trendIndicator} style={{ background: trendInfo.color }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
@@ -138,9 +138,9 @@ export default function AnalyticsView({ measurements }: Props) {
       {/* Time of Day */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Período do dia</h2>
-        <div className={styles.grid}>
+        <div className={styles.grid3}>
           <div className={styles.card}>
-            <span className={styles.cardLabel}>Manha (5h-12h)</span>
+            <span className={styles.cardLabel}>Manhã (5h-12h)</span>
             {timeOfDay.morning ? (
               <span className={styles.cardValue}>
                 {timeOfDay.morning.systolic}/{timeOfDay.morning.diastolic}
@@ -150,7 +150,17 @@ export default function AnalyticsView({ measurements }: Props) {
             )}
           </div>
           <div className={styles.card}>
-            <span className={styles.cardLabel}>Noite (17h-23h)</span>
+            <span className={styles.cardLabel}>Tarde (12h-18h)</span>
+            {timeOfDay.afternoon ? (
+              <span className={styles.cardValue}>
+                {timeOfDay.afternoon.systolic}/{timeOfDay.afternoon.diastolic}
+              </span>
+            ) : (
+              <span className={styles.cardEmpty}>Sem dados</span>
+            )}
+          </div>
+          <div className={styles.card}>
+            <span className={styles.cardLabel}>Noite (18h-5h)</span>
             {timeOfDay.evening ? (
               <span className={styles.cardValue}>
                 {timeOfDay.evening.systolic}/{timeOfDay.evening.diastolic}

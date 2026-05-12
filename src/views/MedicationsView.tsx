@@ -12,7 +12,7 @@ const frequencyOptions = [
   'Conforme necessário',
 ]
 
-type AddMode = 'manual' | 'ai'
+type AddMode = 'manual' | 'photo' | 'pdf'
 
 function treatmentDaysLeft(endDate?: string): number | null {
   if (!endDate) return null
@@ -64,11 +64,13 @@ class MissingGeminiKeyError extends Error {
   constructor() { super('MISSING_GEMINI_KEY') }
 }
 
-async function analyzePrescritionImage(base64: string, mimeType: string): Promise<Partial<{ name: string; dose: string; frequency: string; notes: string }>> {
+async function analyzePrescription(base64: string, mimeType: string): Promise<Partial<{ name: string; dose: string; frequency: string; notes: string }>> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY
   if (!apiKey) throw new MissingGeminiKeyError()
 
-  // gemini-2.5-flash — bem melhor que 2.0-flash-lite em OCR de receita manuscrita
+  const isPdf = mimeType === 'application/pdf'
+
+  // gemini-2.5-flash aceita imagens (image/*) e PDFs (application/pdf) inline.
   const resp = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
@@ -81,12 +83,15 @@ async function analyzePrescritionImage(base64: string, mimeType: string): Promis
               { inline_data: { mime_type: mimeType, data: base64 } },
               {
                 text: [
-                  'Esta é uma imagem de uma receita médica ou embalagem de medicamento.',
+                  isPdf
+                    ? 'Este é um arquivo PDF de uma receita médica (pode ter várias páginas).'
+                    : 'Esta é uma imagem de uma receita médica ou embalagem de medicamento.',
                   'Extraia, em português, e SOMENTE a partir do que está visível:',
                   '• name — princípio ativo + marca quando houver (ex.: "Losartana Potássica 50mg" ou "Atenolol 25mg")',
                   '• dose — somente a dose por tomada (ex.: "1 comprimido", "10 gotas", "50mg")',
                   '• frequency — uma destas opções literais: "1x ao dia", "2x ao dia", "3x ao dia", "4x ao dia", "A cada 8h", "A cada 12h", "Conforme necessário"',
                   '• notes — observações relevantes do prescritor (jejum, durante refeições, suspender em caso de…). Vazio se não houver.',
+                  'Se houver MAIS DE UM medicamento, retorne SOMENTE o primeiro (mais relevante).',
                   'Se um campo não estiver legível, deixe string vazia.',
                   'Responda SOMENTE em JSON válido. Sem markdown, sem ```json, sem texto fora do JSON.',
                 ].join('\n'),
@@ -131,7 +136,9 @@ export default function MedicationsView() {
   const [notes, setNotes] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
+  const [fromAI, setFromAI] = useState(false) // sinaliza que campos vieram de foto/PDF
   const cameraRef = useRef<HTMLInputElement>(null)
+  const pdfRef = useRef<HTMLInputElement>(null)
 
   const activeMeds = medications.filter((m) => {
     const daysLeft = treatmentDaysLeft(m.endDate)
@@ -146,68 +153,93 @@ export default function MedicationsView() {
   const resetForm = () => {
     setName(''); setDose(''); setFrequency(frequencyOptions[0])
     setScheduleInput(''); setStartDate(new Date().toISOString().split('T')[0])
-    setEndDate(''); setNotes(''); setAiError('')
+    setEndDate(''); setNotes(''); setAiError(''); setFromAI(false)
   }
 
   const handleAdd = (e: FormEvent) => {
     e.preventDefault()
     if (!name || !dose) return
+    if (fromAI) {
+      const ok = confirm(`Confirmar dados do remédio?\n\n• ${name}\n• ${dose}\n• ${frequency}${notes ? `\n• Obs: ${notes}` : ''}`)
+      if (!ok) return
+    }
     const schedule = scheduleInput.split(',').map((s) => s.trim()).filter(Boolean)
     addMedication(name, dose, frequency, schedule.length > 0 ? schedule : undefined, startDate || undefined, endDate || undefined, notes || undefined)
     resetForm()
     setShowAdd(false)
   }
 
-  const handlePhotoCapture = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const processPrescriptionFile = (file: File, defaultMime: string, sourceLabel: 'foto' | 'PDF') => {
     setAiLoading(true)
     setAiError('')
-    try {
-      const reader = new FileReader()
-      reader.onload = async (ev) => {
-        const dataUrl = ev.target?.result as string
-        const base64 = dataUrl.split(',')[1]
-        const mimeType = file.type || 'image/jpeg'
-        try {
-          const result = await analyzePrescritionImage(base64, mimeType)
-          if (result.name) setName(result.name)
-          if (result.dose) setDose(result.dose)
-          if (result.frequency) {
-            const match = frequencyOptions.find((f) => f.toLowerCase().includes(result.frequency!.toLowerCase().split(' ')[0]))
-            setFrequency(match ?? frequencyOptions[0])
-          }
-          if (result.notes) setNotes(result.notes)
-          // Se nenhum campo veio preenchido, alerta o usuário
-          if (!result.name && !result.dose && !result.frequency && !result.notes) {
-            setAiError('A IA não conseguiu identificar nenhum campo. Verifique a foto (legibilidade) ou preencha manualmente.')
-          } else {
-            setAddMode('manual') // troca para o form com os campos prontos para revisão
-          }
-        } catch (err) {
-          if (err instanceof MissingGeminiKeyError) {
-            setAiError('IA de receita não está configurada (falta VITE_GEMINI_API_KEY no servidor). Preencha manualmente.')
-          } else {
-            const msg = err instanceof Error ? err.message : ''
-            setAiError(`Não foi possível analisar a imagem (${msg}). Preencha manualmente.`)
-          }
-          console.error('[receita-IA]', err)
-        } finally {
-          setAiLoading(false)
+    setFromAI(false)
+    const reader = new FileReader()
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target?.result as string
+      const base64 = dataUrl.split(',')[1]
+      const mimeType = file.type || defaultMime
+      try {
+        const result = await analyzePrescription(base64, mimeType)
+        if (result.name) setName(result.name)
+        if (result.dose) setDose(result.dose)
+        if (result.frequency) {
+          const match = frequencyOptions.find((f) => f.toLowerCase().includes(result.frequency!.toLowerCase().split(' ')[0]))
+          setFrequency(match ?? frequencyOptions[0])
         }
+        if (result.notes) setNotes(result.notes)
+        if (!result.name && !result.dose && !result.frequency && !result.notes) {
+          setAiError(`A IA não conseguiu identificar nenhum campo no ${sourceLabel}. Verifique a legibilidade ou preencha manualmente.`)
+        } else {
+          setFromAI(true)
+          setAddMode('manual') // mostra form pré-preenchido para revisão
+        }
+      } catch (err) {
+        if (err instanceof MissingGeminiKeyError) {
+          setAiError('IA de receita não está configurada (falta VITE_GEMINI_API_KEY no servidor). Preencha manualmente.')
+        } else {
+          const msg = err instanceof Error ? err.message : ''
+          setAiError(`Não foi possível analisar o ${sourceLabel} (${msg}). Preencha manualmente.`)
+        }
+        console.error('[receita-IA]', err)
+      } finally {
+        setAiLoading(false)
       }
-      reader.readAsDataURL(file)
-    } catch {
+    }
+    reader.onerror = () => {
       setAiError('Erro ao ler o arquivo.')
       setAiLoading(false)
     }
+    reader.readAsDataURL(file)
+  }
+
+  const handlePhotoCapture = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) processPrescriptionFile(file, 'image/jpeg', 'foto')
+    e.target.value = ''
+  }
+
+  const handlePdfUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 20 * 1024 * 1024) {
+      setAiError('PDF maior que 20MB. Use um arquivo menor ou envie como foto.')
+      e.target.value = ''
+      return
+    }
+    processPrescriptionFile(file, 'application/pdf', 'PDF')
     e.target.value = ''
   }
 
   const openCamera = () => {
-    setAddMode('ai')
+    setAddMode('photo')
     setShowAdd(true)
     setTimeout(() => cameraRef.current?.click(), 100)
+  }
+
+  const openPdfPicker = () => {
+    setAddMode('pdf')
+    setShowAdd(true)
+    setTimeout(() => pdfRef.current?.click(), 100)
   }
 
   return (
@@ -220,7 +252,11 @@ export default function MedicationsView() {
         <div className={styles.addActions}>
           <button className={styles.aiBtn} onClick={openCamera} title="Foto da receita">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></svg>
-            IA
+            Foto
+          </button>
+          <button className={styles.aiBtn} onClick={openPdfPicker} title="PDF da receita">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            PDF
           </button>
           <button className={styles.addBtn} onClick={() => { setAddMode('manual'); setShowAdd(true) }}>
             + Manual
@@ -228,7 +264,7 @@ export default function MedicationsView() {
         </div>
       </div>
 
-      {/* Hidden camera input */}
+      {/* Hidden camera & PDF inputs */}
       <input
         ref={cameraRef}
         type="file"
@@ -237,12 +273,19 @@ export default function MedicationsView() {
         style={{ display: 'none' }}
         onChange={handlePhotoCapture}
       />
+      <input
+        ref={pdfRef}
+        type="file"
+        accept="application/pdf"
+        style={{ display: 'none' }}
+        onChange={handlePdfUpload}
+      />
 
       {showAdd && (
         <div className={styles.formCard}>
           <div className={styles.formHeader}>
             <h2 className={styles.formTitle}>
-              {addMode === 'ai' ? 'Receita por IA' : 'Novo Remédio'}
+              {addMode === 'photo' ? 'Receita por Foto' : addMode === 'pdf' ? 'Receita em PDF' : fromAI ? 'Confirmar dados' : 'Novo Remédio'}
             </h2>
             <div className={styles.modeTabs}>
               <button
@@ -250,11 +293,18 @@ export default function MedicationsView() {
                 onClick={() => setAddMode('manual')}
               >Manual</button>
               <button
-                className={`${styles.modeTab} ${addMode === 'ai' ? styles.modeTabActive : ''}`}
-                onClick={() => { setAddMode('ai'); cameraRef.current?.click() }}
+                className={`${styles.modeTab} ${addMode === 'photo' ? styles.modeTabActive : ''}`}
+                onClick={() => { setAddMode('photo'); cameraRef.current?.click() }}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></svg>
                 Foto
+              </button>
+              <button
+                className={`${styles.modeTab} ${addMode === 'pdf' ? styles.modeTabActive : ''}`}
+                onClick={() => { setAddMode('pdf'); pdfRef.current?.click() }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                PDF
               </button>
             </div>
           </div>
@@ -262,7 +312,7 @@ export default function MedicationsView() {
           {aiLoading && (
             <div className={styles.aiLoading}>
               <div className={styles.aiSpinner} />
-              <p>Analisando receita com IA...</p>
+              <p>{addMode === 'pdf' ? 'Lendo PDF com IA...' : 'Analisando receita com IA...'}</p>
             </div>
           )}
 
@@ -270,10 +320,23 @@ export default function MedicationsView() {
             <div className={styles.aiError}>{aiError}</div>
           )}
 
-          {addMode === 'ai' && !aiLoading && !name && !aiError && (
+          {fromAI && !aiLoading && (
+            <div className={styles.aiNotice}>
+              📋 Dados lidos pela IA. <b>Confira cada campo</b> antes de salvar — corrija o que estiver errado.
+            </div>
+          )}
+
+          {addMode === 'photo' && !aiLoading && !name && !aiError && (
             <button className={styles.retakeBtn} onClick={() => cameraRef.current?.click()}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></svg>
               Tirar foto da receita
+            </button>
+          )}
+
+          {addMode === 'pdf' && !aiLoading && !name && !aiError && (
+            <button className={styles.retakeBtn} onClick={() => pdfRef.current?.click()}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Selecionar PDF
             </button>
           )}
 
@@ -322,7 +385,9 @@ export default function MedicationsView() {
 
             <div className={styles.formActions}>
               <button type="button" className={styles.cancelBtn} onClick={() => { resetForm(); setShowAdd(false) }}>Cancelar</button>
-              <button type="submit" className={styles.saveBtn} disabled={aiLoading}>Salvar</button>
+              <button type="submit" className={styles.saveBtn} disabled={aiLoading}>
+                {fromAI ? 'Confirmar e Salvar' : 'Salvar'}
+              </button>
             </div>
           </form>
         </div>
@@ -380,7 +445,7 @@ export default function MedicationsView() {
             </svg>
           </div>
           <p className={styles.emptyTitle}>Sem remédios cadastrados</p>
-          <p className={styles.emptyDesc}>Adicione manualmente ou tire foto da receita</p>
+          <p className={styles.emptyDesc}>Adicione manualmente, tire foto ou envie o PDF da receita</p>
         </div>
       )}
     </div>
