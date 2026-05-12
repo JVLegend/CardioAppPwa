@@ -7,6 +7,7 @@ import {
 } from '../services/database'
 import type { Patient, Measurement, BPAlert } from '../models/types'
 import DashboardCharts from './DashboardCharts'
+import LeveSaudeLogo from './LeveSaudeLogo'
 import styles from './ControllerDashboardView.module.css'
 
 type BPClass = 'normal' | 'prehypertension' | 'stage1' | 'stage2' | 'crisis'
@@ -198,10 +199,13 @@ export default function ControllerDashboardView() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <div>
-          <div className={styles.eyebrow}>Painel da Operadora</div>
-          <h1 className={styles.title}>Olá, {currentPatient?.name ?? 'Doutor(a)'}</h1>
-          <div className={styles.subtitle}>{today} · Visão diária dos seus pacientes</div>
+        <div className={styles.headerLeft}>
+          <LeveSaudeLogo size={44} />
+          <div>
+            <div className={styles.eyebrow}>Painel da Operadora</div>
+            <h1 className={styles.title}>Olá, {currentPatient?.name ?? 'Doutor(a)'}</h1>
+            <div className={styles.subtitle}>{today} · Visão diária dos seus pacientes</div>
+          </div>
         </div>
         <button className={styles.logoutBtn} onClick={logout}>
           Sair

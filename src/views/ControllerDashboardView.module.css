@@ -34,12 +34,18 @@
   margin-bottom: 24px;
 }
 
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .eyebrow {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--cardio-red);
+  color: var(--leve-coral);
   margin-bottom: 6px;
 }
 
@@ -75,7 +81,7 @@
 
 /* Insight card */
 .insightCard {
-  background: linear-gradient(135deg, #1D4ED8 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, var(--leve-plum) 0%, #6B2A5E 100%);
   border-radius: var(--radius);
   padding: 22px 22px 20px;
   color: #fff;
@@ -160,7 +166,7 @@
   background: var(--bg-card);
   border-radius: var(--radius);
   padding: 18px 18px 16px;
-  border-left: 4px solid var(--cardio-red);
+  border-left: 4px solid var(--leve-coral);
   box-shadow: var(--shadow-sm);
   transition: transform 0.15s, box-shadow 0.15s;
 }
@@ -171,7 +177,7 @@
 }
 
 .kpiGreen { border-left-color: var(--cardio-green); }
-.kpiBlue { border-left-color: var(--cardio-blue); }
+.kpiBlue { border-left-color: var(--leve-plum); }
 .kpiAmber { border-left-color: #D97706; }
 
 .kpiLabel {
@@ -217,12 +223,12 @@
   padding: 18px;
   box-shadow: var(--shadow-sm);
   margin-bottom: 12px;
-  border-left: 4px solid var(--cardio-red);
+  border-left: 4px solid var(--leve-coral);
 }
 
-.actionCritical { border-left-color: var(--cardio-red); }
+.actionCritical { border-left-color: var(--leve-coral); }
 .actionWarn { border-left-color: #D97706; }
-.actionInfo { border-left-color: var(--cardio-blue); }
+.actionInfo { border-left-color: var(--leve-plum); }
 
 .actionHeader {
   display: flex;
@@ -240,7 +246,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   background: rgba(196, 18, 48, 0.1);
-  color: var(--cardio-red);
+  color: var(--leve-coral);
 }
 
 .badgeWarn {
@@ -249,8 +255,8 @@
 }
 
 .badgeInfo {
-  background: rgba(29, 78, 216, 0.1);
-  color: var(--cardio-blue);
+  background: rgba(74, 19, 64, 0.1);
+  color: var(--leve-plum);
 }
 
 .actionCount {
@@ -291,7 +297,7 @@
 
 .bp {
   font-variant-numeric: tabular-nums;
-  color: var(--cardio-red);
+  color: var(--leve-coral);
   font-weight: 600;
 }
 
@@ -344,8 +350,8 @@
 }
 
 .distFillGreen { background: var(--cardio-green); }
-.distFillRed { background: var(--cardio-red); }
-.distFillBlue { background: var(--cardio-blue); }
+.distFillRed { background: var(--leve-coral); }
+.distFillBlue { background: var(--leve-plum); }
 
 .distValue {
   font-family: 'Sora', sans-serif;

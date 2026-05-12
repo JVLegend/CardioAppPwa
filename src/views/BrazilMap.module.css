@@ -1,0 +1,73 @@
+.wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.svg {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  display: block;
+}
+
+.state {
+  transition: filter 0.15s, stroke-width 0.15s;
+  cursor: pointer;
+}
+
+.state:hover {
+  filter: brightness(0.95);
+  stroke: var(--leve-plum);
+  stroke-width: 1.6;
+}
+
+.labelGroup {
+  pointer-events: none;
+}
+
+.sigla {
+  font-size: 14px;
+  font-weight: 700;
+  fill: white;
+  paint-order: stroke;
+  stroke: rgba(74, 19, 64, 0.35);
+  stroke-width: 0.5;
+}
+
+.count {
+  font-size: 16px;
+  font-weight: 700;
+  fill: white;
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke;
+  stroke: rgba(74, 19, 64, 0.35);
+  stroke-width: 0.5;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.legendLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.legendBar {
+  display: flex;
+  gap: 2px;
+}
+
+.legendStop {
+  width: 18px;
+  height: 12px;
+  border-radius: 3px;
+}

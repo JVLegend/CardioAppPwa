@@ -4,6 +4,8 @@ import {
 } from 'recharts'
 import type { Patient } from '../models/types'
 import { db } from '../services/database'
+import { BRAZIL_STATES } from '../data/brazilStates'
+import BrazilMap from './BrazilMap'
 import styles from './DashboardCharts.module.css'
 
 interface Props {
@@ -19,31 +21,40 @@ interface DailyAvg {
   count: number
 }
 
-// Cidades fictícias para o mapa de calor enquanto o cadastro de endereço
-// não está em produção. Distribuição determinística por id do paciente.
-const DEMO_CITIES = [
-  'São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Curitiba', 'Salvador',
-  'Recife', 'Porto Alegre', 'Fortaleza', 'Brasília', 'Campinas',
-]
+interface DailyGlucose {
+  date: string
+  label: string
+  avg: number
+  count: number
+}
 
-function cityFor(patientId: string): string {
+// Estados brasileiros fictícios para o mapa enquanto o cadastro de endereço
+// não está em produção. Distribuição determinística por id do paciente.
+const STATE_SIGLAS = BRAZIL_STATES.map((s) => s.sigla)
+
+function stateFor(patientId: string): string {
   let hash = 0
   for (let i = 0; i < patientId.length; i++) {
     hash = (hash * 31 + patientId.charCodeAt(i)) >>> 0
   }
-  return DEMO_CITIES[hash % DEMO_CITIES.length]
+  return STATE_SIGLAS[hash % STATE_SIGLAS.length]
+}
+
+function stateName(sigla: string): string {
+  return BRAZIL_STATES.find((s) => s.sigla === sigla)?.name ?? sigla
 }
 
 export default function DashboardCharts({ patients }: Props) {
   const [search, setSearch] = useState('')
-  const [region, setRegion] = useState<string>('all')
+  const [stateFilter, setStateFilter] = useState<string>('all')
   const [series, setSeries] = useState<DailyAvg[]>([])
+  const [glucoseSeries, setGlucoseSeries] = useState<DailyGlucose[]>([])
   const [loading, setLoading] = useState(true)
 
   const filteredPatients = useMemo(() => {
     const q = search.trim().toLowerCase()
     return patients.filter((p) => {
-      if (region !== 'all' && cityFor(p.id) !== region) return false
+      if (stateFilter !== 'all' && stateFor(p.id) !== stateFilter) return false
       if (!q) return true
       return (
         p.name.toLowerCase().includes(q) ||
@@ -51,19 +62,22 @@ export default function DashboardCharts({ patients }: Props) {
         (p.comorbidities || []).some((c) => c.toLowerCase().includes(q))
       )
     })
-  }, [patients, search, region])
+  }, [patients, search, stateFilter])
 
-  const cityCounts = useMemo(() => {
-    const counts = new Map<string, number>()
+  const stateCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
     for (const p of patients) {
-      const city = cityFor(p.id)
-      counts.set(city, (counts.get(city) ?? 0) + 1)
+      const s = stateFor(p.id)
+      counts[s] = (counts[s] ?? 0) + 1
     }
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1])
+    return counts
   }, [patients])
 
-  const maxCity = cityCounts[0]?.[1] ?? 1
+  const sortedStateEntries = useMemo(
+    () =>
+      Object.entries(stateCounts).sort((a, b) => b[1] - a[1]),
+    [stateCounts]
+  )
 
   useEffect(() => {
     async function load() {
@@ -72,15 +86,23 @@ export default function DashboardCharts({ patients }: Props) {
       const cutoff = new Date()
       cutoff.setDate(cutoff.getDate() - 6)
 
-      const all = await db.measurements.toArray()
-      const recent = all.filter((m) => ids.has(m.patientId) && new Date(m.measuredAt) >= cutoff)
+      const [allMeas, allGlc] = await Promise.all([
+        db.measurements.toArray(),
+        db.glucoseMeasurements.toArray(),
+      ])
+      const recent = allMeas.filter((m) => ids.has(m.patientId) && new Date(m.measuredAt) >= cutoff)
+      const recentGlc = allGlc.filter((g) => ids.has(g.patientId) && new Date(g.measuredAt) >= cutoff)
 
+      const dayKeys: string[] = []
       const byDay = new Map<string, { sys: number[]; dia: number[]; hr: number[] }>()
+      const byDayGlc = new Map<string, number[]>()
       for (let i = 6; i >= 0; i--) {
         const d = new Date()
         d.setDate(d.getDate() - i)
         const key = d.toISOString().slice(0, 10)
+        dayKeys.push(key)
         byDay.set(key, { sys: [], dia: [], hr: [] })
+        byDayGlc.set(key, [])
       }
       for (const m of recent) {
         const key = new Date(m.measuredAt).toISOString().slice(0, 10)
@@ -90,11 +112,18 @@ export default function DashboardCharts({ patients }: Props) {
         bucket.dia.push(m.diastolic)
         if (m.heartRate) bucket.hr.push(m.heartRate)
       }
-      const out: DailyAvg[] = Array.from(byDay.entries()).map(([date, b]) => {
-        const avg = (xs: number[]) => xs.length ? Math.round(xs.reduce((a, c) => a + c, 0) / xs.length) : 0
-        const d = new Date(date)
+      for (const g of recentGlc) {
+        const key = new Date(g.measuredAt).toISOString().slice(0, 10)
+        const arr = byDayGlc.get(key)
+        if (arr) arr.push(g.value)
+      }
+      const avg = (xs: number[]) =>
+        xs.length ? Math.round(xs.reduce((a, c) => a + c, 0) / xs.length) : 0
+      const out: DailyAvg[] = dayKeys.map((key) => {
+        const b = byDay.get(key)!
+        const d = new Date(key)
         return {
-          date,
+          date: key,
           label: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
           systolic: avg(b.sys),
           diastolic: avg(b.dia),
@@ -102,7 +131,18 @@ export default function DashboardCharts({ patients }: Props) {
           count: b.sys.length,
         }
       })
+      const outGlc: DailyGlucose[] = dayKeys.map((key) => {
+        const arr = byDayGlc.get(key)!
+        const d = new Date(key)
+        return {
+          date: key,
+          label: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+          avg: avg(arr),
+          count: arr.length,
+        }
+      })
       setSeries(out)
+      setGlucoseSeries(outGlc)
       setLoading(false)
     }
     load()
@@ -127,12 +167,12 @@ export default function DashboardCharts({ patients }: Props) {
 
         <select
           className={styles.regionSelect}
-          value={region}
-          onChange={(e) => setRegion(e.target.value)}
+          value={stateFilter}
+          onChange={(e) => setStateFilter(e.target.value)}
         >
-          <option value="all">Todas as regiões ({patients.length})</option>
-          {cityCounts.map(([city, n]) => (
-            <option key={city} value={city}>{city} ({n})</option>
+          <option value="all">Todos os estados ({patients.length})</option>
+          {sortedStateEntries.map(([sigla, n]) => (
+            <option key={sigla} value={sigla}>{stateName(sigla)} — {sigla} ({n})</option>
           ))}
         </select>
 
@@ -160,8 +200,8 @@ export default function DashboardCharts({ patients }: Props) {
                     contentStyle={{ borderRadius: 10, border: 0, boxShadow: '0 6px 24px rgba(0,0,0,0.12)' }}
                     formatter={(v: number, name: string) => [`${v} mmHg`, name === 'systolic' ? 'Sistólica' : 'Diastólica']}
                   />
-                  <Line type="monotone" dataKey="systolic" stroke="#C41230" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-                  <Line type="monotone" dataKey="diastolic" stroke="#1D4ED8" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                  <Line type="monotone" dataKey="systolic" stroke="#E84E1B" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                  <Line type="monotone" dataKey="diastolic" stroke="#4A1340" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -186,7 +226,7 @@ export default function DashboardCharts({ patients }: Props) {
                     contentStyle={{ borderRadius: 10, border: 0, boxShadow: '0 6px 24px rgba(0,0,0,0.12)' }}
                     formatter={(v: number) => [`${v} bpm`, 'FC média']}
                   />
-                  <Line type="monotone" dataKey="hr" stroke="#16A34A" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                  <Line type="monotone" dataKey="hr" stroke="#4A1340" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -194,28 +234,48 @@ export default function DashboardCharts({ patients }: Props) {
         </div>
       </div>
 
+      <div className={styles.chartCard}>
+        <div className={styles.chartHeader}>
+          <h3>Glicemia média — últimos 7 dias</h3>
+          <span className={styles.chartHint}>mg/dL</span>
+        </div>
+        <div className={styles.chart}>
+          {loading ? (
+            <div className={styles.shimmer} />
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={glucoseSeries} margin={{ top: 8, right: 12, bottom: 0, left: -8 }}>
+                <CartesianGrid stroke="rgba(74,19,64,0.08)" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="label" fontSize={11} tickLine={false} axisLine={false} stroke="rgba(74,19,64,0.4)" />
+                <YAxis fontSize={11} tickLine={false} axisLine={false} stroke="rgba(74,19,64,0.4)" domain={[60, 240]} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 10, border: 0, boxShadow: '0 6px 24px rgba(74,19,64,0.12)' }}
+                  formatter={(v: number, _name, item) => {
+                    const payload = (item as { payload?: DailyGlucose })?.payload
+                    const count = payload?.count ?? 0
+                    return [
+                      count > 0 ? `${v} mg/dL · ${count} medição(ões)` : 'sem dados',
+                      'Glicemia média',
+                    ]
+                  }}
+                />
+                <Line type="monotone" dataKey="avg" stroke="#E84E1B" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
       <div className={styles.heatCard}>
         <div className={styles.chartHeader}>
-          <h3>Mapa de calor — pacientes por cidade</h3>
-          <span className={styles.chartHint}>protótipo · usa cidade fictícia até cadastro de endereço</span>
+          <h3>Mapa do Brasil — pacientes por estado</h3>
+          <span className={styles.chartHint}>protótipo · estado fictício até cadastro de endereço</span>
         </div>
-        <div className={styles.heatGrid}>
-          {cityCounts.map(([city, n]) => {
-            const intensity = Math.max(0.18, n / maxCity)
-            return (
-              <button
-                key={city}
-                className={styles.heatTile}
-                style={{ background: `rgba(196, 18, 48, ${intensity})` }}
-                onClick={() => setRegion(region === city ? 'all' : city)}
-                aria-pressed={region === city}
-              >
-                <span className={styles.heatCity}>{city}</span>
-                <span className={styles.heatCount}>{n}</span>
-              </button>
-            )
-          })}
-        </div>
+        <BrazilMap
+          counts={stateCounts}
+          selected={stateFilter === 'all' ? null : stateFilter}
+          onSelect={(s) => setStateFilter(s || 'all')}
+        />
       </div>
     </section>
   )
