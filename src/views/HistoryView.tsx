@@ -46,7 +46,7 @@ export default function HistoryView() {
             className={`${styles.subTab} ${subTab === t ? styles.subTabActive : ''}`}
             onClick={() => setSubTab(t)}
           >
-            {t === 'history' ? 'Medições' : 'Analise'}
+            {t === 'history' ? 'Medições' : 'Análise'}
           </button>
         ))}
       </div>
@@ -132,7 +132,7 @@ export default function HistoryView() {
             {filtered.length === 0 ? (
               <div className={styles.empty}>
                 <p className={styles.emptyTitle}>Sem medições</p>
-                <p className={styles.emptyDesc}>Nenhuma medição nos ultimos {period} dias</p>
+                <p className={styles.emptyDesc}>Nenhuma medição nos últimos {period} dias</p>
               </div>
             ) : (
               filtered.map((m) => {

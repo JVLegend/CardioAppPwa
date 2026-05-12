@@ -74,7 +74,7 @@ export default function SettingsView() {
             <>
               <div className={styles.divider} />
               <div className={styles.row}>
-                <span className={styles.rowLabel}>Horario</span>
+                <span className={styles.rowLabel}>Horário</span>
                 <div className={styles.stepper}>
                   <button className={styles.stepBtn} onClick={() => setReminderHour(Math.max(5, reminderHour - 1))}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-red)" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>

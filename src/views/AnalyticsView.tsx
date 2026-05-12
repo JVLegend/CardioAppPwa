@@ -26,9 +26,9 @@ export default function AnalyticsView({ measurements }: Props) {
   const timeOfDay = useMemo(() => morningVsEvening(measurements), [measurements])
 
   const trendInfo = {
-    improving: { label: 'Melhorando', color: 'var(--cardio-green)', desc: 'Sua pressao esta diminuindo' },
-    stable: { label: 'Estável', color: 'var(--cardio-blue)', desc: 'Sua pressao esta estável' },
-    worsening: { label: 'Piorando', color: 'var(--cardio-red)', desc: 'Sua pressao esta aumentando' },
+    improving: { label: 'Melhorando', color: 'var(--cardio-green)', desc: 'Sua pressão está diminuindo' },
+    stable: { label: 'Estável', color: 'var(--cardio-blue)', desc: 'Sua pressão está estável' },
+    worsening: { label: 'Piorando', color: 'var(--cardio-red)', desc: 'Sua pressão está aumentando' },
   }[trend]
 
   const pieData = distribution.map((d) => ({
@@ -137,7 +137,7 @@ export default function AnalyticsView({ measurements }: Props) {
 
       {/* Time of Day */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Periodo do dia</h2>
+        <h2 className={styles.sectionTitle}>Período do dia</h2>
         <div className={styles.grid}>
           <div className={styles.card}>
             <span className={styles.cardLabel}>Manha (5h-12h)</span>

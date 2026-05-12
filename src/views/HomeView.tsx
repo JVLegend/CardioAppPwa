@@ -237,7 +237,7 @@ export default function HomeView() {
               </div>
               <div>
                 <div className={styles.alertTitle}>
-                  {alert.type === 'urgent' ? 'Urgente' : 'Atencao'}
+                  {alert.type === 'urgent' ? 'Urgente' : 'Atenção'}
                 </div>
                 <div className={styles.alertDesc}>{alert.rule}</div>
               </div>

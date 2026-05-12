@@ -124,7 +124,7 @@ export default function ManualEntryView({
           </div>
           <div className={styles.divider} />
           <div className={styles.inputRow}>
-            <label className={styles.label}>Frequencia cardíaca</label>
+            <label className={styles.label}>Frequência cardíaca</label>
             <input
               className={styles.input}
               type="number"
