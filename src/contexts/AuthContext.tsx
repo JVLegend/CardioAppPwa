@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
-import type { Patient, UserRole } from '../models/types'
+import type { Patient, PlanStatus, UserRole } from '../models/types'
 import * as db from '../services/database'
 
 interface HardcodedUser {
@@ -14,6 +14,25 @@ interface HardcodedUser {
   comorbidities?: string[]
   planStatus?: 'adimplente' | 'inadimplente' | 'pendente'
   inTreatmentPlan?: boolean
+}
+
+export interface CreatePatientProfileInput {
+  name: string
+  email: string
+  password: string
+  phone?: string
+  birthDate?: string
+  comorbidities?: string[]
+  planStatus?: PlanStatus
+  inTreatmentPlan?: boolean
+}
+
+// O acesso administrativo fica explícito e restrito ao e-mail da operadora.
+// Se o responsável mudar, altere somente esta lista.
+export const ADMIN_EMAILS = ['kneipapps@gmail.com'] as const
+
+export function isAdminEmail(email: string | null | undefined) {
+  return !!email && ADMIN_EMAILS.some((adminEmail) => adminEmail === email.trim().toLowerCase())
 }
 
 // Kneip é operadora; Toco e JV são pacientes vinculados à Kneip
@@ -80,16 +99,48 @@ const USERS: HardcodedUser[] = [
 
 const AUTH_KEY = 'cardioapp_auth'
 const AUTH_USER_KEY = 'cardioapp_auth_user'
+const DYNAMIC_USERS_KEY = 'cardioapp_dynamic_users'
+
+function readDynamicUsers(): HardcodedUser[] {
+  const raw = localStorage.getItem(DYNAMIC_USERS_KEY)
+  if (!raw) return []
+
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((item): item is HardcodedUser => {
+      if (!item || typeof item !== 'object') return false
+      const record = item as Record<string, unknown>
+      return (
+        typeof record.email === 'string' &&
+        typeof record.password === 'string' &&
+        typeof record.userId === 'string' &&
+        typeof record.name === 'string' &&
+        record.role === 'patient' &&
+        typeof record.patientId === 'string'
+      )
+    })
+  } catch {
+    return []
+  }
+}
+
+function allUsers() {
+  return [...USERS, ...readDynamicUsers()]
+}
 
 interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
+  currentUserEmail: string | null
+  isAdmin: boolean
   currentPatient: Patient | null
   errorMessage: string | null
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   selectPatient: (patient: Patient | null) => void
   restoreSelf: () => Promise<void>
+  createPatientProfile: (input: CreatePatientProfileInput) => Promise<Patient>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -97,6 +148,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null)
   const [currentPatient, setCurrentPatient] = useState<Patient | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -112,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: u.patientId,
         operatorId: u.operatorPatientId ?? '',
         userId: u.userId,
+        email: u.email,
         name: u.name,
         role: u.role,
         createdAt: new Date().toISOString(),
@@ -135,6 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: user.patientId,
         operatorId: user.operatorPatientId ?? '',
         userId: user.userId,
+        email: user.email,
         name: user.name,
         role: user.role,
         createdAt: new Date().toISOString(),
@@ -148,6 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Mantém sincronia de campos vindos do seed (útil para contas novas/atualizadas)
       const updated: Patient = {
         ...patient,
+        email: patient.email ?? user.email,
         name: user.name,
         role: user.role,
         operatorId: user.operatorPatientId ?? patient.operatorId,
@@ -161,6 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       patient = updated
     }
+    setCurrentUserEmail(user.email)
     setCurrentPatient(patient)
   }, [seedDemoPatients])
 
@@ -168,7 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem(AUTH_KEY)
     const savedUserId = localStorage.getItem(AUTH_USER_KEY)
     if (saved === 'true' && savedUserId) {
-      const user = USERS.find((u) => u.userId === savedUserId)
+      const user = allUsers().find((u) => u.userId === savedUserId)
       if (user) {
         setIsAuthenticated(true)
         setupPatient(user).finally(() => setIsLoading(false))
@@ -181,7 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     setErrorMessage(null)
-    const user = USERS.find(
+    const user = allUsers().find(
       (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
     )
     if (user) {
@@ -199,6 +255,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(AUTH_KEY)
     localStorage.removeItem(AUTH_USER_KEY)
     setIsAuthenticated(false)
+    setCurrentUserEmail(null)
     setCurrentPatient(null)
   }
 
@@ -209,8 +266,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const restoreSelf = async () => {
     const savedUserId = localStorage.getItem(AUTH_USER_KEY)
     if (!savedUserId) return
-    const user = USERS.find((u) => u.userId === savedUserId)
+    const user = allUsers().find((u) => u.userId === savedUserId)
     if (user) await setupPatient(user)
+  }
+
+  const createPatientProfile = async (input: CreatePatientProfileInput): Promise<Patient> => {
+    if (!isAdminEmail(currentUserEmail)) {
+      throw new Error('Somente o administrador pode criar perfis.')
+    }
+
+    const name = input.name.trim()
+    const email = input.email.trim().toLowerCase()
+    const password = input.password
+    if (!name || !email || !password) {
+      throw new Error('Preencha nome, e-mail e senha inicial.')
+    }
+    if (password.length < 6) {
+      throw new Error('A senha inicial precisa ter pelo menos 6 caracteres.')
+    }
+    if (allUsers().some((user) => user.email.toLowerCase() === email)) {
+      throw new Error('Já existe um perfil com este e-mail.')
+    }
+
+    const userId = `profile-user-${crypto.randomUUID()}`
+    const patientId = `patient-${crypto.randomUUID()}`
+    const operatorId = currentPatient?.id ?? OPERATOR_KNEIP_ID
+    const user: HardcodedUser = {
+      email,
+      password,
+      userId,
+      name,
+      role: 'patient',
+      patientId,
+      operatorPatientId: operatorId,
+      phone: input.phone?.trim() || undefined,
+      comorbidities: input.comorbidities,
+      planStatus: input.planStatus,
+      inTreatmentPlan: input.inTreatmentPlan,
+    }
+    localStorage.setItem(DYNAMIC_USERS_KEY, JSON.stringify([...readDynamicUsers(), user]))
+
+    const patient: Patient = {
+      id: patientId,
+      operatorId,
+      userId,
+      email,
+      name,
+      role: 'patient',
+      birthDate: input.birthDate || undefined,
+      phone: input.phone?.trim() || undefined,
+      comorbidities: input.comorbidities,
+      planStatus: input.planStatus,
+      inTreatmentPlan: input.inTreatmentPlan,
+      createdAt: new Date().toISOString(),
+    }
+    await db.savePatient(patient)
+    return patient
   }
 
   return (
@@ -218,12 +329,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         isAuthenticated,
         isLoading,
+        currentUserEmail,
+        isAdmin: isAdminEmail(currentUserEmail),
         currentPatient,
         errorMessage,
         login,
         logout,
         selectPatient,
         restoreSelf,
+        createPatientProfile,
       }}
     >
       {children}

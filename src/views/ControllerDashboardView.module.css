@@ -80,6 +80,28 @@
 }
 .logoutBtn:hover { background: var(--bg-card); }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adminBtn {
+  background: var(--kps-navy);
+  border: 1px solid var(--kps-navy);
+  color: var(--kps-gold-light);
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.adminBtn:hover { background: var(--kps-navy-soft); }
+
 /* ===== TOOLBAR ===== */
 .toolbar {
   display: flex;
@@ -410,6 +432,8 @@
   .kpiTileValue { font-size: 24px; }
   .toolbar { flex-direction: column; align-items: stretch; }
   .matchHint { text-align: right; }
+  .headerActions { width: 100%; }
+  .adminBtn, .logoutBtn { flex: 1; }
 }
 
 /* ===== Desktop ===== */

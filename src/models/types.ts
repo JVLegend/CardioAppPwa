@@ -10,6 +10,7 @@ export interface Patient {
   id: string
   operatorId: string
   userId?: string
+  email?: string
   name: string
   birthDate?: string
   phone?: string

@@ -11,6 +11,7 @@ import DashboardCharts from './DashboardCharts'
 import BrazilMap from './BrazilMap'
 import KardiaLogo from './KardiaLogo'
 import PatientManagementSection from './PatientManagementSection'
+import AdminProfilesView from './AdminProfilesView'
 import styles from './ControllerDashboardView.module.css'
 
 const STATE_SIGLAS = BRAZIL_STATES.map((s) => s.sigla)
@@ -108,7 +109,7 @@ function fallbackInsight(agg: Aggregates): string {
 }
 
 export default function ControllerDashboardView() {
-  const { logout, currentPatient } = useAuth()
+  const { logout, currentPatient, isAdmin } = useAuth()
   const [agg, setAgg] = useState<Aggregates | null>(null)
   const [allPatients, setAllPatients] = useState<Patient[]>([])
   const [insight, setInsight] = useState<string>('')
@@ -116,6 +117,7 @@ export default function ControllerDashboardView() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [stateFilter, setStateFilter] = useState<string>('all')
+  const [showAdminProfiles, setShowAdminProfiles] = useState(false)
 
   async function loadAll() {
     setLoading(true)
@@ -230,6 +232,17 @@ export default function ControllerDashboardView() {
     )
   })
 
+  if (showAdminProfiles) {
+    return (
+      <AdminProfilesView
+        onBack={() => {
+          setShowAdminProfiles(false)
+          void loadAll()
+        }}
+      />
+    )
+  }
+
   return (
     <div className={styles.container}>
       {/* HEADER — compacto, logo à esquerda */}
@@ -242,7 +255,14 @@ export default function ControllerDashboardView() {
             <div className={styles.subtitle}>{today}</div>
           </div>
         </div>
-        <button className={styles.logoutBtn} onClick={logout}>Sair</button>
+        <div className={styles.headerActions}>
+          {isAdmin && (
+            <button className={styles.adminBtn} onClick={() => setShowAdminProfiles(true)}>
+              Gerenciar perfis
+            </button>
+          )}
+          <button className={styles.logoutBtn} onClick={logout}>Sair</button>
+        </div>
       </header>
 
       {/* FILTRO GLOBAL — search + estado */}
