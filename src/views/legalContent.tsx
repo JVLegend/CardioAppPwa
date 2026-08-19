@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 const UPDATED = '7 de maio de 2026'
-const SUPPORT_EMAIL = 'suporte@levesaude.com.br'
+const SUPPORT_EMAIL = 'suporte@casalcardioapp.app'
 
 export const PRIVACY_SUBTITLE = `Última atualização: ${UPDATED}`
 export const TERMS_SUBTITLE = `Última atualização: ${UPDATED}`
@@ -10,7 +10,7 @@ export function PrivacyContent(): ReactNode {
   return (
     <>
       <p>
-        Esta política descreve quais dados o <strong>Leve Control</strong> coleta, como são
+        Esta política descreve quais dados o <strong>CasalCardioApp</strong> coleta, como são
         usados, com quem são compartilhados e como você pode acessá-los, corrigi-los ou
         excluí-los, em conformidade com a LGPD (Lei 13.709/2018).
       </p>
@@ -63,7 +63,7 @@ export function PrivacyContent(): ReactNode {
 
       <h2>7. Crianças</h2>
       <p>
-        O Leve Control não é direcionado a menores de 16 anos sem consentimento dos
+        O CasalCardioApp não é direcionado a menores de 16 anos sem consentimento dos
         responsáveis. Se identificarmos cadastro de menor sem consentimento, removeremos
         os dados.
       </p>
@@ -86,13 +86,13 @@ export function TermsContent(): ReactNode {
   return (
     <>
       <p>
-        Ao usar o <strong>Leve Control</strong> você concorda com estes Termos. Leia com
+        Ao usar o <strong>CasalCardioApp</strong> você concorda com estes Termos. Leia com
         atenção — eles definem o que o app faz e o que <strong>não</strong> faz.
       </p>
 
       <h2>1. Sobre o serviço</h2>
       <p>
-        O Leve Control é uma ferramenta digital de <strong>monitoramento e registro</strong>
+        O CasalCardioApp é uma ferramenta digital de <strong>monitoramento e registro</strong>
         de medições de pressão arterial e glicemia. Permite registro manual, leitura por
         Bluetooth (Web BLE), leitura por foto/PDF com auxílio de IA e envio dos dados à
         sua operadora/médico.
@@ -100,7 +100,7 @@ export function TermsContent(): ReactNode {
 
       <h2>2. O que o app NÃO é</h2>
       <div className="note">
-        O Leve Control <strong>não substitui</strong> consulta, diagnóstico ou tratamento
+        O CasalCardioApp <strong>não substitui</strong> consulta, diagnóstico ou tratamento
         médico. Classificações exibidas (Normal, Pré-hipertensão, Hipertensão I/II, Crise)
         seguem a Diretriz Brasileira de Hipertensão Arterial (SBC, 2025) e são apenas
         <strong> informativas</strong>. Em emergência, ligue <strong>192 (SAMU)</strong>.
@@ -188,7 +188,7 @@ export function SupportContent(): ReactNode {
       <ul>
         <li>No iPhone, o Bluetooth do navegador (Web BLE) ainda não é suportado pelo Safari. Use o registro manual ou faça pelo app no Android/Chrome.</li>
         <li>No Android, confira se o Bluetooth está ligado e se o aparelho está em modo de pareamento (geralmente botão SET por alguns segundos).</li>
-        <li>Esqueça o aparelho nas Configurações do sistema e pareie de novo pelo Leve Control.</li>
+        <li>Esqueça o aparelho nas Configurações do sistema e pareie de novo pelo CasalCardioApp.</li>
       </ul>
 
       <p><strong>A foto/PDF da receita não foi lida certo.</strong></p>

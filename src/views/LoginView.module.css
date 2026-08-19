@@ -17,12 +17,12 @@
   width: 88px;
   height: 88px;
   border-radius: 22px;
-  background: linear-gradient(135deg, var(--leve-teal) 0%, var(--leve-teal-bright) 100%);
+  background: linear-gradient(135deg, var(--casal-red) 0%, var(--casal-red-bright) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
-  box-shadow: 0 8px 32px rgba(232, 78, 27, 0.32);
+  box-shadow: 0 8px 32px rgba(180, 35, 60, 0.32);
 }
 
 .logoSvg {
@@ -36,7 +36,7 @@
   font-size: 42px;
   font-weight: 600;
   letter-spacing: -0.5px;
-  color: var(--leve-plum);
+  color: var(--casal-red-deep);
   line-height: 1;
 }
 
@@ -93,7 +93,7 @@
 }
 
 .button {
-  background: var(--leve-teal);
+  background: var(--casal-red);
   color: white;
   padding: 18px;
   border-radius: var(--radius-pill);
@@ -101,7 +101,7 @@
   font-weight: 600;
   letter-spacing: -0.2px;
   transition: all 0.2s;
-  box-shadow: 0 6px 18px rgba(232, 78, 27, 0.22);
+  box-shadow: 0 6px 18px rgba(180, 35, 60, 0.22);
 }
 
 .button:active {

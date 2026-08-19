@@ -84,7 +84,7 @@
   font-size: 10px;
   font-weight: 600;
   background: #EEF2FF;
-  color: var(--leve-plum);
+  color: var(--casal-red-deep);
   padding: 2px 8px;
   border-radius: 10px;
   letter-spacing: 0.02em;
@@ -97,7 +97,7 @@
 }
 
 .kpiCardTotal {
-  background: linear-gradient(135deg, var(--leve-coral), #F26B3F);
+  background: linear-gradient(135deg, var(--casal-red), #D94F65);
   border-radius: var(--radius-lg);
   padding: 20px 24px;
   display: flex;
@@ -317,7 +317,7 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--leve-coral), #F26B3F);
+  background: linear-gradient(135deg, var(--casal-red), #D94F65);
   color: white;
   font-size: 17px;
   font-weight: 700;
@@ -356,7 +356,7 @@
 }
 
 .bpBadgeGreen { background: #F0FDF4; color: #16A34A; }
-.bpBadgeRed { background: rgba(232,78,27,0.08); color: #E84E1B; }
+.bpBadgeRed { background: rgba(180, 35, 60,0.08); color: #B4233C; }
 
 .measureBadge {
   font-size: 11px;
@@ -366,7 +366,7 @@
 }
 
 .measureBadgeGreen { background: #F0FDF4; color: #16A34A; }
-.measureBadgeOrange { background: #FFFBEB; color: #D97706; }
+.measureBadgeWarm { background: #FFF0F2; color: #B4233C; }
 
 /* Loading */
 .loadingRow {
@@ -472,7 +472,7 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--leve-coral), #F26B3F);
+  background: linear-gradient(135deg, var(--casal-red), #D94F65);
   color: white;
   font-size: 22px;
   font-weight: 700;
@@ -770,7 +770,7 @@
   justify-content: center;
   gap: 8px;
   padding: 13px;
-  background: linear-gradient(135deg, var(--leve-coral), #F26B3F);
+  background: linear-gradient(135deg, var(--casal-red), #D94F65);
   color: white;
   border-radius: var(--radius);
   font-size: 14px;

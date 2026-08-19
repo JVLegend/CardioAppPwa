@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(74, 19, 64, 0.45);
+  background: rgba(114, 21, 43, 0.45);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex;
@@ -78,7 +78,7 @@
   font-size: 17px;
   font-weight: 700;
   margin: 22px 0 8px;
-  color: var(--leve-plum);
+  color: var(--casal-red-deep);
   letter-spacing: -0.2px;
 }
 
@@ -101,7 +101,7 @@
 }
 
 .body :global(a) {
-  color: var(--leve-coral);
+  color: var(--casal-red);
   text-decoration: underline;
 }
 
@@ -116,7 +116,7 @@
 
 .body :global(.note) {
   background: var(--bg-card);
-  border-left: 3px solid var(--leve-coral);
+  border-left: 3px solid var(--casal-red);
   padding: 12px 14px;
   border-radius: 12px;
   font-size: 14px;
@@ -131,7 +131,7 @@
 
 .primaryBtn {
   width: 100%;
-  background: var(--leve-coral);
+  background: var(--casal-red);
   color: white;
   border: 0;
   border-radius: 999px;
@@ -139,7 +139,7 @@
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(232, 78, 27, 0.22);
+  box-shadow: 0 6px 18px rgba(180, 35, 60, 0.22);
 }
 
 .primaryBtn:active {

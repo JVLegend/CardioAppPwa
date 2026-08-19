@@ -76,7 +76,7 @@ export default function BluetoothView({ embedded = false }: Props = {}) {
 
       {!bleSupported && (
         <div className={styles.infoCard}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-orange)" strokeWidth="2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-warm)" strokeWidth="2">
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
           <div>

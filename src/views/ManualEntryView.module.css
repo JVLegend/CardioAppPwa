@@ -139,7 +139,7 @@
 
 /* Save */
 .saveBtn {
-  background: var(--leve-teal);
+  background: var(--casal-red);
   color: white;
   padding: 18px;
   border-radius: var(--radius-pill);
@@ -147,7 +147,7 @@
   font-weight: 600;
   letter-spacing: -0.2px;
   transition: all 0.15s;
-  box-shadow: 0 6px 18px rgba(232, 78, 27, 0.22);
+  box-shadow: 0 6px 18px rgba(180, 35, 60, 0.22);
 }
 
 .saveBtn:active {

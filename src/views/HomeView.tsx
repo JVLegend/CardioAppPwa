@@ -92,7 +92,7 @@ export default function HomeView() {
       {/* Header */}
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>Leve Control</h1>
+          <h1 className={styles.title}>CasalCardioApp</h1>
           <p className={styles.date}>
             {new Date().toLocaleDateString('pt-BR', {
               weekday: 'long',
@@ -227,11 +227,11 @@ export default function HomeView() {
               className={styles.alertCard}
               style={{
                 borderLeftColor:
-                  alert.type === 'urgent' ? 'var(--cardio-red)' : 'var(--cardio-orange)',
+                  alert.type === 'urgent' ? 'var(--cardio-red)' : 'var(--cardio-warm)',
               }}
             >
               <div className={styles.alertIcon}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={alert.type === 'urgent' ? 'var(--cardio-red)' : 'var(--cardio-orange)'} strokeWidth="2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={alert.type === 'urgent' ? 'var(--cardio-red)' : 'var(--cardio-warm)'} strokeWidth="2">
                   <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                   <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
@@ -258,7 +258,7 @@ export default function HomeView() {
 
         <button
           className={styles.primaryAction}
-          style={{ background: 'var(--leve-plum)', marginTop: 8 }}
+          style={{ background: 'var(--casal-red-deep)', marginTop: 8 }}
           onClick={() => cameraRef.current?.click()}
           disabled={ocrLoading}
         >

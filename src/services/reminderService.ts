@@ -15,13 +15,15 @@ const DEFAULT: Record<ReminderKey, ReminderConfig> = {
   glicose: { enabled: false, hour: 8, minute: 0 },
 }
 
-const STORAGE_KEY = 'leve-control:reminders'
-const EVENT = 'leve-control:reminders-change'
+const STORAGE_KEY = 'casalcardioapp:reminders'
+const LEGACY_STORAGE_KEY = 'leve-control:reminders'
+const EVENT = 'casalcardioapp:reminders-change'
 
 function load(): Record<ReminderKey, ReminderConfig> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
     if (!raw) return { ...DEFAULT }
+    if (!localStorage.getItem(STORAGE_KEY)) localStorage.setItem(STORAGE_KEY, raw)
     const parsed = JSON.parse(raw)
     return {
       pressao: { ...DEFAULT.pressao, ...parsed.pressao },
@@ -65,7 +67,7 @@ const REMINDER_COPY: Record<ReminderKey, { title: string; body: string }> = {
 }
 
 function lastFiredKey(key: ReminderKey) {
-  return `leve-control:reminders:last:${key}`
+  return `casalcardioapp:reminders:last:${key}`
 }
 
 async function fire(key: ReminderKey) {

@@ -188,7 +188,7 @@
 .confirmOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(28,25,23,0.45);
+  background: rgba(50,21,28,0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -214,7 +214,7 @@
   border: 0;
   cursor: pointer;
 }
-.cancelBtn { background: var(--bg-card-hover, #F5F1EB); color: var(--text-primary); }
+.cancelBtn { background: var(--bg-card-hover, #FDECEF); color: var(--text-primary); }
 .dangerBtn { background: var(--cardio-red, #C41230); color: white; }
 .cancelBtn:disabled, .dangerBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 

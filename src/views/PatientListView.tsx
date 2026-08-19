@@ -210,7 +210,7 @@ export default function PatientListView() {
           <h2 className={styles.sectionTitle}>Atividade de Hoje</h2>
           <div className={styles.kpiGrid}>
             <StatCard value={mt} label="Em dia" sub="Realizaram medição hoje" color="#16A34A" active={drillFilter === 'measuredToday'} onClick={() => setDrillFilter(drillFilter === 'measuredToday' ? 'all' : 'measuredToday')} />
-            <StatCard value={nmt} label="Faltando" sub="Sem medição hoje" color="#D97706" active={drillFilter === 'notMeasuredToday'} onClick={() => setDrillFilter(drillFilter === 'notMeasuredToday' ? 'all' : 'notMeasuredToday')} />
+            <StatCard value={nmt} label="Faltando" sub="Sem medição hoje" color="#B4233C" active={drillFilter === 'notMeasuredToday'} onClick={() => setDrillFilter(drillFilter === 'notMeasuredToday' ? 'all' : 'notMeasuredToday')} />
           </div>
         </div>
 
@@ -241,7 +241,7 @@ export default function PatientListView() {
           <h2 className={styles.sectionTitle}>Aderência à Medicação</h2>
           <div className={styles.kpiGrid}>
             <StatCard value={adhering} label="Aderentes" sub="Tomando corretamente" color="#0891B2" active={drillFilter === 'adhering'} onClick={() => setDrillFilter(drillFilter === 'adhering' ? 'all' : 'adhering')} />
-            <StatCard value={nonAdhering} label="Não Aderentes" sub="Precisam atenção" color="#D97706" active={drillFilter === 'nonAdhering'} onClick={() => setDrillFilter(drillFilter === 'nonAdhering' ? 'all' : 'nonAdhering')} />
+            <StatCard value={nonAdhering} label="Não Aderentes" sub="Precisam atenção" color="#B4233C" active={drillFilter === 'nonAdhering'} onClick={() => setDrillFilter(drillFilter === 'nonAdhering' ? 'all' : 'nonAdhering')} />
           </div>
         </div>
 
@@ -310,11 +310,11 @@ export default function PatientListView() {
                     ) : (
                       <span className={styles.bpBadge}>Sem dados</span>
                     )}
-                    <span className={`${styles.measureBadge} ${s.measuredToday ? styles.measureBadgeGreen : styles.measureBadgeOrange}`}>
+                    <span className={`${styles.measureBadge} ${s.measuredToday ? styles.measureBadgeGreen : styles.measureBadgeWarm}`}>
                       {s.measuredToday ? 'Mediu hoje' : 'Sem medição'}
                     </span>
                     {!s.adhering && s.activeMedications > 0 && (
-                      <span className={styles.measureBadge} style={{ background: '#FFFBEB', color: '#D97706' }}>
+                      <span className={styles.measureBadge} style={{ background: '#FFF0F2', color: '#B4233C' }}>
                         Não aderente
                       </span>
                     )}
@@ -446,7 +446,7 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
             </div>
             <div className={styles.drawerInfoItem}>
               <span className={styles.drawerInfoLabel}>Aderência</span>
-              <span className={styles.drawerInfoValue} style={{ color: adhering ? '#16A34A' : '#D97706' }}>
+              <span className={styles.drawerInfoValue} style={{ color: adhering ? '#16A34A' : '#B4233C' }}>
                 {adhering ? 'Em dia' : 'Precisa atenção'}
               </span>
             </div>

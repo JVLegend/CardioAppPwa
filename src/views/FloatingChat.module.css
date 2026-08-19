@@ -5,7 +5,7 @@
   width: 58px;
   height: 58px;
   border-radius: 50%;
-  background: var(--leve-plum);
+  background: var(--casal-red-deep);
   border: 0;
   box-shadow: 0 8px 22px rgba(22, 163, 74, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12);
   display: flex;
@@ -33,7 +33,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--bg-primary, #F7F4EF);
+  border: 2px solid var(--bg-primary, #FFF7F8);
 }
 
 .window {
@@ -64,7 +64,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: var(--leve-plum);
+  background: var(--casal-red-deep);
   color: white;
   font-weight: 600;
   font-size: 14px;

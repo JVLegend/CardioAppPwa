@@ -19,7 +19,7 @@
 }
 
 .infoCard {
-  background: rgba(255, 149, 0, 0.08);
+  background: rgba(180, 35, 60, 0.08);
   border-radius: var(--radius-lg);
   padding: 16px 20px;
   display: flex;
@@ -31,7 +31,7 @@
 .infoTitle {
   font-size: 15px;
   font-weight: 600;
-  color: var(--cardio-orange);
+  color: var(--cardio-warm);
 }
 
 .infoDesc {
@@ -66,14 +66,14 @@
 .scanBtn {
   width: 100%;
   padding: 18px;
-  background: var(--leve-teal);
+  background: var(--casal-red);
   color: white;
   border-radius: var(--radius-pill);
   font-size: 17px;
   font-weight: 600;
   margin-bottom: 16px;
   transition: all 0.15s;
-  box-shadow: 0 6px 18px rgba(232, 78, 27, 0.22);
+  box-shadow: 0 6px 18px rgba(180, 35, 60, 0.22);
 }
 
 .scanBtn:active { transform: scale(0.98); }
@@ -193,11 +193,11 @@
   width: 100%;
   padding: 16px;
   background: var(--bg-secondary);
-  border: 1.5px solid var(--leve-teal);
+  border: 1.5px solid var(--casal-red);
   border-radius: var(--radius-pill);
   font-size: 16px;
   font-weight: 500;
-  color: var(--leve-teal);
+  color: var(--casal-red);
   transition: all 0.15s;
 }
 

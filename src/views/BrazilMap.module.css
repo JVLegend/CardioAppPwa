@@ -20,7 +20,7 @@
 
 .state:hover {
   filter: brightness(0.95);
-  stroke: var(--leve-plum);
+  stroke: var(--casal-red-deep);
   stroke-width: 1.6;
 }
 
@@ -33,7 +33,7 @@
   font-weight: 700;
   fill: white;
   paint-order: stroke;
-  stroke: rgba(74, 19, 64, 0.35);
+  stroke: rgba(114, 21, 43, 0.35);
   stroke-width: 0.5;
 }
 
@@ -43,7 +43,7 @@
   fill: white;
   font-variant-numeric: tabular-nums;
   paint-order: stroke;
-  stroke: rgba(74, 19, 64, 0.35);
+  stroke: rgba(114, 21, 43, 0.35);
   stroke-width: 0.5;
 }
 

@@ -42,7 +42,7 @@ export default function BrazilMap({ counts, selected, onSelect }: Props) {
               key={s.sigla}
               d={s.d}
               fill={fill}
-              stroke={isSelected ? 'var(--leve-plum)' : '#fff'}
+              stroke={isSelected ? 'var(--casal-red-deep)' : '#fff'}
               strokeWidth={isSelected ? 2.5 : 0.8}
               className={styles.state}
               onClick={() => handleClick(s)}

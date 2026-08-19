@@ -48,7 +48,7 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--leve-coral);
+  color: var(--casal-red);
   margin-bottom: 2px;
 }
 
@@ -148,16 +148,16 @@
 .kpiTile {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-top: 3px solid var(--leve-plum);
+  border-top: 3px solid var(--casal-red-deep);
   border-radius: var(--radius-lg);
   padding: 14px 16px;
   box-shadow: var(--shadow-sm);
 }
 
-.accent_plum { border-top-color: var(--leve-plum); }
-.accent_coral { border-top-color: var(--leve-coral); }
+.accent_plum { border-top-color: var(--casal-red-deep); }
+.accent_coral { border-top-color: var(--casal-red); }
 .accent_green { border-top-color: var(--cardio-green); }
-.accent_amber { border-top-color: #D97706; }
+.accent_amber { border-top-color: #B4233C; }
 
 .kpiTileLabel {
   font-size: 11px;
@@ -198,7 +198,7 @@
 }
 
 .insightCard {
-  background: linear-gradient(135deg, var(--leve-plum) 0%, #6B2A5E 100%);
+  background: linear-gradient(135deg, var(--casal-red-deep) 0%, #8F2948 100%);
   border-radius: var(--radius-lg);
   padding: 20px 22px;
   color: #fff;
@@ -308,15 +308,15 @@
 .actionCard {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-left: 4px solid var(--leve-coral);
+  border-left: 4px solid var(--casal-red);
   border-radius: var(--radius-lg);
   padding: 16px 18px;
   box-shadow: var(--shadow-sm);
 }
 
-.actionCritical { border-left-color: var(--leve-coral); }
-.actionWarn { border-left-color: #D97706; }
-.actionInfo { border-left-color: var(--leve-plum); }
+.actionCritical { border-left-color: var(--casal-red); }
+.actionWarn { border-left-color: #B4233C; }
+.actionInfo { border-left-color: var(--casal-red-deep); }
 
 .actionHead {
   display: flex;
@@ -332,12 +332,12 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  background: rgba(232, 78, 27, 0.1);
-  color: var(--leve-coral);
+  background: rgba(180, 35, 60, 0.1);
+  color: var(--casal-red);
 }
 
-.badgeWarn { background: rgba(217, 119, 6, 0.12); color: #B45309; }
-.badgeInfo { background: rgba(74, 19, 64, 0.1); color: var(--leve-plum); }
+.badgeWarn { background: rgba(180, 35, 60, 0.12); color: #B4233C; }
+.badgeInfo { background: rgba(114, 21, 43, 0.1); color: var(--casal-red-deep); }
 
 .actionCount {
   font-family: 'Sora', sans-serif;
@@ -378,7 +378,7 @@
 
 .bp {
   font-variant-numeric: tabular-nums;
-  color: var(--leve-coral);
+  color: var(--casal-red);
   font-weight: 600;
 }
 

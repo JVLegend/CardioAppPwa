@@ -23,8 +23,8 @@ export default function LoginView() {
             />
           </svg>
         </div>
-        <h1 className={styles.title}>Leve Control</h1>
-        <p className={styles.subtitle}>Monitoramento Inteligente</p>
+        <h1 className={styles.title}>CasalCardioApp</h1>
+        <p className={styles.subtitle}>Monitoramento cardiovascular</p>
       </div>
 
       <form className={styles.form} onSubmit={handleSubmit}>
@@ -58,7 +58,7 @@ export default function LoginView() {
       </form>
 
       <p className={styles.footer}>
-        Pressão arterial sob controle
+        Cuidado com o seu coração todos os dias
       </p>
     </div>
   )

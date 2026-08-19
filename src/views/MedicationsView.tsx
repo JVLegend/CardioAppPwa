@@ -42,13 +42,13 @@ function TreatmentBar({ startDate, endDate }: { startDate?: string; endDate?: st
           className={styles.treatmentBarFill}
           style={{
             width: `${progress * 100}%`,
-            background: expired ? 'var(--text-muted)' : urgent ? 'var(--cardio-orange)' : 'var(--cardio-green)',
+            background: expired ? 'var(--text-muted)' : urgent ? 'var(--cardio-warm)' : 'var(--cardio-green)',
           }}
         />
       </div>
       <span
         className={styles.treatmentDays}
-        style={{ color: expired ? 'var(--text-muted)' : urgent ? 'var(--cardio-orange)' : 'var(--cardio-green)' }}
+        style={{ color: expired ? 'var(--text-muted)' : urgent ? 'var(--cardio-warm)' : 'var(--cardio-green)' }}
       >
         {expired
           ? 'Tratamento encerrado'
@@ -467,7 +467,7 @@ function MedCard({ med, index, onToggle, onRemove, expired }: {
     >
       <div
         className={styles.medDot}
-        style={{ background: expired ? 'var(--text-muted)' : urgent ? 'var(--cardio-orange)' : 'var(--cardio-green)' }}
+        style={{ background: expired ? 'var(--text-muted)' : urgent ? 'var(--cardio-warm)' : 'var(--cardio-green)' }}
       />
       <div className={styles.medInfo}>
         <div className={styles.medName}>{med.name}</div>

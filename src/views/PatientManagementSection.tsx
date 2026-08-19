@@ -379,11 +379,11 @@ function DetailDrawer({
         <section className={styles.drawerSection}>
           <h4 className={styles.drawerSectionTitle}>Glicemia</h4>
           {latestGlucose ? (
-            <div className={styles.measureCard} style={{ borderLeftColor: glucoseAltered ? 'var(--leve-coral)' : 'var(--cardio-green)' }}>
-              <div className={styles.measureBp} style={{ color: glucoseAltered ? 'var(--leve-coral)' : 'var(--cardio-green)' }}>
+            <div className={styles.measureCard} style={{ borderLeftColor: glucoseAltered ? 'var(--casal-red)' : 'var(--cardio-green)' }}>
+              <div className={styles.measureBp} style={{ color: glucoseAltered ? 'var(--casal-red)' : 'var(--cardio-green)' }}>
                 {latestGlucose.value} <span className={styles.measureUnit}>mg/dL</span>
               </div>
-              <div className={styles.measureClass} style={{ color: glucoseAltered ? 'var(--leve-coral)' : 'var(--cardio-green)' }}>
+              <div className={styles.measureClass} style={{ color: glucoseAltered ? 'var(--casal-red)' : 'var(--cardio-green)' }}>
                 {glucoseAltered ? 'Alterada' : 'Em faixa'} · {ctxLabel(latestGlucose.context)}
               </div>
               <div className={styles.measureTime}>
@@ -404,21 +404,21 @@ function DetailDrawer({
             </div>
             <div className={styles.kv}>
               <span className={styles.kvLabel}>Aderência</span>
-              <span className={styles.kvValue} style={{ color: adhering ? 'var(--cardio-green)' : '#D97706' }}>
+              <span className={styles.kvValue} style={{ color: adhering ? 'var(--cardio-green)' : '#B4233C' }}>
                 {adhering ? 'Em dia' : 'Atenção'}
               </span>
             </div>
             <div className={styles.kv}>
               <span className={styles.kvLabel}>Plano financeiro</span>
               <span className={styles.kvValue} style={{
-                color: patient.planStatus === 'adimplente' ? 'var(--cardio-green)' : patient.planStatus === 'inadimplente' ? 'var(--leve-coral)' : 'var(--text-muted)',
+                color: patient.planStatus === 'adimplente' ? 'var(--cardio-green)' : patient.planStatus === 'inadimplente' ? 'var(--casal-red)' : 'var(--text-muted)',
               }}>
                 {patient.planStatus === 'adimplente' ? 'Adimplente' : patient.planStatus === 'inadimplente' ? 'Inadimplente' : '—'}
               </span>
             </div>
             <div className={styles.kv}>
               <span className={styles.kvLabel}>Tratamento</span>
-              <span className={styles.kvValue} style={{ color: patient.inTreatmentPlan ? 'var(--leve-plum)' : 'var(--text-muted)' }}>
+              <span className={styles.kvValue} style={{ color: patient.inTreatmentPlan ? 'var(--casal-red-deep)' : 'var(--text-muted)' }}>
                 {patient.inTreatmentPlan ? 'Ativo' : 'Sem plano'}
               </span>
             </div>

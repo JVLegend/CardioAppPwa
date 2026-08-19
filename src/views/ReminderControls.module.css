@@ -76,7 +76,7 @@
 }
 
 .toggleOn {
-  background: var(--leve-coral);
+  background: var(--casal-red);
 }
 
 .toggleKnob {
@@ -114,12 +114,12 @@
   justify-content: center;
   background: transparent;
   border: 0;
-  color: var(--leve-coral);
+  color: var(--casal-red);
   cursor: pointer;
 }
 
 .stepBtn:active {
-  background: rgba(232, 78, 27, 0.1);
+  background: rgba(180, 35, 60, 0.1);
 }
 
 .stepValue {
