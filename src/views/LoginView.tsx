@@ -19,7 +19,7 @@ export default function LoginView() {
         <div className={styles.logoRing}>
           <KardiaLogo size={88} variant="mark" />
         </div>
-        <h1 className={styles.title}>Kardia App</h1>
+        <h1 className={styles.title}>KPS Cardio</h1>
         <p className={styles.subtitle}>Monitoramento cardiovascular</p>
       </div>
 

@@ -56,8 +56,8 @@ export default function ManualEntryView({
         {fromPhoto && (
           <div
             style={{
-              background: 'var(--cardio-yellow-bg, #FFF0F2)',
-              border: '1px solid var(--cardio-yellow, #B4233C)',
+              background: 'var(--cardio-yellow-bg, #FBF5E5)',
+              border: '1px solid var(--cardio-yellow, #C5A050)',
               color: '#7a5a00',
               padding: '12px 14px',
               borderRadius: 12,

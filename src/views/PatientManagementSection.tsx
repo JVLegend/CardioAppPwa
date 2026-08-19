@@ -1,6 +1,6 @@
 // Painel de gestão de pacientes para a operadora.
 // Migrado do PatientListView original (controladora) e melhorado com:
-//   • paleta LeveSaúde (sem #C41230 / #1D4ED8 hard-coded)
+//   • paleta KPS Apps (sem cores de marca hard-coded)
 //   • KPI extra "Glicemia alterada" (>= 126 jejum / >= 200 aleatório)
 //   • estatísticas de glicose carregadas em paralelo com BP
 //   • compatível com modo embutido em outro dashboard
@@ -404,7 +404,7 @@ function DetailDrawer({
             </div>
             <div className={styles.kv}>
               <span className={styles.kvLabel}>Aderência</span>
-              <span className={styles.kvValue} style={{ color: adhering ? 'var(--cardio-green)' : '#B4233C' }}>
+              <span className={styles.kvValue} style={{ color: adhering ? 'var(--cardio-green)' : '#C5A050' }}>
                 {adhering ? 'Em dia' : 'Atenção'}
               </span>
             </div>

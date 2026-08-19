@@ -7,14 +7,14 @@ interface Props {
 }
 
 /**
- * Marca do Kardia App: coração + pulso em um símbolo proprietário.
+ * Marca do KPS Cardio: coração + pulso em um símbolo proprietário.
  * O SVG fica no código para funcionar também offline e em telas pequenas.
  */
 export default function KardiaLogo({ size = 32, variant = 'full' }: Props) {
   const h = size
   const markOnly = variant === 'mark'
   const width = markOnly ? size : Math.round(size * (330 / 88))
-  const gradientId = `kardia-gradient-${useId().replace(/:/g, '')}`
+  const gradientId = `kps-cardio-gradient-${useId().replace(/:/g, '')}`
 
   return (
     <div className={styles.wrapper} style={{ height: h, width }}>
@@ -24,26 +24,26 @@ export default function KardiaLogo({ size = 32, variant = 'full' }: Props) {
         height={h}
         xmlns="http://www.w3.org/2000/svg"
         role="img"
-        aria-label="Kardia App"
+        aria-label="KPS Cardio"
         focusable="false"
       >
         <defs>
           <linearGradient id={gradientId} x1="8" y1="4" x2="84" y2="84" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stopColor="var(--casal-red-deep)" />
-            <stop offset="1" stopColor="var(--casal-red-bright)" />
+            <stop offset="0" stopColor="var(--kps-gold-bright)" />
+            <stop offset="1" stopColor="var(--kps-gold)" />
           </linearGradient>
         </defs>
 
         {/* Símbolo: bloco arredondado com coração e linha de pulso */}
-        <rect x="4" y="4" width="80" height="80" rx="27" fill={`url(#${gradientId})`} />
+        <rect x="4" y="4" width="80" height="80" rx="15" fill={`url(#${gradientId})`} />
         <path
           d="M44 72C38 65 18 53 18 35c0-10 7-17 16-17 5 0 8 2 10 6 2-4 5-6 10-6 9 0 16 7 16 17 0 18-20 30-26 37Z"
-          fill="var(--casal-rose)"
+          fill="var(--kps-navy)"
         />
         <path
           d="M21 44h11l5-11 8 22 8-17 5 6h10"
           fill="none"
-          stroke="var(--casal-red-deep)"
+          stroke="var(--kps-gold-light)"
           strokeWidth="4.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -58,23 +58,23 @@ export default function KardiaLogo({ size = 32, variant = 'full' }: Props) {
               fontSize="38"
               fontWeight="800"
               fontFamily="Sora, sans-serif"
-              fill="var(--casal-red-deep)"
+              fill="var(--kps-navy)"
               letterSpacing="-1.2"
             >
-              Kardia
+              KPS
             </text>
             <text
-              x="238"
+              x="204"
               y="55"
-              fontSize="28"
+              fontSize="27"
               fontWeight="600"
               fontFamily="Sora, sans-serif"
-              fill="var(--casal-red-bright)"
+              fill="var(--kps-gold-bright)"
               letterSpacing="-0.8"
             >
-              App
+              Cardio
             </text>
-            <circle cx="314" cy="49" r="4" fill="var(--casal-red-bright)" />
+            <circle cx="314" cy="49" r="4" fill="var(--kps-gold-bright)" />
           </>
         )}
       </svg>

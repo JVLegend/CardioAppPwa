@@ -20,14 +20,14 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #C41230, #E53E3E);
+  background: linear-gradient(135deg, #C5A050, #D4AF37);
   color: white;
   font-size: 16px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(196, 18, 48, 0.2);
+  box-shadow: 0 2px 8px rgba(197, 160, 80, 0.2);
 }
 
 .headerInfo {
@@ -132,7 +132,7 @@
   background: var(--cardio-red);
   color: white;
   border-bottom-right-radius: 4px;
-  box-shadow: 0 2px 8px rgba(196, 18, 48, 0.2);
+  box-shadow: 0 2px 8px rgba(197, 160, 80, 0.2);
 }
 
 .bubbleContentThem {
@@ -204,7 +204,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(196, 18, 48, 0.35);
+  box-shadow: 0 2px 8px rgba(197, 160, 80, 0.35);
   transition: all 0.15s;
 }
 
@@ -233,7 +233,7 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: rgba(196, 18, 48, 0.06);
+  background: rgba(197, 160, 80, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;

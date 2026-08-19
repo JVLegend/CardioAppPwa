@@ -210,7 +210,7 @@ export default function PatientListView() {
           <h2 className={styles.sectionTitle}>Atividade de Hoje</h2>
           <div className={styles.kpiGrid}>
             <StatCard value={mt} label="Em dia" sub="Realizaram medição hoje" color="#16A34A" active={drillFilter === 'measuredToday'} onClick={() => setDrillFilter(drillFilter === 'measuredToday' ? 'all' : 'measuredToday')} />
-            <StatCard value={nmt} label="Faltando" sub="Sem medição hoje" color="#B4233C" active={drillFilter === 'notMeasuredToday'} onClick={() => setDrillFilter(drillFilter === 'notMeasuredToday' ? 'all' : 'notMeasuredToday')} />
+            <StatCard value={nmt} label="Faltando" sub="Sem medição hoje" color="#C5A050" active={drillFilter === 'notMeasuredToday'} onClick={() => setDrillFilter(drillFilter === 'notMeasuredToday' ? 'all' : 'notMeasuredToday')} />
           </div>
         </div>
 
@@ -218,7 +218,7 @@ export default function PatientListView() {
           <h2 className={styles.sectionTitle}>Pressão Arterial</h2>
           <div className={styles.kpiGrid}>
             <StatCard value={inGoal} label="Dentro da Meta" sub="Normal ou pré-hipertensão" color="#16A34A" active={drillFilter === 'inGoal'} onClick={() => setDrillFilter(drillFilter === 'inGoal' ? 'all' : 'inGoal')} />
-            <StatCard value={outOfGoal} label="Fora da Meta" sub="Hipertensão I, II ou crise" color="#C41230" active={drillFilter === 'outOfGoal'} onClick={() => setDrillFilter(drillFilter === 'outOfGoal' ? 'all' : 'outOfGoal')} />
+            <StatCard value={outOfGoal} label="Fora da Meta" sub="Hipertensão I, II ou crise" color="#C5A050" active={drillFilter === 'outOfGoal'} onClick={() => setDrillFilter(drillFilter === 'outOfGoal' ? 'all' : 'outOfGoal')} />
           </div>
         </div>
         {critical > 0 && (
@@ -240,8 +240,8 @@ export default function PatientListView() {
         <div className={styles.metricGroup}>
           <h2 className={styles.sectionTitle}>Aderência à Medicação</h2>
           <div className={styles.kpiGrid}>
-            <StatCard value={adhering} label="Aderentes" sub="Tomando corretamente" color="#0891B2" active={drillFilter === 'adhering'} onClick={() => setDrillFilter(drillFilter === 'adhering' ? 'all' : 'adhering')} />
-            <StatCard value={nonAdhering} label="Não Aderentes" sub="Precisam atenção" color="#B4233C" active={drillFilter === 'nonAdhering'} onClick={() => setDrillFilter(drillFilter === 'nonAdhering' ? 'all' : 'nonAdhering')} />
+            <StatCard value={adhering} label="Aderentes" sub="Tomando corretamente" color="#D4AF37" active={drillFilter === 'adhering'} onClick={() => setDrillFilter(drillFilter === 'adhering' ? 'all' : 'adhering')} />
+            <StatCard value={nonAdhering} label="Não Aderentes" sub="Precisam atenção" color="#C5A050" active={drillFilter === 'nonAdhering'} onClick={() => setDrillFilter(drillFilter === 'nonAdhering' ? 'all' : 'nonAdhering')} />
           </div>
         </div>
 
@@ -251,14 +251,14 @@ export default function PatientListView() {
           </h2>
           <div className={styles.kpiGrid}>
             <StatCard value={adimplente} label="Adimplentes" sub="Plano em dia" color="#16A34A" active={drillFilter === 'adimplente'} onClick={() => setDrillFilter(drillFilter === 'adimplente' ? 'all' : 'adimplente')} />
-            <StatCard value={inadimplente} label="Inadimplentes" sub="Pendências financeiras" color="#C41230" active={drillFilter === 'inadimplente'} onClick={() => setDrillFilter(drillFilter === 'inadimplente' ? 'all' : 'inadimplente')} />
+            <StatCard value={inadimplente} label="Inadimplentes" sub="Pendências financeiras" color="#C5A050" active={drillFilter === 'inadimplente'} onClick={() => setDrillFilter(drillFilter === 'inadimplente' ? 'all' : 'inadimplente')} />
           </div>
         </div>
 
         <div className={`${styles.metricGroup} ${styles.metricGroupWide}`}>
           <h2 className={styles.sectionTitle}>Plano de Tratamento</h2>
           <div className={styles.kpiGrid}>
-            <StatCard value={inTreatment} label="Em Tratamento" sub="Plano ativo na operadora" color="#1D4ED8" active={drillFilter === 'inTreatment'} onClick={() => setDrillFilter(drillFilter === 'inTreatment' ? 'all' : 'inTreatment')} />
+            <StatCard value={inTreatment} label="Em Tratamento" sub="Plano ativo na operadora" color="#001F3F" active={drillFilter === 'inTreatment'} onClick={() => setDrillFilter(drillFilter === 'inTreatment' ? 'all' : 'inTreatment')} />
             <StatCard value={outOfTreatment} label="Sem Plano" sub="Não estão em tratamento" color="#78716C" active={drillFilter === 'outOfTreatment'} onClick={() => setDrillFilter(drillFilter === 'outOfTreatment' ? 'all' : 'outOfTreatment')} />
           </div>
         </div>
@@ -314,12 +314,12 @@ export default function PatientListView() {
                       {s.measuredToday ? 'Mediu hoje' : 'Sem medição'}
                     </span>
                     {!s.adhering && s.activeMedications > 0 && (
-                      <span className={styles.measureBadge} style={{ background: '#FFF0F2', color: '#B4233C' }}>
+                      <span className={styles.measureBadge} style={{ background: '#FBF5E5', color: '#C5A050' }}>
                         Não aderente
                       </span>
                     )}
                     {s.patient.planStatus === 'inadimplente' && (
-                      <span className={styles.measureBadge} style={{ background: '#FFF1F2', color: '#C41230' }}>
+                      <span className={styles.measureBadge} style={{ background: '#FBF5E5', color: '#C5A050' }}>
                         Inadimplente
                       </span>
                     )}
@@ -446,21 +446,21 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
             </div>
             <div className={styles.drawerInfoItem}>
               <span className={styles.drawerInfoLabel}>Aderência</span>
-              <span className={styles.drawerInfoValue} style={{ color: adhering ? '#16A34A' : '#B4233C' }}>
+              <span className={styles.drawerInfoValue} style={{ color: adhering ? '#16A34A' : '#C5A050' }}>
                 {adhering ? 'Em dia' : 'Precisa atenção'}
               </span>
             </div>
             <div className={styles.drawerInfoItem}>
               <span className={styles.drawerInfoLabel}>Plano financeiro</span>
               <span className={styles.drawerInfoValue} style={{
-                color: patient.planStatus === 'adimplente' ? '#16A34A' : patient.planStatus === 'inadimplente' ? '#C41230' : 'var(--text-muted)',
+                color: patient.planStatus === 'adimplente' ? '#16A34A' : patient.planStatus === 'inadimplente' ? '#C5A050' : 'var(--text-muted)',
               }}>
                 {patient.planStatus === 'adimplente' ? 'Adimplente' : patient.planStatus === 'inadimplente' ? 'Inadimplente' : '—'}
               </span>
             </div>
             <div className={styles.drawerInfoItem}>
               <span className={styles.drawerInfoLabel}>Plano de tratamento</span>
-              <span className={styles.drawerInfoValue} style={{ color: patient.inTreatmentPlan ? '#1D4ED8' : 'var(--text-muted)' }}>
+              <span className={styles.drawerInfoValue} style={{ color: patient.inTreatmentPlan ? '#001F3F' : 'var(--text-muted)' }}>
                 {patient.inTreatmentPlan ? 'Ativo' : 'Sem plano'}
               </span>
             </div>

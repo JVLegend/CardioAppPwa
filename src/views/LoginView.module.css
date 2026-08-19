@@ -22,7 +22,7 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
-  box-shadow: 0 8px 32px rgba(180, 35, 60, 0.24);
+  box-shadow: 0 8px 32px rgba(197, 160, 80, 0.24);
 }
 
 .title {
@@ -95,7 +95,7 @@
   font-weight: 600;
   letter-spacing: -0.2px;
   transition: all 0.2s;
-  box-shadow: 0 6px 18px rgba(180, 35, 60, 0.22);
+  box-shadow: 0 6px 18px rgba(197, 160, 80, 0.22);
 }
 
 .button:active {

@@ -167,7 +167,7 @@
   width: 100%;
   padding: 16px;
   background: transparent;
-  border: 1px solid rgba(196, 18, 48, 0.35);
+  border: 1px solid rgba(197, 160, 80, 0.35);
   border-radius: var(--radius-lg);
   font-size: 16px;
   font-weight: 600;
@@ -175,7 +175,7 @@
   margin-top: 8px;
   cursor: pointer;
 }
-.deleteBtn:active { background: rgba(196, 18, 48, 0.06); }
+.deleteBtn:active { background: rgba(197, 160, 80, 0.06); }
 
 .errorText {
   color: var(--cardio-red);
@@ -188,7 +188,7 @@
 .confirmOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(50,21,28,0.45);
+  background: rgba(10, 22, 40,0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -214,8 +214,8 @@
   border: 0;
   cursor: pointer;
 }
-.cancelBtn { background: var(--bg-card-hover, #FDECEF); color: var(--text-primary); }
-.dangerBtn { background: var(--cardio-red, #C41230); color: white; }
+.cancelBtn { background: var(--bg-card-hover, #EEF2F6); color: var(--text-primary); }
+.dangerBtn { background: var(--cardio-red, #C5A050); color: white; }
 .cancelBtn:disabled, .dangerBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .titleBar {
@@ -228,7 +228,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(196,18,48,0.08);
+  background: rgba(197, 160, 80,0.08);
   color: var(--cardio-red);
   border: 0;
   padding: 8px 14px;
@@ -237,4 +237,4 @@
   font-weight: 600;
   cursor: pointer;
 }
-.headerSignOut:active { background: rgba(196,18,48,0.14); }
+.headerSignOut:active { background: rgba(197, 160, 80,0.14); }

@@ -8,13 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Kardia App',
-        short_name: 'Kardia App',
+        name: 'KPS Cardio',
+        short_name: 'KPS Cardio',
         description: 'Monitoramento cardiovascular',
-        theme_color: '#FFF7F8',
-        background_color: '#FFF7F8',
+        theme_color: '#0A1628',
+        background_color: '#F7F9FC',
         lang: 'pt-BR',
         display: 'standalone',
         orientation: 'portrait',

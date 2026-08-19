@@ -19,7 +19,7 @@
 }
 
 .infoCard {
-  background: rgba(180, 35, 60, 0.08);
+  background: rgba(197, 160, 80, 0.08);
   border-radius: var(--radius-lg);
   padding: 16px 20px;
   display: flex;
@@ -73,7 +73,7 @@
   font-weight: 600;
   margin-bottom: 16px;
   transition: all 0.15s;
-  box-shadow: 0 6px 18px rgba(180, 35, 60, 0.22);
+  box-shadow: 0 6px 18px rgba(197, 160, 80, 0.22);
 }
 
 .scanBtn:active { transform: scale(0.98); }

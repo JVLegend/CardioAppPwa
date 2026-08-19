@@ -56,7 +56,7 @@
 .tone_coral { border-left-color: var(--casal-red); }
 .tone_plum { border-left-color: var(--casal-red-deep); }
 .tone_green { border-left-color: var(--cardio-green); }
-.tone_amber { border-left-color: #B4233C; }
+.tone_amber { border-left-color: #C5A050; }
 
 .kpiValue {
   font-size: 28px;
@@ -76,8 +76,8 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  background: linear-gradient(135deg, rgba(180, 35, 60, 0.08), rgba(114, 21, 43, 0.06));
-  border: 1px solid rgba(180, 35, 60, 0.2);
+  background: linear-gradient(135deg, rgba(197, 160, 80, 0.08), rgba(10, 22, 40, 0.06));
+  border: 1px solid rgba(197, 160, 80, 0.2);
   border-radius: var(--radius);
   padding: 14px 16px;
   width: 100%;
@@ -88,8 +88,8 @@
   transition: background 0.15s;
 }
 
-.alertCard:hover { background: rgba(180, 35, 60, 0.12); }
-.alertActive { background: rgba(180, 35, 60, 0.18); }
+.alertCard:hover { background: rgba(197, 160, 80, 0.12); }
+.alertActive { background: rgba(197, 160, 80, 0.18); }
 
 .alertIcon {
   width: 36px;
@@ -220,7 +220,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--casal-red-deep), #8F2948);
+  background: linear-gradient(135deg, var(--kps-navy), var(--kps-navy-soft));
   color: #fff;
   font-weight: 600;
   display: inline-flex;
@@ -249,8 +249,8 @@
 }
 
 .tagGreen { background: rgba(22, 163, 74, 0.1); color: var(--cardio-green); }
-.tagCoral { background: rgba(180, 35, 60, 0.1); color: var(--casal-red); }
-.tagAmber { background: rgba(180, 35, 60, 0.1); color: #B4233C; }
+.tagCoral { background: rgba(197, 160, 80, 0.1); color: var(--casal-red); }
+.tagAmber { background: rgba(197, 160, 80, 0.1); color: #C5A050; }
 
 .chevron {
   font-size: 20px;
@@ -262,7 +262,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(114, 21, 43, 0.45);
+  background: rgba(10, 22, 40, 0.45);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex;
@@ -308,7 +308,7 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--casal-red-deep), #8F2948);
+  background: linear-gradient(135deg, var(--kps-navy), var(--kps-navy-soft));
   color: #fff;
   font-size: 22px;
   font-weight: 600;
@@ -482,7 +482,7 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 13.5px;
-  box-shadow: 0 4px 12px rgba(180, 35, 60, 0.22);
+  box-shadow: 0 4px 12px rgba(197, 160, 80, 0.22);
 }
 
 .btnPrimary:disabled {

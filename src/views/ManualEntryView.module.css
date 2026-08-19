@@ -147,7 +147,7 @@
   font-weight: 600;
   letter-spacing: -0.2px;
   transition: all 0.15s;
-  box-shadow: 0 6px 18px rgba(180, 35, 60, 0.22);
+  box-shadow: 0 6px 18px rgba(197, 160, 80, 0.22);
 }
 
 .saveBtn:active {

@@ -19,7 +19,7 @@ const tabs: { id: Tab; label: string }[] = [
 ]
 
 const ACTIVE = 'var(--cardio-red)'
-const INACTIVE = 'rgba(50,21,28,0.3)'
+const INACTIVE = 'rgba(10, 22, 40,0.3)'
 
 const tabIcons: Record<Tab, (active: boolean) => JSX.Element> = {
   home: (a) => (

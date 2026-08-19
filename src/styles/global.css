@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Sora:wght@300;400;500;600;700&display=swap');
 
 * {
   margin: 0;
@@ -8,43 +8,53 @@
 }
 
 :root {
-  /* Paleta Kardia App — vinho, vermelho e rosa suave. */
-  --casal-red: #B4233C;
-  --casal-red-deep: #72152B;
-  --casal-red-bright: #D94F65;
-  --casal-red-soft: #FBE3E8;
-  --casal-rose: #FFF7F8;
-  --casal-red-pale: #FFF0F2;
-  --casal-warm-gray: #806C70;
+  /* Identidade KPS Apps: navy profundo, dourado e azul-gelo. */
+  --kps-navy: #0A1628;
+  --kps-navy-deep: #001F3F;
+  --kps-navy-soft: #122036;
+  --kps-gold: #C5A050;
+  --kps-gold-bright: #D4AF37;
+  --kps-gold-light: #E0B95C;
+  --kps-ice: #DCE3EB;
+  --kps-paper: #F7F9FC;
+  --kps-gold-pale: #FBF5E5;
 
-  /* Aliases de produto: todos os acentos principais permanecem na família vermelha. */
-  --cardio-red: var(--casal-red);
-  --cardio-red-alert: #9B1C31;
-  --cardio-blue: #1D4ED8;
+  /* Aliases legados mantidos para preservar os componentes existentes. */
+  --casal-red: var(--kps-gold);
+  --casal-red-deep: var(--kps-navy);
+  --casal-red-bright: var(--kps-gold-bright);
+  --casal-red-soft: #F1E7C8;
+  --casal-rose: var(--kps-paper);
+  --casal-red-pale: var(--kps-gold-pale);
+  --casal-warm-gray: #526174;
+
+  --cardio-red: var(--kps-gold);
+  --cardio-red-alert: var(--kps-navy-deep);
+  --cardio-blue: var(--kps-navy-deep);
   --cardio-green: #16A34A;
-  --cardio-warm: #C33C55;
-  --cardio-purple: #7C2D4A;
-  --cardio-yellow: var(--casal-red);
-  --cardio-teal: var(--casal-red-bright);
-  --cardio-pink: #C0265E;
+  --cardio-warm: var(--kps-gold-light);
+  --cardio-purple: var(--kps-navy-soft);
+  --cardio-yellow: var(--kps-gold);
+  --cardio-teal: var(--kps-gold-bright);
+  --cardio-pink: var(--kps-gold-light);
 
-  --bg-primary: var(--casal-rose);
+  --bg-primary: var(--kps-paper);
   --bg-secondary: #FFFFFF;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #FDECEF;
+  --bg-card-hover: #EEF2F6;
   --bg-elevated: #FFFFFF;
 
-  --text-primary: #32151C;
-  --text-secondary: rgba(50, 21, 28, 0.66);
-  --text-muted: rgba(50, 21, 28, 0.42);
+  --text-primary: var(--kps-navy);
+  --text-secondary: rgba(10, 22, 40, 0.72);
+  --text-muted: rgba(10, 22, 40, 0.48);
 
-  --border: rgba(114, 21, 43, 0.09);
-  --border-light: rgba(114, 21, 43, 0.15);
-  --separator: rgba(114, 21, 43, 0.06);
+  --border: rgba(10, 22, 40, 0.10);
+  --border-light: rgba(10, 22, 40, 0.16);
+  --separator: rgba(10, 22, 40, 0.08);
 
-  --shadow-sm: 0 1px 3px rgba(114, 21, 43, 0.08), 0 1px 2px rgba(114, 21, 43, 0.04);
-  --shadow-md: 0 4px 16px rgba(114, 21, 43, 0.11), 0 2px 4px rgba(114, 21, 43, 0.05);
-  --shadow-lg: 0 8px 32px rgba(114, 21, 43, 0.14), 0 4px 8px rgba(114, 21, 43, 0.06);
+  --shadow-sm: 0 1px 3px rgba(10, 22, 40, 0.08), 0 1px 2px rgba(10, 22, 40, 0.04);
+  --shadow-md: 0 4px 16px rgba(10, 22, 40, 0.11), 0 2px 4px rgba(10, 22, 40, 0.05);
+  --shadow-lg: 0 8px 32px rgba(10, 22, 40, 0.14), 0 4px 8px rgba(10, 22, 40, 0.06);
 
   --radius: 14px;
   --radius-lg: 18px;

@@ -389,7 +389,7 @@ export default function ControllerDashboardView() {
       <PatientManagementSection />
 
       <footer className={styles.footer}>
-        Kardia App · Painel da Operadora
+        KPS Cardio · Painel da Operadora
       </footer>
     </div>
   )

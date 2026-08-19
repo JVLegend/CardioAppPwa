@@ -104,7 +104,7 @@
   }
 
   .tabBar::before {
-    content: 'Kardia App';
+    content: 'KPS Cardio';
     font-family: 'Sora', sans-serif;
     font-size: 26px;
     font-weight: 600;
@@ -145,7 +145,7 @@
   }
 
   .active {
-    background: rgba(196, 18, 48, 0.08);
+    background: rgba(197, 160, 80, 0.08);
   }
 
   .active .tabLabel {

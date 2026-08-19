@@ -23,14 +23,14 @@ function classifyGlucose(value: number, context: MealContext): GlucoseClass {
   if (value < 70) return { label: 'Hipoglicemia', color: '#dc2626' }
   if (context === 'jejum' || context === 'pre_refeicao') {
     if (value <= 99) return { label: 'Normal', color: '#16a34a' }
-    if (value <= 125) return { label: 'Glicemia alterada', color: '#C6284A' }
-    if (value <= 180) return { label: 'Diabetes', color: '#B4233C' }
+    if (value <= 125) return { label: 'Glicemia alterada', color: '#A9822E' }
+    if (value <= 180) return { label: 'Diabetes', color: '#C5A050' }
     return { label: 'Muito alta', color: '#dc2626' }
   }
   // pós-refeição / aleatório
   if (value <= 139) return { label: 'Normal', color: '#16a34a' }
-  if (value <= 199) return { label: 'Tolerância alterada', color: '#C6284A' }
-  if (value <= 250) return { label: 'Diabetes', color: '#B4233C' }
+  if (value <= 199) return { label: 'Tolerância alterada', color: '#A9822E' }
+  if (value <= 250) return { label: 'Diabetes', color: '#C5A050' }
   return { label: 'Muito alta', color: '#dc2626' }
 }
 

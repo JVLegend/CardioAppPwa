@@ -117,7 +117,7 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: rgba(180, 35, 60, 0.12);
+  background: rgba(197, 160, 80, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -302,7 +302,7 @@
   gap: 10px;
   transition: all 0.15s;
   letter-spacing: -0.2px;
-  box-shadow: 0 6px 18px rgba(180, 35, 60, 0.22);
+  box-shadow: 0 6px 18px rgba(197, 160, 80, 0.22);
 }
 
 .primaryAction:active {

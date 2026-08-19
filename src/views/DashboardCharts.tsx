@@ -123,15 +123,15 @@ export default function DashboardCharts({ patients }: Props) {
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-                <CartesianGrid stroke="rgba(114, 21, 43,0.08)" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="label" fontSize={10} tickLine={false} axisLine={false} stroke="rgba(114, 21, 43,0.4)" />
-                <YAxis fontSize={10} tickLine={false} axisLine={false} stroke="rgba(114, 21, 43,0.4)" domain={[60, 180]} />
+                <CartesianGrid stroke="rgba(10, 22, 40,0.08)" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="label" fontSize={10} tickLine={false} axisLine={false} stroke="rgba(10, 22, 40,0.4)" />
+                <YAxis fontSize={10} tickLine={false} axisLine={false} stroke="rgba(10, 22, 40,0.4)" domain={[60, 180]} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 10, border: 0, boxShadow: '0 6px 24px rgba(114, 21, 43,0.12)' }}
+                  contentStyle={{ borderRadius: 10, border: 0, boxShadow: '0 6px 24px rgba(10, 22, 40,0.12)' }}
                   formatter={(v: number, name: string) => [`${v} mmHg`, name === 'systolic' ? 'Sistólica' : 'Diastólica']}
                 />
-                <Line type="monotone" dataKey="systolic" stroke="#B4233C" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-                <Line type="monotone" dataKey="diastolic" stroke="#4A1340" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="systolic" stroke="#C5A050" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="diastolic" stroke="#001F3F" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -149,14 +149,14 @@ export default function DashboardCharts({ patients }: Props) {
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-                <CartesianGrid stroke="rgba(114, 21, 43,0.08)" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="label" fontSize={10} tickLine={false} axisLine={false} stroke="rgba(114, 21, 43,0.4)" />
-                <YAxis fontSize={10} tickLine={false} axisLine={false} stroke="rgba(114, 21, 43,0.4)" domain={[40, 130]} />
+                <CartesianGrid stroke="rgba(10, 22, 40,0.08)" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="label" fontSize={10} tickLine={false} axisLine={false} stroke="rgba(10, 22, 40,0.4)" />
+                <YAxis fontSize={10} tickLine={false} axisLine={false} stroke="rgba(10, 22, 40,0.4)" domain={[40, 130]} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 10, border: 0, boxShadow: '0 6px 24px rgba(114, 21, 43,0.12)' }}
+                  contentStyle={{ borderRadius: 10, border: 0, boxShadow: '0 6px 24px rgba(10, 22, 40,0.12)' }}
                   formatter={(v: number) => [`${v} bpm`, 'FC média']}
                 />
-                <Line type="monotone" dataKey="hr" stroke="#4A1340" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="hr" stroke="#001F3F" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -174,11 +174,11 @@ export default function DashboardCharts({ patients }: Props) {
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={glucoseSeries} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-                <CartesianGrid stroke="rgba(114, 21, 43,0.08)" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="label" fontSize={10} tickLine={false} axisLine={false} stroke="rgba(114, 21, 43,0.4)" />
-                <YAxis fontSize={10} tickLine={false} axisLine={false} stroke="rgba(114, 21, 43,0.4)" domain={[60, 240]} />
+                <CartesianGrid stroke="rgba(10, 22, 40,0.08)" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="label" fontSize={10} tickLine={false} axisLine={false} stroke="rgba(10, 22, 40,0.4)" />
+                <YAxis fontSize={10} tickLine={false} axisLine={false} stroke="rgba(10, 22, 40,0.4)" domain={[60, 240]} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 10, border: 0, boxShadow: '0 6px 24px rgba(114, 21, 43,0.12)' }}
+                  contentStyle={{ borderRadius: 10, border: 0, boxShadow: '0 6px 24px rgba(10, 22, 40,0.12)' }}
                   formatter={(v: number, _name, item) => {
                     const payload = (item as { payload?: DailyGlucose })?.payload
                     const count = payload?.count ?? 0
@@ -188,7 +188,7 @@ export default function DashboardCharts({ patients }: Props) {
                     ]
                   }}
                 />
-                <Line type="monotone" dataKey="avg" stroke="#B4233C" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="avg" stroke="#C5A050" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
           )}

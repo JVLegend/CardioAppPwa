@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(114, 21, 43, 0.45);
+  background: rgba(10, 22, 40, 0.45);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex;
@@ -139,7 +139,7 @@
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(180, 35, 60, 0.22);
+  box-shadow: 0 6px 18px rgba(197, 160, 80, 0.22);
 }
 
 .primaryBtn:active {

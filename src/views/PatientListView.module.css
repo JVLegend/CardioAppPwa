@@ -83,7 +83,7 @@
   font-family: 'Sora', sans-serif;
   font-size: 10px;
   font-weight: 600;
-  background: #EEF2FF;
+  background: #EEF2F6;
   color: var(--casal-red-deep);
   padding: 2px 8px;
   border-radius: 10px;
@@ -97,14 +97,14 @@
 }
 
 .kpiCardTotal {
-  background: linear-gradient(135deg, var(--casal-red), #D94F65);
+  background: linear-gradient(135deg, var(--casal-red), #D4AF37);
   border-radius: var(--radius-lg);
   padding: 20px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  box-shadow: 0 6px 20px rgba(196, 18, 48, 0.28);
+  box-shadow: 0 6px 20px rgba(197, 160, 80, 0.28);
   cursor: pointer;
 }
 
@@ -191,8 +191,8 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: linear-gradient(135deg, rgba(196, 18, 48, 0.06), rgba(196, 18, 48, 0.02));
-  border: 1.5px solid rgba(196, 18, 48, 0.25);
+  background: linear-gradient(135deg, rgba(197, 160, 80, 0.06), rgba(197, 160, 80, 0.02));
+  border: 1.5px solid rgba(197, 160, 80, 0.25);
   border-radius: var(--radius);
   text-align: left;
 }
@@ -201,7 +201,7 @@
 
 .alertCardActive {
   border-color: var(--cardio-red);
-  background: rgba(196, 18, 48, 0.08);
+  background: rgba(197, 160, 80, 0.08);
 }
 
 .alertIconWrap {
@@ -212,7 +212,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(196, 18, 48, 0.35);
+  box-shadow: 0 2px 8px rgba(197, 160, 80, 0.35);
   flex-shrink: 0;
 }
 
@@ -252,7 +252,7 @@
   font-size: 12px;
   color: var(--cardio-red);
   font-weight: 500;
-  background: rgba(196, 18, 48, 0.06);
+  background: rgba(197, 160, 80, 0.06);
   padding: 4px 10px;
   border-radius: 12px;
 }
@@ -317,7 +317,7 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--casal-red), #D94F65);
+  background: linear-gradient(135deg, var(--casal-red), #D4AF37);
   color: white;
   font-size: 17px;
   font-weight: 700;
@@ -325,7 +325,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(196, 18, 48, 0.2);
+  box-shadow: 0 2px 8px rgba(197, 160, 80, 0.2);
 }
 
 .patientInfo { flex: 1; min-width: 0; }
@@ -356,7 +356,7 @@
 }
 
 .bpBadgeGreen { background: #F0FDF4; color: #16A34A; }
-.bpBadgeRed { background: rgba(180, 35, 60,0.08); color: #B4233C; }
+.bpBadgeRed { background: rgba(197, 160, 80,0.08); color: #C5A050; }
 
 .measureBadge {
   font-size: 11px;
@@ -366,7 +366,7 @@
 }
 
 .measureBadgeGreen { background: #F0FDF4; color: #16A34A; }
-.measureBadgeWarm { background: #FFF0F2; color: #B4233C; }
+.measureBadgeWarm { background: #FBF5E5; color: #C5A050; }
 
 /* Loading */
 .loadingRow {
@@ -472,14 +472,14 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--casal-red), #D94F65);
+  background: linear-gradient(135deg, var(--casal-red), #D4AF37);
   color: white;
   font-size: 22px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(196, 18, 48, 0.3);
+  box-shadow: 0 4px 12px rgba(197, 160, 80, 0.3);
   flex-shrink: 0;
 }
 
@@ -565,7 +565,7 @@
 .drawerReason {
   margin-top: 10px;
   padding: 10px 12px;
-  background: rgba(196, 18, 48, 0.06);
+  background: rgba(197, 160, 80, 0.06);
   border-radius: 10px;
   font-size: 13px;
   color: var(--cardio-red);
@@ -754,7 +754,7 @@
   color: white;
   font-size: 14px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(196, 18, 48, 0.3);
+  box-shadow: 0 2px 8px rgba(197, 160, 80, 0.3);
 }
 
 /* Communication */
@@ -770,12 +770,12 @@
   justify-content: center;
   gap: 8px;
   padding: 13px;
-  background: linear-gradient(135deg, var(--casal-red), #D94F65);
+  background: linear-gradient(135deg, var(--casal-red), #D4AF37);
   color: white;
   border-radius: var(--radius);
   font-size: 14px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(196, 18, 48, 0.3);
+  box-shadow: 0 2px 8px rgba(197, 160, 80, 0.3);
 }
 
 .pushBtn:active { transform: scale(0.97); }
@@ -988,7 +988,7 @@
   color: white;
   font-size: 15px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(196, 18, 48, 0.3);
+  box-shadow: 0 2px 8px rgba(197, 160, 80, 0.3);
 }
 
 /* ==========================
@@ -1023,7 +1023,7 @@
     inset: 0;
     pointer-events: none;
     background:
-      radial-gradient(ellipse 800px 400px at 0% 0%, rgba(196, 18, 48, 0.035), transparent 70%),
+      radial-gradient(ellipse 800px 400px at 0% 0%, rgba(197, 160, 80, 0.035), transparent 70%),
       radial-gradient(ellipse 600px 500px at 100% 100%, rgba(29, 78, 216, 0.025), transparent 70%);
     z-index: 0;
   }
@@ -1167,7 +1167,7 @@
   }
 
   .kpiCardTotal:hover {
-    border-color: rgba(196, 18, 48, 0.4);
+    border-color: rgba(197, 160, 80, 0.4);
     box-shadow: var(--shadow-md);
     transform: none;
   }
@@ -1318,7 +1318,7 @@
     padding: 22px 28px 22px 72px;
     margin-top: 0;
     position: relative;
-    box-shadow: 0 8px 28px rgba(196, 18, 48, 0.1);
+    box-shadow: 0 8px 28px rgba(197, 160, 80, 0.1);
     gap: 0;
   }
 
@@ -1371,7 +1371,7 @@
   }
 
   .alertCardActive {
-    background: rgba(196, 18, 48, 0.04);
+    background: rgba(197, 160, 80, 0.04);
   }
 
   /* ===== Patient list: data table ===== */
@@ -1727,7 +1727,7 @@
   .drawerReason {
     border-radius: 0;
     border-left: 2px solid var(--cardio-red);
-    background: rgba(196, 18, 48, 0.05);
+    background: rgba(197, 160, 80, 0.05);
     margin-top: 18px;
     padding: 14px 18px;
     font-size: 13px;
@@ -1836,14 +1836,14 @@
     font-weight: 700;
     padding: 14px;
     background: var(--cardio-red);
-    box-shadow: 0 4px 16px rgba(196, 18, 48, 0.24);
+    box-shadow: 0 4px 16px rgba(197, 160, 80, 0.24);
     cursor: pointer;
     transition: box-shadow 0.2s, transform 0.2s;
   }
 
   .editSave:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(196, 18, 48, 0.32);
+    box-shadow: 0 6px 20px rgba(197, 160, 80, 0.32);
   }
 
   .editCancel {
@@ -1869,7 +1869,7 @@
     letter-spacing: 0.24em;
     text-transform: uppercase;
     font-weight: 700;
-    box-shadow: 0 6px 18px rgba(196, 18, 48, 0.26);
+    box-shadow: 0 6px 18px rgba(197, 160, 80, 0.26);
     cursor: pointer;
     transition: box-shadow 0.2s, transform 0.2s;
     gap: 10px;
@@ -1877,7 +1877,7 @@
 
   .pushBtn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 8px 22px rgba(196, 18, 48, 0.34);
+    box-shadow: 0 8px 22px rgba(197, 160, 80, 0.34);
   }
 
   .whatsBtn {
@@ -1976,7 +1976,7 @@
 
   .pushInput:focus, .pushTextarea:focus {
     border-color: var(--cardio-red);
-    box-shadow: 0 0 0 3px rgba(196, 18, 48, 0.08);
+    box-shadow: 0 0 0 3px rgba(197, 160, 80, 0.08);
   }
 
   /* Patient bar (when viewing patient profile) */

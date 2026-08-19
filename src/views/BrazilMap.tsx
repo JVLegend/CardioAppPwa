@@ -10,7 +10,7 @@ interface Props {
   onSelect?: (sigla: string | null) => void
 }
 
-const BASE = '232, 78, 27' // coral LeveSaúde como rgba
+const BASE = '197, 160, 80' // dourado KPS como rgba
 
 export default function BrazilMap({ counts, selected, onSelect }: Props) {
   const max = useMemo(
