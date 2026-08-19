@@ -17,18 +17,12 @@
   width: 88px;
   height: 88px;
   border-radius: 22px;
-  background: linear-gradient(135deg, var(--casal-red) 0%, var(--casal-red-bright) 100%);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
-  box-shadow: 0 8px 32px rgba(180, 35, 60, 0.32);
-}
-
-.logoSvg {
-  width: 48px;
-  height: 48px;
-  filter: brightness(10);
+  box-shadow: 0 8px 32px rgba(180, 35, 60, 0.24);
 }
 
 .title {

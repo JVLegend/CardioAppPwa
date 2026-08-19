@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import KardiaLogo from './KardiaLogo'
 import styles from './LoginView.module.css'
 
 export default function LoginView() {
@@ -16,12 +17,7 @@ export default function LoginView() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.logoRing}>
-          <svg viewBox="0 0 48 48" className={styles.logoSvg}>
-            <path
-              d="M24 8C18 8 14 12 14 16c0 8 10 20 10 20s10-12 10-20c0-4-4-8-10-8z"
-              fill="var(--cardio-red)"
-            />
-          </svg>
+          <KardiaLogo size={88} variant="mark" />
         </div>
         <h1 className={styles.title}>Kardia App</h1>
         <p className={styles.subtitle}>Monitoramento cardiovascular</p>

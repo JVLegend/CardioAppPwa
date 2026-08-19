@@ -1,5 +1,7 @@
 .wrapper {
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
   line-height: 0;
+  overflow: visible;
 }

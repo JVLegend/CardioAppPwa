@@ -1,3 +1,4 @@
+import KardiaLogo from './KardiaLogo'
 import styles from './DisclaimerView.module.css'
 
 interface Props {
@@ -12,10 +13,7 @@ export default function DisclaimerView({ variant, onAccept, onClose }: Props) {
       <div className={styles.sheet}>
         <header className={styles.header}>
           <div className={styles.icon}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
-                 stroke="var(--cardio-red)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z" />
-            </svg>
+            <KardiaLogo size={72} variant="mark" />
           </div>
           <h1 className={styles.title}>
             {variant === 'onboarding' ? 'Bem-vindo ao Kardia App' : 'Aviso médico'}

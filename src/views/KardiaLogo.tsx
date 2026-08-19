@@ -1,55 +1,82 @@
+import { useId } from 'react'
 import styles from './KardiaLogo.module.css'
 
 interface Props {
   size?: number
+  variant?: 'full' | 'mark'
 }
 
 /**
- * Marca tipográfica do Kardia App com um arco em vermelho-cereja.
+ * Marca do Kardia App: coração + pulso em um símbolo proprietário.
  * O SVG fica no código para funcionar também offline e em telas pequenas.
  */
-export default function KardiaLogo({ size = 32 }: Props) {
+export default function KardiaLogo({ size = 32, variant = 'full' }: Props) {
   const h = size
+  const markOnly = variant === 'mark'
+  const width = markOnly ? size : Math.round(size * (330 / 88))
+  const gradientId = `kardia-gradient-${useId().replace(/:/g, '')}`
+
   return (
-    <div className={styles.wrapper} style={{ height: h }}>
+    <div className={styles.wrapper} style={{ height: h, width }}>
       <svg
-        viewBox="0 0 260 70"
+        viewBox={markOnly ? '0 0 88 88' : '0 0 330 88'}
+        width={width}
         height={h}
         xmlns="http://www.w3.org/2000/svg"
         role="img"
         aria-label="Kardia App"
+        focusable="false"
       >
-        {/* Arco vermelho sobre o nome */}
+        <defs>
+          <linearGradient id={gradientId} x1="8" y1="4" x2="84" y2="84" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stopColor="var(--casal-red-deep)" />
+            <stop offset="1" stopColor="var(--casal-red-bright)" />
+          </linearGradient>
+        </defs>
+
+        {/* Símbolo: bloco arredondado com coração e linha de pulso */}
+        <rect x="4" y="4" width="80" height="80" rx="27" fill={`url(#${gradientId})`} />
         <path
-          d="M 12 28 Q 62 -2 112 28"
-          fill="none"
-          stroke="var(--casal-red-bright)"
-          strokeWidth="6"
-          strokeLinecap="round"
+          d="M44 72C38 65 18 53 18 35c0-10 7-17 16-17 5 0 8 2 10 6 2-4 5-6 10-6 9 0 16 7 16 17 0 18-20 30-26 37Z"
+          fill="var(--casal-rose)"
         />
-        {/* Nome do produto */}
-        <text
-          x="0"
-          y="58"
-          fontSize="37"
-          fontWeight="700"
-          fontFamily="Sora, sans-serif"
-          fill="var(--casal-red-deep)"
-          letterSpacing="-1"
-        >
-          Kardia
-        </text>
-        {/* Segunda parte da marca */}
-        <text
-          x="142"
-          y="58"
-          fontSize="26"
-          fontWeight="500"
-          fontFamily="Sora, sans-serif"
-          fill="var(--casal-red)"
-        >
-          App
-        </text>
+        <path
+          d="M21 44h11l5-11 8 22 8-17 5 6h10"
+          fill="none"
+          stroke="var(--casal-red-deep)"
+          strokeWidth="4.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {!markOnly && (
+          <>
+            {/* Wordmark */}
+            <text
+              x="104"
+              y="55"
+              fontSize="38"
+              fontWeight="800"
+              fontFamily="Sora, sans-serif"
+              fill="var(--casal-red-deep)"
+              letterSpacing="-1.2"
+            >
+              Kardia
+            </text>
+            <text
+              x="238"
+              y="55"
+              fontSize="28"
+              fontWeight="600"
+              fontFamily="Sora, sans-serif"
+              fill="var(--casal-red-bright)"
+              letterSpacing="-0.8"
+            >
+              App
+            </text>
+            <circle cx="314" cy="49" r="4" fill="var(--casal-red-bright)" />
+          </>
+        )}
       </svg>
     </div>
   )
