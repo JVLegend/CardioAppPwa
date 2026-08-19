@@ -183,6 +183,17 @@
   accent-color: var(--kps-gold);
 }
 
+.roleHint {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+  background: var(--kps-gold-pale);
+  color: var(--text-secondary);
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
 .primaryButton,
 .secondaryButton {
   min-height: 44px;

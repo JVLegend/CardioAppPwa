@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useAuth, type CreatePatientProfileInput } from '../contexts/AuthContext'
-import type { Patient, PlanStatus } from '../models/types'
+import type { Patient, PlanStatus, UserRole } from '../models/types'
 import * as db from '../services/database'
 import styles from './AdminProfilesView.module.css'
 
@@ -12,6 +12,7 @@ interface FormState {
   name: string
   email: string
   password: string
+  role: UserRole
   phone: string
   birthDate: string
   comorbidities: string
@@ -23,11 +24,18 @@ const EMPTY_FORM: FormState = {
   name: '',
   email: '',
   password: '',
+  role: 'patient',
   phone: '',
   birthDate: '',
   comorbidities: '',
   planStatus: 'pendente',
   inTreatmentPlan: false,
+}
+
+function roleLabel(role: UserRole) {
+  if (role === 'operator') return 'Médico'
+  if (role === 'controller') return 'Gestora'
+  return 'Paciente'
 }
 
 export default function AdminProfilesView({ onBack }: Props) {
@@ -43,10 +51,10 @@ export default function AdminProfilesView({ onBack }: Props) {
     if (!currentPatient) return
     setLoadingProfiles(true)
     try {
-      const list = await db.fetchPatientsByOperator(currentPatient.id)
+      const list = await db.db.patients.toArray()
       setProfiles(
         list
-          .filter((profile) => profile.role === 'patient')
+          .filter((profile) => profile.id !== currentPatient.id)
           .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
       )
     } finally {
@@ -72,14 +80,18 @@ export default function AdminProfilesView({ onBack }: Props) {
       name: form.name,
       email: form.email,
       password: form.password,
+      role: form.role,
       phone: form.phone,
-      birthDate: form.birthDate,
-      comorbidities: form.comorbidities
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean),
-      planStatus: form.planStatus,
-      inTreatmentPlan: form.inTreatmentPlan,
+      birthDate: form.role === 'patient' ? form.birthDate : undefined,
+      comorbidities:
+        form.role === 'patient'
+          ? form.comorbidities
+              .split(',')
+              .map((item) => item.trim())
+              .filter(Boolean)
+          : undefined,
+      planStatus: form.role === 'patient' ? form.planStatus : undefined,
+      inTreatmentPlan: form.role === 'patient' ? form.inTreatmentPlan : undefined,
     }
 
     try {
@@ -113,9 +125,9 @@ export default function AdminProfilesView({ onBack }: Props) {
         <div>
           <button className={styles.backButton} onClick={onBack}>← Voltar ao painel</button>
           <p className={styles.eyebrow}>Administração protegida</p>
-          <h1 className={styles.title}>Perfis de pacientes</h1>
+          <h1 className={styles.title}>Perfis de acesso</h1>
           <p className={styles.subtitle}>
-            Crie acessos para novos pacientes sem editar o código do aplicativo.
+            Crie acessos para pacientes, médicos e gestoras sem editar o código do aplicativo.
           </p>
         </div>
         <div className={styles.adminBadge}>{currentUserEmail}</div>
@@ -132,7 +144,7 @@ export default function AdminProfilesView({ onBack }: Props) {
           </div>
 
           <p className={styles.notice}>
-            O perfil será vinculado à operadora atual e poderá entrar usando o e-mail e a senha inicial definidos abaixo.
+            O perfil poderá entrar usando o e-mail e a senha inicial definidos abaixo. Dados clínicos aparecem somente para pacientes.
           </p>
 
           <form className={styles.form} onSubmit={handleSubmit}>
@@ -175,6 +187,17 @@ export default function AdminProfilesView({ onBack }: Props) {
 
             <div className={styles.formGrid}>
               <label className={styles.field}>
+                <span>Tipo de perfil *</span>
+                <select
+                  value={form.role}
+                  onChange={(event) => updateField('role', event.target.value as UserRole)}
+                >
+                  <option value="patient">Paciente</option>
+                  <option value="operator">Médico</option>
+                  <option value="controller">Gestora</option>
+                </select>
+              </label>
+              <label className={styles.field}>
                 <span>Telefone</span>
                 <input
                   value={form.phone}
@@ -183,47 +206,57 @@ export default function AdminProfilesView({ onBack }: Props) {
                   autoComplete="tel"
                 />
               </label>
-              <label className={styles.field}>
-                <span>Data de nascimento</span>
-                <input
-                  type="date"
-                  value={form.birthDate}
-                  onChange={(event) => updateField('birthDate', event.target.value)}
-                />
-              </label>
             </div>
 
-            <label className={styles.field}>
-              <span>Comorbidades</span>
-              <input
-                value={form.comorbidities}
-                onChange={(event) => updateField('comorbidities', event.target.value)}
-                placeholder="Hipertensão, diabetes..."
-              />
-              <small>Separe mais de uma por vírgula.</small>
-            </label>
+            {form.role === 'patient' && (
+              <>
+                <label className={styles.field}>
+                  <span>Data de nascimento</span>
+                  <input
+                    type="date"
+                    value={form.birthDate}
+                    onChange={(event) => updateField('birthDate', event.target.value)}
+                  />
+                </label>
+                <label className={styles.field}>
+                  <span>Comorbidades</span>
+                  <input
+                    value={form.comorbidities}
+                    onChange={(event) => updateField('comorbidities', event.target.value)}
+                    placeholder="Hipertensão, diabetes..."
+                  />
+                  <small>Separe mais de uma por vírgula.</small>
+                </label>
 
-            <div className={styles.formGrid}>
-              <label className={styles.field}>
-                <span>Status do plano</span>
-                <select
-                  value={form.planStatus}
-                  onChange={(event) => updateField('planStatus', event.target.value as PlanStatus)}
-                >
-                  <option value="pendente">Pendente</option>
-                  <option value="adimplente">Adimplente</option>
-                  <option value="inadimplente">Inadimplente</option>
-                </select>
-              </label>
-              <label className={styles.checkField}>
-                <input
-                  type="checkbox"
-                  checked={form.inTreatmentPlan}
-                  onChange={(event) => updateField('inTreatmentPlan', event.target.checked)}
-                />
-                <span>Incluir em plano de tratamento</span>
-              </label>
-            </div>
+                <div className={styles.formGrid}>
+                  <label className={styles.field}>
+                    <span>Status do plano</span>
+                    <select
+                      value={form.planStatus}
+                      onChange={(event) => updateField('planStatus', event.target.value as PlanStatus)}
+                    >
+                      <option value="pendente">Pendente</option>
+                      <option value="adimplente">Adimplente</option>
+                      <option value="inadimplente">Inadimplente</option>
+                    </select>
+                  </label>
+                  <label className={styles.checkField}>
+                    <input
+                      type="checkbox"
+                      checked={form.inTreatmentPlan}
+                      onChange={(event) => updateField('inTreatmentPlan', event.target.checked)}
+                    />
+                    <span>Incluir em plano de tratamento</span>
+                  </label>
+                </div>
+              </>
+            )}
+
+            {form.role !== 'patient' && (
+              <div className={styles.roleHint}>
+                Este acesso será criado como <strong>{roleLabel(form.role).toLowerCase()}</strong>.
+              </div>
+            )}
 
             {error && <div className={styles.error}>{error}</div>}
             {createdProfile && (
@@ -233,7 +266,7 @@ export default function AdminProfilesView({ onBack }: Props) {
             )}
 
             <button className={styles.primaryButton} type="submit" disabled={saving}>
-              {saving ? 'Criando perfil...' : 'Criar perfil de paciente'}
+              {saving ? 'Criando perfil...' : `Criar perfil de ${roleLabel(form.role).toLowerCase()}`}
             </button>
           </form>
         </section>
@@ -250,7 +283,7 @@ export default function AdminProfilesView({ onBack }: Props) {
           {loadingProfiles ? (
             <div className={styles.loading}>Carregando perfis...</div>
           ) : profiles.length === 0 ? (
-            <div className={styles.empty}>Nenhum paciente cadastrado ainda.</div>
+            <div className={styles.empty}>Nenhum perfil cadastrado ainda.</div>
           ) : (
             <div className={styles.profileList}>
               {profiles.map((profile) => (
@@ -261,7 +294,7 @@ export default function AdminProfilesView({ onBack }: Props) {
                     <span>{profile.email ?? 'E-mail não informado'}</span>
                     {profile.phone && <small>{profile.phone}</small>}
                   </div>
-                  <span className={styles.profileStatus}>Paciente</span>
+                  <span className={styles.profileStatus}>{roleLabel(profile.role)}</span>
                 </article>
               ))}
             </div>
@@ -270,7 +303,7 @@ export default function AdminProfilesView({ onBack }: Props) {
       </div>
 
       <p className={styles.footerNote}>
-        O cadastro é salvo nesta instalação do KPS Cardio e fica disponível para o acesso do paciente neste PWA.
+        O cadastro é salvo nesta instalação do KPS Cardio e fica disponível para o acesso correspondente neste PWA.
       </p>
     </main>
   )

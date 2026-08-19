@@ -20,6 +20,7 @@ export interface CreatePatientProfileInput {
   name: string
   email: string
   password: string
+  role: UserRole
   phone?: string
   birthDate?: string
   comorbidities?: string[]
@@ -116,7 +117,7 @@ function readDynamicUsers(): HardcodedUser[] {
         typeof record.password === 'string' &&
         typeof record.userId === 'string' &&
         typeof record.name === 'string' &&
-        record.role === 'patient' &&
+        (record.role === 'patient' || record.role === 'operator' || record.role === 'controller') &&
         typeof record.patientId === 'string'
       )
     })
@@ -278,8 +279,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const name = input.name.trim()
     const email = input.email.trim().toLowerCase()
     const password = input.password
+    const role = input.role
     if (!name || !email || !password) {
       throw new Error('Preencha nome, e-mail e senha inicial.')
+    }
+    if (role !== 'patient' && role !== 'operator' && role !== 'controller') {
+      throw new Error('Escolha um tipo de perfil válido.')
     }
     if (password.length < 6) {
       throw new Error('A senha inicial precisa ter pelo menos 6 caracteres.')
@@ -290,15 +295,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const userId = `profile-user-${crypto.randomUUID()}`
     const patientId = `patient-${crypto.randomUUID()}`
-    const operatorId = currentPatient?.id ?? OPERATOR_KNEIP_ID
+    const operatorId = role === 'patient' ? (currentPatient?.id ?? OPERATOR_KNEIP_ID) : ''
     const user: HardcodedUser = {
       email,
       password,
       userId,
       name,
-      role: 'patient',
+      role,
       patientId,
-      operatorPatientId: operatorId,
+      operatorPatientId: role === 'patient' ? operatorId : undefined,
       phone: input.phone?.trim() || undefined,
       comorbidities: input.comorbidities,
       planStatus: input.planStatus,
@@ -312,7 +317,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userId,
       email,
       name,
-      role: 'patient',
+      role,
       birthDate: input.birthDate || undefined,
       phone: input.phone?.trim() || undefined,
       comorbidities: input.comorbidities,
