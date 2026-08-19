@@ -9,7 +9,7 @@ import type { Patient, Measurement, BPAlert } from '../models/types'
 import { BRAZIL_STATES } from '../data/brazilStates'
 import DashboardCharts from './DashboardCharts'
 import BrazilMap from './BrazilMap'
-import CasalCardioLogo from './CasalCardioLogo'
+import KardiaLogo from './KardiaLogo'
 import PatientManagementSection from './PatientManagementSection'
 import styles from './ControllerDashboardView.module.css'
 
@@ -235,7 +235,7 @@ export default function ControllerDashboardView() {
       {/* HEADER — compacto, logo à esquerda */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <CasalCardioLogo size={40} />
+          <KardiaLogo size={40} />
           <div>
             <div className={styles.eyebrow}>Painel da Operadora</div>
             <h1 className={styles.title}>Olá, {currentPatient?.name ?? 'Doutor(a)'}</h1>
@@ -389,7 +389,7 @@ export default function ControllerDashboardView() {
       <PatientManagementSection />
 
       <footer className={styles.footer}>
-        CasalCardioApp · Painel da Operadora
+        Kardia App · Painel da Operadora
       </footer>
     </div>
   )

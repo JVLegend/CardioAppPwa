@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'CasalCardioApp',
-        short_name: 'CasalCardioApp',
+        name: 'Kardia App',
+        short_name: 'Kardia App',
         description: 'Monitoramento cardiovascular',
         theme_color: '#FFF7F8',
         background_color: '#FFF7F8',

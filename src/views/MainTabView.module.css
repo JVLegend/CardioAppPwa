@@ -104,7 +104,7 @@
   }
 
   .tabBar::before {
-    content: 'CasalCardioApp';
+    content: 'Kardia App';
     font-family: 'Sora', sans-serif;
     font-size: 26px;
     font-weight: 600;

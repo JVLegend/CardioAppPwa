@@ -18,7 +18,7 @@ export default function DisclaimerView({ variant, onAccept, onClose }: Props) {
             </svg>
           </div>
           <h1 className={styles.title}>
-            {variant === 'onboarding' ? 'Bem-vindo ao CasalCardioApp' : 'Aviso médico'}
+            {variant === 'onboarding' ? 'Bem-vindo ao Kardia App' : 'Aviso médico'}
           </h1>
           {variant === 'onboarding' && (
             <p className={styles.subtitle}>Antes de começar, leia este aviso.</p>
@@ -27,7 +27,7 @@ export default function DisclaimerView({ variant, onAccept, onClose }: Props) {
 
         <div className={styles.body}>
           <p>
-            O CasalCardioApp é uma ferramenta de <strong>monitoramento e registro</strong>{' '}
+            O Kardia App é uma ferramenta de <strong>monitoramento e registro</strong>{' '}
             de medições de pressão arterial. Ele <strong>não substitui</strong>{' '}
             consulta, diagnóstico ou tratamento médico.
           </p>
