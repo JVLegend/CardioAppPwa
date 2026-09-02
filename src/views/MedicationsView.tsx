@@ -68,7 +68,7 @@ class MissingGeminiKeyError extends Error {
 async function analyzePrescription(base64: string, mimeType: string): Promise<Partial<{ name: string; dose: string; frequency: string; notes: string }>> {
   const isPdf = mimeType === 'application/pdf'
 
-  // gemini-2.5-flash aceita imagens (image/*) e PDFs (application/pdf) inline.
+  // O modelo multimodal do Gemini aceita imagens (image/*) e PDFs (application/pdf) inline.
   const data = await generateWithGemini({
         purpose: 'medication_ocr',
         contents: [

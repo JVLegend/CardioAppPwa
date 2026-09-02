@@ -35,6 +35,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
 const port = Number(process.env.PORT || 3000)
 const databaseUrl = process.env.DATABASE_URL
+const geminiModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite'
 const secureCookies = process.env.COOKIE_SECURE !== 'false'
   && (process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT_ID))
 
@@ -681,7 +682,7 @@ app.post('/api/ai/generate', aiRateLimit, async (req, res, next) => {
     if (!purposes.has(purpose)) return res.status(403).json({ error: 'Uso de IA não permitido para este perfil' })
     if (!Array.isArray(contents)) return res.status(400).json({ error: 'Conteúdo inválido' })
     if (JSON.stringify(contents).length > 10_000_000) return res.status(413).json({ error: 'Imagem ou conteúdo acima do limite permitido' })
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents, generationConfig }), signal: AbortSignal.timeout(30_000),
     })
     const data = await response.json()
