@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { Measurement, BPAlert, Medication, MeasurementSource } from '../models/types'
+import type { Measurement, BPAlert, Medication, MeasurementSource, GlucoseMeasurement } from '../models/types'
 import { useAuth } from '../contexts/AuthContext'
 import * as db from '../services/database'
 import { evaluateAlerts, sendBrowserNotification } from '../services/alertService'
@@ -9,6 +9,7 @@ export function usePatientData() {
   const { currentPatient } = useAuth()
   const [allMeasurements, setAllMeasurements] = useState<Measurement[]>([])
   const [todayMeasurements, setTodayMeasurements] = useState<Measurement[]>([])
+  const [allGlucoseMeasurements, setAllGlucoseMeasurements] = useState<GlucoseMeasurement[]>([])
   const [streak, setStreak] = useState(0)
   const [activeAlerts, setActiveAlerts] = useState<BPAlert[]>([])
   const [medications, setMedications] = useState<Medication[]>([])
@@ -20,15 +21,18 @@ export function usePatientData() {
     if (!patientId) return
     setIsLoading(true)
     try {
-      const [all, today, s, alerts, meds] = await Promise.all([
+      await pullFromServer()
+      const [all, today, glucose, s, alerts, meds] = await Promise.all([
         db.fetchAllMeasurements(patientId),
         db.fetchTodayMeasurements(patientId),
+        db.fetchAllGlucose(patientId),
         db.fetchStreak(patientId),
         db.fetchActiveAlerts(patientId),
         db.fetchMedications(patientId),
       ])
       setAllMeasurements(all)
       setTodayMeasurements(today)
+      setAllGlucoseMeasurements(glucose)
       setStreak(s)
       setActiveAlerts(alerts)
       setMedications(meds)
@@ -121,6 +125,7 @@ export function usePatientData() {
 
   return {
     allMeasurements,
+    allGlucoseMeasurements,
     todayMeasurements,
     streak,
     activeAlerts,

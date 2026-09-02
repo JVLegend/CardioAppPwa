@@ -5,6 +5,13 @@ import { persistEntity } from '../services/syncEngine'
 import { readGlucoseFromImage, MissingGeminiKeyError } from '../services/glucoseOcr'
 import type { GlucoseMeasurement, MealContext, MeasurementSource } from '../models/types'
 import AppPageHeader from './AppPageHeader'
+import {
+  classifyGlucose,
+  MAX_GLUCOSE_MG_DL,
+  MIN_GLUCOSE_MG_DL,
+  MMOL_TO_MG_DL,
+  type GlucoseUnit,
+} from '../config/glucose'
 import styles from './GlucoseView.module.css'
 
 const contextOptions: { id: MealContext; label: string }[] = [
@@ -13,32 +20,6 @@ const contextOptions: { id: MealContext; label: string }[] = [
   { id: 'pos_refeicao', label: 'Pós-refeição' },
   { id: 'aleatorio', label: 'Aleatório' },
 ]
-
-type GlucoseUnit = 'mg/dL' | 'mmol/L'
-const MIN_GLUCOSE_MG_DL = 10
-const MAX_GLUCOSE_MG_DL = 800
-const MMOL_TO_MG_DL = 18
-
-interface GlucoseClass {
-  label: string
-  color: string
-}
-
-function classifyGlucose(value: number, context: MealContext): GlucoseClass {
-  // Faixas SBD/ADA simplificadas (mg/dL).
-  if (value < 70) return { label: 'Hipoglicemia', color: '#dc2626' }
-  if (context === 'jejum' || context === 'pre_refeicao') {
-    if (value <= 99) return { label: 'Normal', color: '#16a34a' }
-    if (value <= 125) return { label: 'Glicemia alterada', color: '#A9822E' }
-    if (value <= 180) return { label: 'Diabetes', color: '#C5A050' }
-    return { label: 'Muito alta', color: '#dc2626' }
-  }
-  // pós-refeição / aleatório
-  if (value <= 139) return { label: 'Normal', color: '#16a34a' }
-  if (value <= 199) return { label: 'Tolerância alterada', color: '#A9822E' }
-  if (value <= 250) return { label: 'Diabetes', color: '#C5A050' }
-  return { label: 'Muito alta', color: '#dc2626' }
-}
 
 export default function GlucoseView() {
   const { currentPatient } = useAuth()
@@ -53,8 +34,12 @@ export default function GlucoseView() {
   const [ocrError, setOcrError] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [pendingDelete, setPendingDelete] = useState<GlucoseMeasurement | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
   const cameraRef = useRef<HTMLInputElement>(null)
   const valueRef = useRef<HTMLInputElement>(null)
+  const deleteCancelRef = useRef<HTMLButtonElement>(null)
   const savingRef = useRef(false)
 
   const loadHistory = async () => {
@@ -70,6 +55,21 @@ export default function GlucoseView() {
       setTimeout(() => valueRef.current?.focus(), 50)
     }
   }, [showEntry, fromPhoto])
+
+  useEffect(() => {
+    if (!pendingDelete) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    deleteCancelRef.current?.focus()
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !deleting) setPendingDelete(null)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [pendingDelete, deleting])
 
   const enteredValue = Number(value) || 0
   const num = unit === 'mmol/L' ? Math.round(enteredValue * MMOL_TO_MG_DL) : enteredValue
@@ -172,14 +172,18 @@ export default function GlucoseView() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Apagar esta medição?')) return
-    setOcrError('')
+  const confirmDelete = async () => {
+    if (!pendingDelete || deleting) return
+    setDeleting(true)
+    setDeleteError('')
     try {
-      await persistEntity('glucoseMeasurement', id, 'delete', undefined, () => db.deleteGlucoseMeasurement(id))
+      await persistEntity('glucoseMeasurement', pendingDelete.id, 'delete', undefined, () => db.deleteGlucoseMeasurement(pendingDelete.id))
       await loadHistory()
+      setPendingDelete(null)
     } catch (error) {
-      setOcrError(error instanceof Error ? error.message : 'Não foi possível apagar a medição.')
+      setDeleteError(error instanceof Error ? error.message : 'Não foi possível apagar a medição.')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -363,11 +367,12 @@ export default function GlucoseView() {
                 ? date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
                 : date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
               return (
-                <div
+                <button
+                  type="button"
                   key={g.id}
                   className={styles.historyItem}
-                  onClick={() => handleDelete(g.id)}
-                  role="button"
+                  onClick={() => { setDeleteError(''); setPendingDelete(g) }}
+                  aria-label={`Glicemia ${g.value} mg/dL. Abrir opções`}
                 >
                   <span className={styles.historyDot} style={{ background: c.color }} />
                   <div className={styles.historyContent}>
@@ -381,12 +386,56 @@ export default function GlucoseView() {
                     </div>
                   </div>
                   <span className={styles.historyTime}>{timeStr}</span>
-                </div>
+                </button>
               )
             })}
           </div>
         )}
       </section>
+
+      {pendingDelete && (
+        <div
+          className={styles.modalOverlay}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !deleting) setPendingDelete(null)
+          }}
+        >
+          <div
+            className={styles.deleteModal}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-glucose-title"
+            aria-describedby="delete-glucose-description"
+          >
+            <div className={styles.deleteIcon} aria-hidden="true">🗑</div>
+            <h2 id="delete-glucose-title" className={styles.deleteTitle}>Apagar esta medição?</h2>
+            <p id="delete-glucose-description" className={styles.deleteDescription}>
+              A glicemia de <strong>{pendingDelete.value} mg/dL</strong>, registrada em{' '}
+              {new Date(pendingDelete.measuredAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}, será removida do seu histórico.
+            </p>
+            {deleteError && <p className={styles.error} role="alert">{deleteError}</p>}
+            <div className={styles.deleteActions}>
+              <button
+                ref={deleteCancelRef}
+                type="button"
+                className={styles.cancelDeleteBtn}
+                disabled={deleting}
+                onClick={() => setPendingDelete(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.confirmDeleteBtn}
+                disabled={deleting}
+                onClick={() => void confirmDelete()}
+              >
+                {deleting ? 'Apagando...' : 'Apagar medição'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

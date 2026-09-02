@@ -54,6 +54,30 @@
   color: white;
 }
 
+.kindPicker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: -8px 0 20px;
+}
+
+.kindBtn {
+  min-width: 0;
+  padding: 9px 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.kindActive {
+  border-color: var(--cardio-red);
+  background: color-mix(in srgb, var(--cardio-red) 12%, white);
+  color: var(--cardio-red);
+}
+
 .chartCard {
   background: var(--bg-secondary);
   border-radius: var(--radius-xl);
@@ -125,6 +149,27 @@
 
 .listContent {
   flex: 1;
+}
+
+.kindBadge {
+  display: inline-flex;
+  margin-bottom: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pressureBadge {
+  background: rgba(0, 31, 63, 0.08);
+  color: var(--cardio-blue);
+}
+
+.glucoseBadge {
+  background: rgba(197, 160, 80, 0.12);
+  color: #8a6820;
 }
 
 .listBP {
