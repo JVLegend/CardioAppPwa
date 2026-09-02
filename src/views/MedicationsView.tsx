@@ -356,24 +356,24 @@ export default function MedicationsView() {
             <div className={styles.inputGroup}>
               <div className={styles.inputRow}>
                 <label className={styles.inputLabel}>Nome</label>
-                <input className={styles.input} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Losartana" required />
+                <input className={styles.input} aria-label="Nome do remédio" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Losartana" required />
               </div>
               <div className={styles.inputDivider} />
               <div className={styles.inputRow}>
                 <label className={styles.inputLabel}>Dose</label>
-                <input className={styles.input} value={dose} onChange={(e) => setDose(e.target.value)} placeholder="Ex: 50mg" required />
+                <input className={styles.input} aria-label="Dose" value={dose} onChange={(e) => setDose(e.target.value)} placeholder="Ex: 50mg" required />
               </div>
               <div className={styles.inputDivider} />
               <div className={styles.inputRow}>
                 <label className={styles.inputLabel}>Frequência</label>
-                <select className={styles.select} value={frequency} onChange={(e) => setFrequency(e.target.value)}>
+                <select className={styles.select} aria-label="Frequência" value={frequency} onChange={(e) => setFrequency(e.target.value)}>
                   {frequencyOptions.map((f) => <option key={f} value={f}>{f}</option>)}
                 </select>
               </div>
               <div className={styles.inputDivider} />
               <div className={styles.inputRow}>
                 <label className={styles.inputLabel}>Horários</label>
-                <input className={styles.input} value={scheduleInput} onChange={(e) => setScheduleInput(e.target.value)} placeholder="08:00, 20:00" />
+                <input className={styles.input} aria-label="Horários" value={scheduleInput} onChange={(e) => setScheduleInput(e.target.value)} placeholder="08:00, 20:00" />
               </div>
             </div>
 
@@ -381,17 +381,17 @@ export default function MedicationsView() {
             <div className={styles.inputGroup}>
               <div className={styles.inputRow}>
                 <label className={styles.inputLabel}>Início</label>
-                <input className={styles.input} type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <input className={styles.input} aria-label="Início do tratamento" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
               </div>
               <div className={styles.inputDivider} />
               <div className={styles.inputRow}>
                 <label className={styles.inputLabel}>Término</label>
-                <input className={styles.input} type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} placeholder="Opcional" />
+                <input className={styles.input} aria-label="Término do tratamento" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} placeholder="Opcional" />
               </div>
               <div className={styles.inputDivider} />
               <div className={styles.inputRow}>
                 <label className={styles.inputLabel}>Obs</label>
-                <input className={styles.input} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observações (opcional)" />
+                <input className={styles.input} aria-label="Observações" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observações (opcional)" />
               </div>
             </div>
 

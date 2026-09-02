@@ -129,6 +129,7 @@ export default function ManualEntryView({
             <label className={styles.label}>Sistólica</label>
             <input
               ref={sysRef}
+              aria-label="Pressão sistólica"
               className={styles.input}
               type="number"
               inputMode="numeric"
@@ -146,6 +147,7 @@ export default function ManualEntryView({
             <label className={styles.label}>Diastólica</label>
             <input
               className={styles.input}
+              aria-label="Pressão diastólica"
               type="number"
               inputMode="numeric"
               value={diastolic}
@@ -162,6 +164,7 @@ export default function ManualEntryView({
             <label className={styles.label}>Frequência cardíaca</label>
             <input
               className={styles.input}
+              aria-label="Frequência cardíaca"
               type="number"
               inputMode="numeric"
               value={heartRate}

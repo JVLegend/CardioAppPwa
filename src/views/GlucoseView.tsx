@@ -215,6 +215,7 @@ export default function GlucoseView() {
               <label className={styles.label}>Glicemia</label>
               <input
                 ref={valueRef}
+                aria-label="Glicemia"
                 className={styles.input}
                 type="number"
                 inputMode="numeric"
