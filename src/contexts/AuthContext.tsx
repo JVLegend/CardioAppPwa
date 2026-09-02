@@ -24,6 +24,7 @@ interface AuthContextType {
   isLoading: boolean
   mustChangePassword: boolean
   currentUserEmail: string | null
+  currentUserRole: UserRole | null
   isAdmin: boolean
   currentPatient: Patient | null
   errorMessage: string | null
@@ -169,10 +170,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const isAdmin = selfProfile?.role === 'operator' || selfProfile?.role === 'controller'
+  const currentUserRole = selfProfile?.role ?? pendingProfile?.role ?? null
 
   return (
     <AuthContext.Provider value={{
-      isAuthenticated, isLoading, mustChangePassword, currentUserEmail, isAdmin,
+      isAuthenticated, isLoading, mustChangePassword, currentUserEmail, currentUserRole, isAdmin,
       currentPatient, errorMessage, login, updatePassword,
       clearError: () => setErrorMessage(null), logout, selectPatient, restoreSelf,
       createPatientProfile, resetProfilePassword,

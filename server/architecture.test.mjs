@@ -30,3 +30,18 @@ test('PostgreSQL contém todas as entidades clínicas e operacionais', async () 
     assert.match(schema, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}\\b`, 'i'))
   }
 })
+
+test('médico e operadora recebem painéis distintos', async () => {
+  const app = await readFile(join(process.cwd(), 'src', 'App.tsx'), 'utf8')
+
+  assert.match(app, /currentUserRole === 'operator'[\s\S]*<PatientListView \/>/)
+  assert.match(app, /currentUserRole === 'controller'[\s\S]*<ControllerDashboardView \/>/)
+  assert.doesNotMatch(app, /currentUserRole === 'operator'\s*\|\|\s*currentUserRole === 'controller'/)
+})
+
+test('painel médico não exibe nem edita situação financeira', async () => {
+  const panel = await readFile(join(process.cwd(), 'src', 'views', 'PatientListView.tsx'), 'utf8')
+
+  assert.match(panel, /Painel Médico/)
+  assert.doesNotMatch(panel, /Plano financeiro|Adimplente|Inadimplente/)
+})

@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import type { Patient, Measurement } from '../models/types'
+import type { Patient, Measurement, GlucoseMeasurement } from '../models/types'
 import * as db from '../services/database'
 import { persistEntity, pullFromServer } from '../services/syncEngine'
-import { db as dexieDb } from '../services/database'
 import { classifyBP, classificationConfig, type BPClassification } from '../config/theme'
-import { sendBrowserNotification } from '../services/alertService'
+import { classifyGlucose, glucoseContextLabel } from '../config/glucose'
 import MainTabView from './MainTabView'
 import styles from './PatientListView.module.css'
 
@@ -16,16 +15,18 @@ type DrillFilter =
   | 'inGoal'
   | 'outOfGoal'
   | 'critical'
+  | 'glucoseAttention'
+  | 'activeAlerts'
   | 'adhering'
   | 'nonAdhering'
-  | 'adimplente'
-  | 'inadimplente'
   | 'inTreatment'
   | 'outOfTreatment'
 
 interface PatientStats {
   patient: Patient
   latest: Measurement | undefined
+  latestGlucose: GlucoseMeasurement | undefined
+  activeAlerts: number
   classification: BPClassification | null
   measuredToday: boolean
   measuredLast3Days: boolean
@@ -56,40 +57,44 @@ export default function PatientListView() {
   const [pushModal, setPushModal] = useState<Patient | null>(null)
 
   useEffect(() => {
-    if (currentPatient?.role === 'operator' || currentPatient?.role === 'controller') loadData()
+    if (currentPatient?.role === 'operator') void loadData()
   }, [currentPatient])
 
   async function loadData() {
-    await pullFromServer()
     if (!currentPatient) return
     setLoading(true)
     try {
-      const list = currentPatient.role === 'controller'
-        ? (await dexieDb.patients.toArray()).filter((p) => p.role === 'patient')
-        : await db.fetchPatientsByOperator(currentPatient.id)
+      await pullFromServer()
+      const list = await db.fetchPatientsByOperator(currentPatient.id)
       setPatients(list)
-    const ids = list.map((p) => p.id)
-    const { latestMeasurements, measuredToday, activeMedicationCount, measuredLast3Days } =
-      await db.fetchOperatorPatientStats(ids)
+      const ids = list.map((p) => p.id)
+      const [{ latestMeasurements, measuredToday, activeMedicationCount, measuredLast3Days }, glucoseRows, alertRows] =
+        await Promise.all([
+          db.fetchOperatorPatientStats(ids),
+          Promise.all(list.map((p) => db.fetchAllGlucose(p.id))),
+          Promise.all(list.map((p) => db.fetchActiveAlerts(p.id))),
+        ])
 
-    const s: PatientStats[] = list.map((p) => {
-      const latest = latestMeasurements.get(p.id)
-      const c = latest ? classifyBP(latest.systolic, latest.diastolic) : null
-      const activeMeds = activeMedicationCount.get(p.id) ?? 0
-      const mt = measuredToday.has(p.id)
-      const m3 = measuredLast3Days.has(p.id)
-      const adhering = activeMeds > 0 ? m3 : mt // se toma remédio, precisa medir regularmente
-      return {
-        patient: p,
-        latest,
-        classification: c,
-        measuredToday: mt,
-        measuredLast3Days: m3,
-        activeMedications: activeMeds,
-        adhering,
-        outOfGoalReason: computeReason(c),
-      }
-    })
+      const s: PatientStats[] = list.map((p, index) => {
+        const latest = latestMeasurements.get(p.id)
+        const c = latest ? classifyBP(latest.systolic, latest.diastolic) : null
+        const activeMeds = activeMedicationCount.get(p.id) ?? 0
+        const mt = measuredToday.has(p.id)
+        const m3 = measuredLast3Days.has(p.id)
+        const adhering = activeMeds > 0 ? m3 : mt
+        return {
+          patient: p,
+          latest,
+          latestGlucose: glucoseRows[index]?.[0],
+          activeAlerts: alertRows[index]?.length ?? 0,
+          classification: c,
+          measuredToday: mt,
+          measuredLast3Days: m3,
+          activeMedications: activeMeds,
+          adhering,
+          outOfGoalReason: computeReason(c),
+        }
+      })
       setStats(s)
     } catch (e) {
       console.error('[PatientListView] loadData FAILED', e)
@@ -105,10 +110,10 @@ export default function PatientListView() {
   const inGoal = stats.filter((s) => s.classification === 'normal' || s.classification === 'prehypertension').length
   const outOfGoal = stats.filter((s) => s.classification && ['stage1', 'stage2', 'crisis'].includes(s.classification)).length
   const critical = stats.filter((s) => s.classification === 'crisis' || s.classification === 'stage2').length
+  const glucoseAttention = stats.filter((s) => s.latestGlucose && classifyGlucose(s.latestGlucose.value, s.latestGlucose.context).label !== 'Normal').length
+  const activeAlerts = stats.filter((s) => s.activeAlerts > 0).length
   const adhering = stats.filter((s) => s.adhering).length
   const nonAdhering = total - adhering
-  const adimplente = stats.filter((s) => s.patient.planStatus === 'adimplente').length
-  const inadimplente = stats.filter((s) => s.patient.planStatus === 'inadimplente').length
   const inTreatment = stats.filter((s) => s.patient.inTreatmentPlan).length
   const outOfTreatment = total - inTreatment
 
@@ -120,10 +125,10 @@ export default function PatientListView() {
       case 'inGoal': list = list.filter((s) => s.classification === 'normal' || s.classification === 'prehypertension'); break
       case 'outOfGoal': list = list.filter((s) => s.classification && ['stage1', 'stage2', 'crisis'].includes(s.classification)); break
       case 'critical': list = list.filter((s) => s.classification === 'crisis' || s.classification === 'stage2'); break
+      case 'glucoseAttention': list = list.filter((s) => s.latestGlucose && classifyGlucose(s.latestGlucose.value, s.latestGlucose.context).label !== 'Normal'); break
+      case 'activeAlerts': list = list.filter((s) => s.activeAlerts > 0); break
       case 'adhering': list = list.filter((s) => s.adhering); break
       case 'nonAdhering': list = list.filter((s) => !s.adhering); break
-      case 'adimplente': list = list.filter((s) => s.patient.planStatus === 'adimplente'); break
-      case 'inadimplente': list = list.filter((s) => s.patient.planStatus === 'inadimplente'); break
       case 'inTreatment': list = list.filter((s) => s.patient.inTreatmentPlan); break
       case 'outOfTreatment': list = list.filter((s) => !s.patient.inTreatmentPlan); break
     }
@@ -154,7 +159,7 @@ export default function PatientListView() {
         <div className={styles.patientBar}>
           <button className={styles.backBtn} onClick={handleBack}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-red)" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
-            Dashboard
+            Painel médico
           </button>
           <span className={styles.patientBarName}>{viewingPatient.name}</span>
           <div style={{ width: 80 }} />
@@ -173,10 +178,10 @@ export default function PatientListView() {
     inGoal: 'Dentro da Meta',
     outOfGoal: 'Fora da Meta',
     critical: 'Alertas Críticos',
+    glucoseAttention: 'Glicose Fora da Meta',
+    activeAlerts: 'Pacientes com Alertas Ativos',
     adhering: 'Aderentes à Medicação',
     nonAdhering: 'Não Aderentes',
-    adimplente: 'Plano Adimplente',
-    inadimplente: 'Plano Inadimplente',
     inTreatment: 'Em Plano de Tratamento',
     outOfTreatment: 'Sem Plano de Tratamento',
   }
@@ -186,8 +191,8 @@ export default function PatientListView() {
       {/* Header */}
       <div className={styles.header}>
         <div>
-          <p className={styles.headerLabel}>Painel da Operadora</p>
-          <h1 className={styles.headerTitle}>Olá, {currentPatient?.name?.split(' ')[0] ?? 'Operadora'}</h1>
+          <p className={styles.headerLabel}>Painel Médico</p>
+          <h1 className={styles.headerTitle}>Olá, Dr(a). {currentPatient?.name?.split(' ')[0] ?? 'Médico'}</h1>
           <p className={styles.headerDate}>
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
@@ -223,6 +228,14 @@ export default function PatientListView() {
             <StatCard value={outOfGoal} label="Fora da Meta" sub="Leituras acima da faixa" color="#C5A050" active={drillFilter === 'outOfGoal'} onClick={() => setDrillFilter(drillFilter === 'outOfGoal' ? 'all' : 'outOfGoal')} />
           </div>
         </div>
+
+        <div className={styles.metricGroup}>
+          <h2 className={styles.sectionTitle}>Acompanhamento Clínico</h2>
+          <div className={styles.kpiGrid}>
+            <StatCard value={glucoseAttention} label="Glicose fora da meta" sub="Última leitura alterada" color="#C5A050" active={drillFilter === 'glucoseAttention'} onClick={() => setDrillFilter(drillFilter === 'glucoseAttention' ? 'all' : 'glucoseAttention')} />
+            <StatCard value={activeAlerts} label="Com alertas ativos" sub="Exigem avaliação clínica" color="#DC2626" active={drillFilter === 'activeAlerts'} onClick={() => setDrillFilter(drillFilter === 'activeAlerts' ? 'all' : 'activeAlerts')} />
+          </div>
+        </div>
         {critical > 0 && (
           <button
             className={`${styles.alertCard} ${drillFilter === 'critical' ? styles.alertCardActive : ''}`}
@@ -244,16 +257,6 @@ export default function PatientListView() {
           <div className={styles.kpiGrid}>
             <StatCard value={adhering} label="Aderentes" sub="Tomando corretamente" color="#D4AF37" active={drillFilter === 'adhering'} onClick={() => setDrillFilter(drillFilter === 'adhering' ? 'all' : 'adhering')} />
             <StatCard value={nonAdhering} label="Não Aderentes" sub="Precisam atenção" color="#C5A050" active={drillFilter === 'nonAdhering'} onClick={() => setDrillFilter(drillFilter === 'nonAdhering' ? 'all' : 'nonAdhering')} />
-          </div>
-        </div>
-
-        <div className={styles.metricGroup}>
-          <h2 className={styles.sectionTitle}>
-            Plano Financeiro <span className={styles.comingSoonTag}>API em breve</span>
-          </h2>
-          <div className={styles.kpiGrid}>
-            <StatCard value={adimplente} label="Adimplentes" sub="Plano em dia" color="#16A34A" active={drillFilter === 'adimplente'} onClick={() => setDrillFilter(drillFilter === 'adimplente' ? 'all' : 'adimplente')} />
-            <StatCard value={inadimplente} label="Inadimplentes" sub="Pendências financeiras" color="#C5A050" active={drillFilter === 'inadimplente'} onClick={() => setDrillFilter(drillFilter === 'inadimplente' ? 'all' : 'inadimplente')} />
           </div>
         </div>
 
@@ -320,11 +323,12 @@ export default function PatientListView() {
                         Não aderente
                       </span>
                     )}
-                    {s.patient.planStatus === 'inadimplente' && (
-                      <span className={styles.measureBadge} style={{ background: '#FBF5E5', color: '#C5A050' }}>
-                        Inadimplente
+                    {s.latestGlucose && (
+                      <span className={styles.measureBadge} style={{ background: '#F3F4F6', color: classifyGlucose(s.latestGlucose.value, s.latestGlucose.context).color }}>
+                        Glicose {s.latestGlucose.value} mg/dL
                       </span>
                     )}
+                    {s.activeAlerts > 0 && <span className={styles.measureBadge} style={{ background: '#FEE2E2', color: '#DC2626' }}>{s.activeAlerts} alerta{s.activeAlerts !== 1 ? 's' : ''}</span>}
                   </div>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
@@ -378,11 +382,11 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
   onOpenFullProfile: () => void
   onSendPush: () => void
 }) {
-  const { patient, latest, classification, outOfGoalReason, adhering, activeMedications } = stats
+  const { patient, latest, latestGlucose, activeAlerts, classification, outOfGoalReason, adhering, activeMedications } = stats
   const classConfig = classification ? classificationConfig[classification] : null
+  const glucoseClass = latestGlucose ? classifyGlucose(latestGlucose.value, latestGlucose.context) : null
   const [editing, setEditing] = useState(false)
   const [comorbInput, setComorbInput] = useState((patient.comorbidities ?? []).join(', '))
-  const [planStatus, setPlanStatus] = useState(patient.planStatus ?? 'pendente')
   const [inTreatmentPlan, setInTreatmentPlan] = useState(patient.inTreatmentPlan ?? false)
   const [phone, setPhone] = useState(patient.phone ?? '')
 
@@ -390,7 +394,6 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
     const updated: Patient = {
       ...patient,
       comorbidities: comorbInput.split(',').map((s) => s.trim()).filter(Boolean),
-      planStatus,
       inTreatmentPlan,
       phone: phone || undefined,
     }
@@ -412,9 +415,9 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
           <button className={styles.closeBtn} onClick={onClose}>×</button>
         </div>
 
-        {/* Última medição */}
+        {/* Últimas medições */}
         <div className={styles.drawerSection}>
-          <h3 className={styles.drawerSectionTitle}>Última Medição</h3>
+          <h3 className={styles.drawerSectionTitle}>Últimas medições</h3>
           {latest && classConfig ? (
             <div className={styles.drawerMeasureCard} style={{ borderLeftColor: classConfig.color }}>
               <div className={styles.drawerBP}>
@@ -434,13 +437,29 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
               )}
             </div>
           ) : (
-            <div className={styles.drawerEmpty}>Nenhuma medição registrada</div>
+            <div className={styles.drawerEmpty}>Nenhuma pressão registrada</div>
+          )}
+          {latestGlucose && glucoseClass ? (
+            <div className={styles.drawerMeasureCard} style={{ borderLeftColor: glucoseClass.color, marginTop: 10 }}>
+              <div className={styles.drawerBP}>
+                <span className={styles.drawerBPValue} style={{ color: glucoseClass.color }}>{latestGlucose.value}</span>
+                <span className={styles.drawerBPUnit}>mg/dL</span>
+              </div>
+              <div className={styles.drawerBPClass} style={{ color: glucoseClass.color }}>
+                {glucoseClass.label} · {glucoseContextLabel(latestGlucose.context)}
+              </div>
+              <div className={styles.drawerBPTime}>
+                {new Date(latestGlucose.measuredAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+              </div>
+            </div>
+          ) : (
+            <div className={styles.drawerEmpty} style={{ marginTop: 10 }}>Nenhuma glicose registrada</div>
           )}
         </div>
 
         {/* Saúde */}
         <div className={styles.drawerSection}>
-          <h3 className={styles.drawerSectionTitle}>Saúde e Plano</h3>
+          <h3 className={styles.drawerSectionTitle}>Dados clínicos</h3>
           <div className={styles.drawerInfoGrid}>
             <div className={styles.drawerInfoItem}>
               <span className={styles.drawerInfoLabel}>Medicações ativas</span>
@@ -453,17 +472,15 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
               </span>
             </div>
             <div className={styles.drawerInfoItem}>
-              <span className={styles.drawerInfoLabel}>Plano financeiro</span>
-              <span className={styles.drawerInfoValue} style={{
-                color: patient.planStatus === 'adimplente' ? '#16A34A' : patient.planStatus === 'inadimplente' ? '#C5A050' : 'var(--text-muted)',
-              }}>
-                {patient.planStatus === 'adimplente' ? 'Adimplente' : patient.planStatus === 'inadimplente' ? 'Inadimplente' : '—'}
-              </span>
-            </div>
-            <div className={styles.drawerInfoItem}>
               <span className={styles.drawerInfoLabel}>Plano de tratamento</span>
               <span className={styles.drawerInfoValue} style={{ color: patient.inTreatmentPlan ? '#001F3F' : 'var(--text-muted)' }}>
                 {patient.inTreatmentPlan ? 'Ativo' : 'Sem plano'}
+              </span>
+            </div>
+            <div className={styles.drawerInfoItem}>
+              <span className={styles.drawerInfoLabel}>Alertas ativos</span>
+              <span className={styles.drawerInfoValue} style={{ color: activeAlerts > 0 ? '#DC2626' : '#16A34A' }}>
+                {activeAlerts > 0 ? activeAlerts : 'Nenhum'}
               </span>
             </div>
           </div>
@@ -488,14 +505,6 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
               <div className={styles.editRow}>
                 <label className={styles.editLabel}>Comorbidades</label>
                 <input className={styles.editInput} value={comorbInput} onChange={(e) => setComorbInput(e.target.value)} placeholder="Diabetes, Dislipidemia..." />
-              </div>
-              <div className={styles.editRow}>
-                <label className={styles.editLabel}>Plano financeiro</label>
-                <select className={styles.editInput} value={planStatus} onChange={(e) => setPlanStatus(e.target.value as any)}>
-                  <option value="pendente">Pendente</option>
-                  <option value="adimplente">Adimplente</option>
-                  <option value="inadimplente">Inadimplente</option>
-                </select>
               </div>
               <div className={styles.editRow}>
                 <label className={styles.editLabel}>Em tratamento</label>

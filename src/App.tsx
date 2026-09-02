@@ -5,6 +5,7 @@ import DisclaimerView from './views/DisclaimerView'
 import PwaUpdatePrompt from './views/PwaUpdatePrompt'
 
 const MainTabView = lazy(() => import('./views/MainTabView'))
+const PatientListView = lazy(() => import('./views/PatientListView'))
 const ControllerDashboardView = lazy(() => import('./views/ControllerDashboardView'))
 
 const DISCLAIMER_KEY = 'kpscardio_disclaimer_accepted'
@@ -26,7 +27,7 @@ function LoadingScreen() {
 }
 
 function AppContent() {
-  const { isAuthenticated, isLoading, mustChangePassword, currentPatient } = useAuth()
+  const { isAuthenticated, isLoading, mustChangePassword, currentUserRole } = useAuth()
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(
     hasAcceptedDisclaimer
   )
@@ -59,9 +60,13 @@ function AppContent() {
 
   if (!isAuthenticated) return <LoginView />
 
-  // operator = médico/equipe clínica; controller = gestora da operadora.
-  // Ambos usam o painel de gestão, com escopo de dados aplicado pela API.
-  if (currentPatient?.role === 'operator' || currentPatient?.role === 'controller') {
+  // A função do usuário autenticado define o painel. currentPatient pode mudar
+  // temporariamente quando o médico abre o prontuário de um paciente.
+  if (currentUserRole === 'operator') {
+    return <Suspense fallback={<LoadingScreen />}><PatientListView /></Suspense>
+  }
+
+  if (currentUserRole === 'controller') {
     return <Suspense fallback={<LoadingScreen />}><ControllerDashboardView /></Suspense>
   }
 
