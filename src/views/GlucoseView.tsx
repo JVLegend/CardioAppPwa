@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import * as db from '../services/database'
 import { enqueue } from '../services/syncEngine'
 import { readGlucoseFromImage, MissingGeminiKeyError } from '../services/glucoseOcr'
+import { upsertEntityRemote } from '../services/railwayRepository'
 import type { GlucoseMeasurement, MealContext, MeasurementSource } from '../models/types'
 import AppPageHeader from './AppPageHeader'
 import styles from './GlucoseView.module.css'
@@ -45,8 +46,11 @@ export default function GlucoseView() {
   const [fromPhoto, setFromPhoto] = useState(false)
   const [ocrLoading, setOcrLoading] = useState(false)
   const [ocrError, setOcrError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const cameraRef = useRef<HTMLInputElement>(null)
   const valueRef = useRef<HTMLInputElement>(null)
+  const savingRef = useRef(false)
 
   const loadHistory = async () => {
     if (!currentPatient) return
@@ -62,19 +66,30 @@ export default function GlucoseView() {
     }
   }, [showEntry, fromPhoto])
 
-  const num = parseInt(value) || 0
-  const isValid = num >= 20 && num <= 700
+  const num = Number(value) || 0
+  const isValid = Number.isInteger(num) && num >= 20 && num <= 800
 
   const classification = isValid ? classifyGlucose(num, context) : null
 
   const resetForm = () => {
     setValue(''); setContext('jejum'); setSource('manual')
-    setFromPhoto(false); setOcrError('')
+    setFromPhoto(false); setOcrError(''); setSaveError('')
   }
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!isValid || !currentPatient) return
+  const saveReading = async () => {
+    if (savingRef.current) return
+    if (!isValid) {
+      setSaveError('Informe um valor inteiro entre 20 e 800 mg/dL.')
+      return
+    }
+    if (!currentPatient) {
+      setSaveError('Não foi possível identificar o paciente. Atualize a página e tente novamente.')
+      return
+    }
+
+    savingRef.current = true
+    setSaving(true)
+    setSaveError('')
     const reading: GlucoseMeasurement = {
       id: crypto.randomUUID(),
       patientId: currentPatient.id,
@@ -83,11 +98,43 @@ export default function GlucoseView() {
       source,
       measuredAt: new Date().toISOString(),
     }
-    await db.saveGlucoseMeasurement(reading)
-    enqueue('glucoseMeasurement', reading.id, 'create', reading)
-    resetForm()
-    setShowEntry(false)
-    loadHistory()
+
+    let savedRemotely = false
+    let remoteError: unknown
+    try {
+      if (navigator.onLine) {
+        try {
+          await upsertEntityRemote('glucoseMeasurement', reading.id, reading)
+          savedRemotely = true
+        } catch (error) {
+          remoteError = error
+          console.warn('[glucose] Railway indisponível; tentando fila local', error)
+        }
+      }
+
+      try {
+        await db.saveGlucoseMeasurement(reading)
+        if (!savedRemotely) await enqueue('glucoseMeasurement', reading.id, 'create', reading)
+      } catch (localError) {
+        if (!savedRemotely) throw remoteError || localError
+        console.warn('[glucose] medição salva no Railway, mas o cache local falhou', localError)
+      }
+
+      setHistory((current) => [reading, ...current.filter((item) => item.id !== reading.id)])
+      resetForm()
+      setShowEntry(false)
+    } catch (error) {
+      console.error('[glucose] falha ao registrar medição', error)
+      setSaveError(error instanceof Error ? error.message : 'Não foi possível registrar a medição. Tente novamente.')
+    } finally {
+      savingRef.current = false
+      setSaving(false)
+    }
+  }
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    void saveReading()
   }
 
   const handlePhotoCapture = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -187,7 +234,7 @@ export default function GlucoseView() {
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="100"
                 min={20}
-                max={700}
+                max={800}
                 required
               />
               <span className={styles.unit}>mg/dL</span>
@@ -209,8 +256,15 @@ export default function GlucoseView() {
             </div>
           </div>
 
-          <button className={styles.saveBtn} type="submit" disabled={!isValid}>
-            {fromPhoto ? 'Confirmar e Registrar' : 'Registrar'}
+          {saveError && <div className={styles.error} role="alert">{saveError}</div>}
+
+          <button
+            className={styles.saveBtn}
+            type="button"
+            disabled={saving}
+            onClick={() => void saveReading()}
+          >
+            {saving ? 'Salvando...' : fromPhoto ? 'Confirmar e Registrar' : 'Registrar'}
           </button>
         </form>
       </div>
