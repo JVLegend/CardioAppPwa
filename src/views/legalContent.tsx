@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 const UPDATED = '2 de setembro de 2026'
-const SUPPORT_EMAIL = 'suporte@kardiaapp.app'
+const SUPPORT_EMAIL = 'suporte@kpsapps.com'
 
 export const PRIVACY_SUBTITLE = `Última atualização: ${UPDATED}`
 export const TERMS_SUBTITLE = `Última atualização: ${UPDATED}`
@@ -10,7 +10,7 @@ export function PrivacyContent(): ReactNode {
   return (
     <>
       <p>
-        Esta política descreve quais dados o <strong>KardiaApp</strong> coleta, como são
+        Esta política descreve quais dados o <strong>KPS Cardio</strong> coleta, como são
         usados, com quem são compartilhados e como você pode acessá-los, corrigi-los ou
         excluí-los, em conformidade com a LGPD (Lei 13.709/2018).
       </p>
@@ -37,7 +37,7 @@ export function PrivacyContent(): ReactNode {
         vinculado e seu médico responsável. Não vendemos dados a terceiros nem usamos
         para fins publicitários. Quando você escolhe a leitura por foto, a imagem é
         enviada ao nosso servidor e processada pelo Google Gemini conforme os termos
-        desse fornecedor; o KardiaApp não guarda o arquivo após o processamento.
+        desse fornecedor; o KPS Cardio não guarda o arquivo após o processamento.
       </p>
 
       <h2>4. Armazenamento e segurança</h2>
@@ -66,7 +66,7 @@ export function PrivacyContent(): ReactNode {
 
       <h2>7. Crianças</h2>
       <p>
-        O KardiaApp não é direcionado a menores de 16 anos sem consentimento dos
+        O KPS Cardio não é direcionado a menores de 16 anos sem consentimento dos
         responsáveis. Se identificarmos cadastro de menor sem consentimento, removeremos
         os dados.
       </p>
@@ -89,13 +89,13 @@ export function TermsContent(): ReactNode {
   return (
     <>
       <p>
-        Ao usar o <strong>KardiaApp</strong> você concorda com estes Termos. Leia com
+        Ao usar o <strong>KPS Cardio</strong> você concorda com estes Termos. Leia com
         atenção — eles definem o que o app faz e o que <strong>não</strong> faz.
       </p>
 
       <h2>1. Sobre o serviço</h2>
       <p>
-        O KardiaApp é uma ferramenta digital de <strong>monitoramento e registro</strong>
+        O KPS Cardio é uma ferramenta digital de <strong>monitoramento e registro</strong>
         de medições de pressão arterial e glicemia. Permite registro manual, leitura por
         Bluetooth (Web BLE), leitura por foto/PDF com auxílio de IA e envio dos dados à
         sua operadora/médico.
@@ -103,7 +103,7 @@ export function TermsContent(): ReactNode {
 
       <h2>2. O que o app NÃO é</h2>
       <div className="note">
-        O KardiaApp <strong>não substitui</strong> consulta, diagnóstico ou tratamento
+        O KPS Cardio <strong>não substitui</strong> consulta, diagnóstico ou tratamento
         médico. As faixas e os alertas são configurados conforme o protocolo clínico da
         instituição e são apenas <strong>informativos</strong>. Em emergência, ligue
         <strong> 192 (SAMU)</strong>.
@@ -190,7 +190,7 @@ export function SupportContent(): ReactNode {
       <ul>
         <li>Use um dispositivo e navegador compatíveis com Web Bluetooth. Quando o recurso não estiver disponível, use o registro manual ou por foto.</li>
         <li>Confira se o Bluetooth está ligado e se o aparelho está em modo de pareamento (geralmente botão SET por alguns segundos).</li>
-        <li>Esqueça o aparelho nas Configurações do sistema e pareie de novo pelo KardiaApp.</li>
+        <li>Esqueça o aparelho nas Configurações do sistema e pareie de novo pelo KPS Cardio.</li>
       </ul>
 
       <p><strong>A foto/PDF da receita não foi lida certo.</strong></p>

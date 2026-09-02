@@ -104,7 +104,7 @@
   }
 
   .tabBar::before {
-    content: 'KardiaApp';
+    content: 'KPS Cardio';
     font-family: 'Sora', sans-serif;
     font-size: 26px;
     font-weight: 600;

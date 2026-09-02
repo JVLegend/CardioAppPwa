@@ -18,7 +18,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   })
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
-    if (response.status === 401) window.dispatchEvent(new CustomEvent('kardia:session-expired'))
+    if (response.status === 401) window.dispatchEvent(new CustomEvent('kpscardio:session-expired'))
     throw new ApiError(body.error || `Falha na API (${response.status})`, response.status, body.code)
   }
   if (response.status === 204) return undefined as T

@@ -1,5 +1,5 @@
 export const AppEnvironment = {
-  appName: 'KardiaApp',
+  appName: 'KPS Cardio',
   defaultReminderHour: 8,
   defaultReminderMinute: 0,
   maxOfflineQueueSize: 500,

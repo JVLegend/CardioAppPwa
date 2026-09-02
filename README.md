@@ -1,19 +1,8 @@
-# Kardia App PWA
-
-<!-- MIGRACAO_HD_EXTERNO_SUPERJV -->
-
-## Armazenamento local
-
-Tags: #Tecnologia #MacMini #Arquivo
-
-Este projeto foi migrado em 2026-07-09 para o HD externo do Mac mini.
-
-- Caminho principal: `/Volumes/Karine HD Externo/Dados_JV/Projetos_GitHub/CardioAppPwa`
-- Caminho legado preservado por symlink: `/Users/iaparamedicos/Documents/GitHub/CardioAppPwa`
+# KPS Cardio PWA
 
 ## Autenticação
 
-O KardiaApp não depende do Supabase. Perfis, hashes de senha e sessões ficam no
+O KPS Cardio não depende do Supabase. Perfis, hashes de senha e sessões ficam no
 PostgreSQL do Railway. O navegador recebe somente um cookie de sessão `HttpOnly`,
 `Secure` e `SameSite=Strict`.
 

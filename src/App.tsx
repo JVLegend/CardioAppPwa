@@ -7,18 +7,10 @@ import PwaUpdatePrompt from './views/PwaUpdatePrompt'
 const MainTabView = lazy(() => import('./views/MainTabView'))
 const ControllerDashboardView = lazy(() => import('./views/ControllerDashboardView'))
 
-const DISCLAIMER_KEY = 'kardiaapp_disclaimer_accepted'
-const LEGACY_DISCLAIMER_KEY = 'cardioapp_disclaimer_accepted'
+const DISCLAIMER_KEY = 'kpscardio_disclaimer_accepted'
 
 function hasAcceptedDisclaimer() {
-  const accepted = localStorage.getItem(DISCLAIMER_KEY) === 'true'
-    || localStorage.getItem(LEGACY_DISCLAIMER_KEY) === 'true'
-
-  if (accepted && localStorage.getItem(DISCLAIMER_KEY) !== 'true') {
-    localStorage.setItem(DISCLAIMER_KEY, 'true')
-  }
-
-  return accepted
+  return localStorage.getItem(DISCLAIMER_KEY) === 'true'
 }
 
 function LoadingScreen() {

@@ -38,7 +38,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
-const CACHE_OWNER_KEY = 'kardiaapp:cache-owner'
+const CACHE_OWNER_KEY = 'kpscardio:cache-owner'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -104,8 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .finally(() => { if (active) setIsLoading(false) })
     const expired = () => clearSessionState()
-    window.addEventListener('kardia:session-expired', expired)
-    return () => { active = false; window.removeEventListener('kardia:session-expired', expired) }
+    window.addEventListener('kpscardio:session-expired', expired)
+    return () => { active = false; window.removeEventListener('kpscardio:session-expired', expired) }
   }, [applySession, clearSessionState])
 
   useEffect(() => {

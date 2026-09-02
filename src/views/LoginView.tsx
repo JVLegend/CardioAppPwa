@@ -35,7 +35,7 @@ export default function LoginView() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.logoRing}><KardiaLogo size={88} variant="mark" /></div>
-        <h1 className={styles.title}>{mustChangePassword ? 'Crie sua senha' : 'KardiaApp'}</h1>
+        <h1 className={styles.title}>{mustChangePassword ? 'Crie sua senha' : 'KPS Cardio'}</h1>
         <p className={styles.subtitle}>
           {mustChangePassword
             ? `Primeiro acesso${currentUserEmail ? ` de ${currentUserEmail}` : ''}`
@@ -61,7 +61,7 @@ export default function LoginView() {
         <section className={styles.form} aria-labelledby="access-help-title">
           <div className={styles.helpCard}>
             <h2 id="access-help-title">Recuperar acesso</h2>
-            <p>Solicite ao administrador do KardiaApp uma senha provisória. No próximo acesso, você criará uma senha pessoal.</p>
+            <p>Solicite ao administrador do KPS Cardio uma senha provisória. No próximo acesso, você criará uma senha pessoal.</p>
           </div>
           <button className={styles.linkButton} type="button" onClick={() => { setShowHelp(false); setLocalError(''); clearError() }}>Voltar ao login</button>
         </section>

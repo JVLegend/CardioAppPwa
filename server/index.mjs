@@ -81,7 +81,7 @@ const aiRateLimit = rateLimit({
   message: { error: 'Muitas solicitações de IA. Aguarde um minuto e tente novamente.' },
 })
 
-const dummyPasswordHash = hashPassword('KardiaApp-Dummy-2026')
+const dummyPasswordHash = hashPassword('KPS-Cardio-Dummy-2026')
 
 function requireServices(_req, res, next) {
   if (!pool) return res.status(503).json({ error: 'DATABASE_URL não configurada' })
@@ -804,7 +804,7 @@ async function ensureBootstrapAdmin() {
        VALUES (gen_random_uuid(),$1,$2,'controller')
        ON CONFLICT(email) DO UPDATE SET role='controller',updated_at=now()
        RETURNING id`,
-      [email, String(process.env.BOOTSTRAP_ADMIN_NAME || 'Administrador KardiaApp').trim()]
+      [email, String(process.env.BOOTSTRAP_ADMIN_NAME || 'Administrador KPS Cardio').trim()]
     )
     await client.query(
       `INSERT INTO auth_credentials (user_id,password_hash,must_change_password)
@@ -827,7 +827,7 @@ async function start() {
     await pool.query('DELETE FROM auth_sessions WHERE expires_at<=now()')
     await ensureBootstrapAdmin()
   }
-  app.listen(port, '0.0.0.0', () => console.log(`KardiaApp em :${port}`))
+  app.listen(port, '0.0.0.0', () => console.log(`KPS Cardio em :${port}`))
 }
 
 start().catch((error) => { console.error(error); process.exit(1) })

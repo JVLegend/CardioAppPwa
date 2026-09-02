@@ -10,7 +10,7 @@ import type {
   ChatMessage,
 } from '../models/types'
 
-class CardioDatabase extends Dexie {
+class KPSCardioDatabase extends Dexie {
   measurements!: Table<Measurement, string>
   glucoseMeasurements!: Table<GlucoseMeasurement, string>
   medications!: Table<Medication, string>
@@ -21,7 +21,7 @@ class CardioDatabase extends Dexie {
   chatMessages!: Table<ChatMessage, string>
 
   constructor() {
-    super('CardioAppDB')
+    super('KPSCardioDB')
     this.version(1).stores({
       measurements: 'id, patientId, measuredAt, source',
       medications: 'id, patientId, active',
@@ -52,7 +52,7 @@ class CardioDatabase extends Dexie {
   }
 }
 
-export const db = new CardioDatabase()
+export const db = new KPSCardioDatabase()
 
 // ---- Measurement helpers ----
 export async function saveMeasurement(m: Measurement) {
@@ -336,12 +336,9 @@ export async function wipeAccountData() {
     db.chatMessages.clear(),
     db.syncOperations.clear(),
   ])
-  localStorage.removeItem('cardioapp_auth')
-  localStorage.removeItem('cardioapp_auth_user')
-  localStorage.removeItem('kardiaapp_disclaimer_accepted')
-  localStorage.removeItem('cardioapp_disclaimer_accepted')
-  localStorage.removeItem('kardiaapp:last-sync')
-  localStorage.removeItem('kardiaapp:cache-owner')
+  localStorage.removeItem('kpscardio_disclaimer_accepted')
+  localStorage.removeItem('kpscardio:last-sync')
+  localStorage.removeItem('kpscardio:cache-owner')
 }
 
 /** Evita vazamento de dados entre contas no mesmo navegador sem apagar o aceite legal. */
@@ -356,5 +353,5 @@ export async function clearClinicalCache() {
     db.chatMessages.clear(),
     db.syncOperations.clear(),
   ])
-  localStorage.removeItem('kardiaapp:last-sync')
+  localStorage.removeItem('kpscardio:last-sync')
 }

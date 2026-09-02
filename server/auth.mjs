@@ -9,7 +9,7 @@ const PASSWORD_PARALLELIZATION = 1
 const PASSWORD_KEY_LENGTH = 64
 const PASSWORD_MAX_MEMORY = 64 * 1024 * 1024
 
-export const SESSION_COOKIE = 'kardia_session'
+export const SESSION_COOKIE = 'kpscardio_session'
 export const MIN_PASSWORD_LENGTH = 12
 
 export function validatePassword(password) {

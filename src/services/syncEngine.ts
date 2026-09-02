@@ -20,7 +20,7 @@ export interface SyncState {
   message: string | null
 }
 
-const SYNC_CURSOR_KEY = 'kardiaapp:last-sync'
+const SYNC_CURSOR_KEY = 'kpscardio:last-sync'
 let isOnline = navigator.onLine
 let isSyncing = false
 let isPulling = false

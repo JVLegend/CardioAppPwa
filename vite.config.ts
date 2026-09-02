@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'KardiaApp',
-        short_name: 'KardiaApp',
+        name: 'KPS Cardio',
+        short_name: 'KPS Cardio',
         description: 'Monitoramento cardiovascular',
         theme_color: '#0A1628',
         background_color: '#F7F9FC',

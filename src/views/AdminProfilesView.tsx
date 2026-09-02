@@ -144,7 +144,7 @@ export default function AdminProfilesView({ onBack }: Props) {
         <section className={styles.denied}>
           <span className={styles.deniedIcon}>!</span>
           <h1>Acesso restrito</h1>
-          <p>Esta área está disponível somente para o administrador do KardiaApp.</p>
+          <p>Esta área está disponível somente para o administrador do KPS Cardio.</p>
           <button className={styles.secondaryButton} onClick={onBack}>Voltar ao painel</button>
         </section>
       </main>
@@ -396,7 +396,7 @@ export default function AdminProfilesView({ onBack }: Props) {
       </div>
 
       <p className={styles.footerNote}>
-        O cadastro é criado no KardiaApp e fica disponível, conforme as permissões, em qualquer dispositivo autorizado.
+        O cadastro é criado no KPS Cardio e fica disponível, conforme as permissões, em qualquer dispositivo autorizado.
       </p>
     </main>
   )

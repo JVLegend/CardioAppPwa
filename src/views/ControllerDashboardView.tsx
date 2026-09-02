@@ -393,7 +393,7 @@ export default function ControllerDashboardView() {
       <PatientManagementSection />
 
       <footer className={styles.footer}>
-        KardiaApp · {isClinician ? 'Painel Médico' : 'Painel da Operadora'}
+        KPS Cardio · {isClinician ? 'Painel Médico' : 'Painel da Operadora'}
       </footer>
     </div>
   )
