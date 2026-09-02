@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import type { Patient, Measurement } from '../models/types'
 import * as db from '../services/database'
-import { enqueue, pullFromServer } from '../services/syncEngine'
+import { persistEntity, pullFromServer } from '../services/syncEngine'
 import { db as dexieDb } from '../services/database'
 import { classifyBP, classificationConfig, type BPClassification } from '../config/theme'
 import { sendBrowserNotification } from '../services/alertService'
@@ -143,8 +143,7 @@ export default function PatientListView() {
   }
 
   async function handleUpdatePatient(updated: Patient) {
-    await db.savePatient(updated)
-    await enqueue('patient', updated.id, 'update', updated)
+    await persistEntity('patient', updated.id, 'update', updated, () => db.savePatient(updated))
     await loadData()
     setDetailPatient((prev) => (prev ? { ...prev, patient: updated } : null))
   }
@@ -561,8 +560,7 @@ function PushNotificationModal({ patient, onClose }: { patient: Patient; onClose
       sentAt: new Date().toISOString(),
       read: false,
     }
-    await db.saveChatMessage(msg)
-    await enqueue('chatMessage', msg.id, 'create', msg)
+    await persistEntity('chatMessage', msg.id, 'create', msg, () => db.saveChatMessage(msg))
     setSent(true)
     setTimeout(onClose, 1400)
   }

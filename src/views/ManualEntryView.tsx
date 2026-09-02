@@ -3,7 +3,7 @@ import { classifyBP, classificationConfig } from '../config/theme'
 import styles from './ManualEntryView.module.css'
 
 interface Props {
-  onSave: (systolic: number, diastolic: number, heartRate?: number) => void
+  onSave: (systolic: number, diastolic: number, heartRate?: number) => void | Promise<void>
   onCancel: () => void
   initialSystolic?: number | null
   initialDiastolic?: number | null
@@ -22,24 +22,48 @@ export default function ManualEntryView({
   const [systolic, setSystolic] = useState(initialSystolic ? String(initialSystolic) : '')
   const [diastolic, setDiastolic] = useState(initialDiastolic ? String(initialDiastolic) : '')
   const [heartRate, setHeartRate] = useState(initialHeartRate ? String(initialHeartRate) : '')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const sysRef = useRef<HTMLInputElement>(null)
+  const savingRef = useRef(false)
 
   useEffect(() => {
-    sysRef.current?.focus()
-  }, [])
+    if (!fromPhoto) sysRef.current?.focus()
+  }, [fromPhoto])
 
   const sys = parseInt(systolic) || 0
   const dia = parseInt(diastolic) || 0
-  const isValid = sys >= 40 && sys <= 300 && dia >= 20 && dia <= 200
+  const hr = heartRate === '' ? undefined : Number(heartRate)
+  const isValid = Number.isInteger(sys) && sys >= 40 && sys <= 300
+    && Number.isInteger(dia) && dia >= 20 && dia <= 200
+    && (hr === undefined || (Number.isInteger(hr) && hr >= 20 && hr <= 250))
 
   const classification = isValid ? classifyBP(sys, dia) : null
   const classConfig = classification ? classificationConfig[classification] : null
 
+  const saveReading = async () => {
+    if (savingRef.current) return
+    if (!isValid) {
+      setSaveError('Confira a pressão e informe uma frequência entre 20 e 250 bpm, se preenchida.')
+      return
+    }
+    savingRef.current = true
+    setSaving(true)
+    setSaveError('')
+    try {
+      await onSave(sys, dia, hr)
+    } catch (error) {
+      console.error('[pressure] falha ao registrar medição', error)
+      setSaveError(error instanceof Error ? error.message : 'Não foi possível registrar a medição. Tente novamente.')
+    } finally {
+      savingRef.current = false
+      setSaving(false)
+    }
+  }
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    if (!isValid) return
-    const hr = heartRate ? parseInt(heartRate) : undefined
-    onSave(sys, dia, hr)
+    void saveReading()
   }
 
   return (
@@ -143,13 +167,17 @@ export default function ManualEntryView({
               value={heartRate}
               onChange={(e) => setHeartRate(e.target.value)}
               placeholder="72"
+              min={20}
+              max={250}
             />
             <span className={styles.unit}>bpm</span>
           </div>
         </div>
 
-        <button className={styles.saveBtn} type="submit" disabled={!isValid}>
-          {fromPhoto ? 'Confirmar e registrar' : 'Registrar medição'}
+        {saveError && <div role="alert" style={{ margin: '0 16px 12px', color: 'var(--cardio-red)', fontSize: 14 }}>{saveError}</div>}
+
+        <button className={styles.saveBtn} type="button" disabled={saving} onClick={() => void saveReading()}>
+          {saving ? 'Salvando...' : fromPhoto ? 'Confirmar e registrar' : 'Registrar medição'}
         </button>
       </form>
     </div>

@@ -35,8 +35,8 @@ export default function HomeView() {
   const dailyProgress = Math.min(todayMeasurements.length / dailyGoal, 1)
   const circumference = 2 * Math.PI * 45
 
-  const handleSaveMeasurement = (sys: number, dia: number, hr?: number) => {
-    addMeasurement(sys, dia, hr, 'manual')
+  const handleSaveMeasurement = async (sys: number, dia: number, hr?: number) => {
+    await addMeasurement(sys, dia, hr, photoReading ? 'photo' : 'manual')
     setShowManualEntry(false)
     setPhotoReading(null)
   }
@@ -130,7 +130,7 @@ export default function HomeView() {
           <div className={styles.stat}>
             <span className={styles.statValue}>{streak}</span>
             <span className={styles.statLabel}>
-              {streak === 1 ? 'dia' : 'dias'} seguidos
+              {streak === 1 ? 'dia seguido' : 'dias seguidos'}
             </span>
           </div>
           <div className={styles.statDivider} />

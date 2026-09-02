@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import * as db from '../services/database'
-import { enqueue } from '../services/syncEngine'
+import { persistEntity } from '../services/syncEngine'
 import { readGlucoseFromImage, MissingGeminiKeyError } from '../services/glucoseOcr'
-import { upsertEntityRemote } from '../services/railwayRepository'
 import type { GlucoseMeasurement, MealContext, MeasurementSource } from '../models/types'
 import AppPageHeader from './AppPageHeader'
 import styles from './GlucoseView.module.css'
@@ -99,26 +98,11 @@ export default function GlucoseView() {
       measuredAt: new Date().toISOString(),
     }
 
-    let savedRemotely = false
-    let remoteError: unknown
     try {
-      if (navigator.onLine) {
-        try {
-          await upsertEntityRemote('glucoseMeasurement', reading.id, reading)
-          savedRemotely = true
-        } catch (error) {
-          remoteError = error
-          console.warn('[glucose] Railway indisponível; tentando fila local', error)
-        }
-      }
-
-      try {
-        await db.saveGlucoseMeasurement(reading)
-        if (!savedRemotely) await enqueue('glucoseMeasurement', reading.id, 'create', reading)
-      } catch (localError) {
-        if (!savedRemotely) throw remoteError || localError
-        console.warn('[glucose] medição salva no Railway, mas o cache local falhou', localError)
-      }
+      await persistEntity(
+        'glucoseMeasurement', reading.id, 'create', reading,
+        () => db.saveGlucoseMeasurement(reading)
+      )
 
       setHistory((current) => [reading, ...current.filter((item) => item.id !== reading.id)])
       resetForm()
@@ -175,9 +159,13 @@ export default function GlucoseView() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Apagar esta medição?')) return
-    await db.deleteGlucoseMeasurement(id)
-    enqueue('glucoseMeasurement', id, 'delete')
-    loadHistory()
+    setOcrError('')
+    try {
+      await persistEntity('glucoseMeasurement', id, 'delete', undefined, () => db.deleteGlucoseMeasurement(id))
+      await loadHistory()
+    } catch (error) {
+      setOcrError(error instanceof Error ? error.message : 'Não foi possível apagar a medição.')
+    }
   }
 
   const todayCount = history.filter((g) => {

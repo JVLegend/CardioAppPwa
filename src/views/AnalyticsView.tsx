@@ -50,7 +50,7 @@ export default function AnalyticsView({ measurements }: Props) {
                 <span className={styles.cardValue}>
                   {weekly.systolic}/{weekly.diastolic}
                 </span>
-                <span className={styles.cardMeta}>{weekly.count} medições</span>
+                <span className={styles.cardMeta}>{weekly.count} {weekly.count === 1 ? 'medição' : 'medições'}</span>
               </>
             ) : (
               <span className={styles.cardEmpty}>Sem dados</span>
@@ -63,7 +63,7 @@ export default function AnalyticsView({ measurements }: Props) {
                 <span className={styles.cardValue}>
                   {monthly.systolic}/{monthly.diastolic}
                 </span>
-                <span className={styles.cardMeta}>{monthly.count} medições</span>
+                <span className={styles.cardMeta}>{monthly.count} {monthly.count === 1 ? 'medição' : 'medições'}</span>
               </>
             ) : (
               <span className={styles.cardEmpty}>Sem dados</span>
@@ -99,7 +99,7 @@ export default function AnalyticsView({ measurements }: Props) {
       {/* Distribution */}
       {pieData.length > 0 && (
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Distribuicao</h2>
+          <h2 className={styles.sectionTitle}>Distribuição</h2>
           <div className={styles.pieCard}>
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>

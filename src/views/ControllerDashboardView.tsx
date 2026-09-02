@@ -14,20 +14,15 @@ import PatientManagementSection from './PatientManagementSection'
 import AdminProfilesView from './AdminProfilesView'
 import { pullFromServer } from '../services/syncEngine'
 import { generateWithGemini } from '../services/railwayRepository'
+import { classifyBP } from '../config/theme'
 import styles from './ControllerDashboardView.module.css'
 
 function stateName(s: string) {
   return BRAZIL_STATES.find((x) => x.sigla === s)?.name ?? s
 }
 
-type BPClass = 'normal' | 'prehypertension' | 'stage1' | 'stage2' | 'crisis'
-
-function classifyBP(systolic: number, diastolic: number): BPClass {
-  if (systolic >= 180 || diastolic >= 110) return 'crisis'
-  if (systolic >= 140 || diastolic >= 90) return 'stage2'
-  if (systolic >= 130 || diastolic >= 80) return 'stage1'
-  if (systolic >= 120) return 'prehypertension'
-  return 'normal'
+function patientCount(count: number) {
+  return `${count} ${count === 1 ? 'paciente' : 'pacientes'}`
 }
 
 interface Aggregates {
@@ -268,14 +263,14 @@ export default function ControllerDashboardView() {
             <option key={sigla} value={sigla}>{stateName(sigla)} — {sigla} ({n})</option>
           ))}
         </select>
-        <span className={styles.matchHint}>{filteredPatients.length} paciente(s)</span>
+        <span className={styles.matchHint}>{patientCount(filteredPatients.length)}</span>
       </div>
 
       {/* KPI STRIP — 5 métricas resumidas */}
       <div className={styles.kpiStrip}>
-        <KpiTile label="Pacientes" value={agg.totalPatients} hint={`${agg.totalOperators} médico(s) responsável(is)`} accent="plum" />
+        <KpiTile label="Pacientes" value={agg.totalPatients} hint={`${agg.totalOperators} ${agg.totalOperators === 1 ? 'médico responsável' : 'médicos responsáveis'}`} accent="plum" />
         <KpiTile label="Mediram hoje" value={`${measurementRate}%`} hint={`${agg.measuredToday}/${agg.totalPatients}`} accent="green" />
-        <KpiTile label="Dentro da meta" value={`${goalRate}%`} hint={`${agg.inGoal} pacientes`} accent="green" />
+        <KpiTile label="Dentro da meta" value={`${goalRate}%`} hint={patientCount(agg.inGoal)} accent="green" />
         <KpiTile label="Aderência" value={`${adherenceRate}%`} hint={`${agg.nonAdhering} sem medição 3d`} accent="amber" />
         <KpiTile label="Pressão muito elevada" value={agg.critical} hint="Limite urgente configurado" accent={agg.critical > 0 ? 'coral' : 'plum'} />
       </div>
@@ -312,7 +307,7 @@ export default function ControllerDashboardView() {
         <section className={styles.mapCard}>
           <div className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>Distribuição geográfica</h2>
-            <span className={styles.cardHint}>{filteredPatients.length} paciente(s) · somente UF cadastrada</span>
+            <span className={styles.cardHint}>{patientCount(filteredPatients.length)} · somente UF cadastrada</span>
           </div>
           <BrazilMap
             counts={stateCounts}
@@ -326,7 +321,7 @@ export default function ControllerDashboardView() {
       <section className={styles.chartsSection}>
         <div className={styles.cardHeader}>
           <h2 className={styles.cardTitle}>Indicadores de saúde · últimos 7 dias</h2>
-          <span className={styles.cardHint}>{filteredPatients.length} paciente(s)</span>
+          <span className={styles.cardHint}>{patientCount(filteredPatients.length)}</span>
         </div>
         <DashboardCharts patients={filteredPatients} />
       </section>

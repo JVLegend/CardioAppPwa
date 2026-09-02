@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import type { ChatMessage } from '../models/types'
 import * as db from '../services/database'
-import { enqueue, pullFromServer } from '../services/syncEngine'
+import { persistEntity, pullFromServer } from '../services/syncEngine'
 import AppPageHeader from './AppPageHeader'
 import styles from './ChatView.module.css'
 
@@ -11,9 +11,10 @@ export default function ChatView() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  const operatorId = currentPatient?.operatorId ?? currentPatient?.id ?? ''
+  const operatorId = currentPatient?.operatorId ?? ''
   const patientId = currentPatient?.id ?? ''
   const isOperator = currentPatient?.role === 'operator'
 
@@ -25,31 +26,42 @@ export default function ChatView() {
   }, [operatorId, patientId])
 
   async function loadMessages() {
-    await pullFromServer()
-    const msgs = await db.fetchChatMessages(operatorId, patientId)
-    setMessages(msgs)
-    await db.markMessagesRead(operatorId, patientId, isOperator ? 'operator' : 'patient')
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    try {
+      await pullFromServer()
+      const msgs = await db.fetchChatMessages(operatorId, patientId)
+      setMessages(msgs)
+      await db.markMessagesRead(operatorId, patientId, isOperator ? 'operator' : 'patient')
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    } catch (error) {
+      console.warn('[chat] não foi possível atualizar as mensagens', error)
+    }
   }
 
   const handleSend = async () => {
     if (!input.trim() || sending) return
     setSending(true)
+    setSendError('')
+    const content = input.trim()
     const msg: ChatMessage = {
       id: crypto.randomUUID(),
       operatorId,
       patientId,
       fromRole: isOperator ? 'operator' : 'patient',
-      content: input.trim(),
+      content,
       sentAt: new Date().toISOString(),
       read: false,
     }
-    setMessages((prev) => [...prev, msg])
-    setInput('')
-    await db.saveChatMessage(msg)
-    await enqueue('chatMessage', msg.id, 'create', msg)
-    setSending(false)
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    try {
+      await persistEntity('chatMessage', msg.id, 'create', msg, () => db.saveChatMessage(msg))
+      setMessages((prev) => [...prev.filter((item) => item.id !== msg.id), msg])
+      setInput('')
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    } catch (error) {
+      console.error('[chat] falha ao enviar mensagem', error)
+      setSendError(error instanceof Error ? error.message : 'Não foi possível enviar. Tente novamente.')
+    } finally {
+      setSending(false)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -125,6 +137,7 @@ export default function ChatView() {
       </div>
 
       {/* Input */}
+      {sendError && <div role="alert" style={{ color: 'var(--cardio-red)', background: 'var(--bg-card)', fontSize: 13, padding: '8px 24px 0' }}>{sendError}</div>}
       <div className={styles.inputBar}>
         <textarea
           className={styles.textInput}
@@ -138,6 +151,7 @@ export default function ChatView() {
           className={styles.sendBtn}
           onClick={handleSend}
           disabled={!input.trim() || sending}
+          aria-label="Enviar mensagem"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="22" y1="2" x2="11" y2="13" />

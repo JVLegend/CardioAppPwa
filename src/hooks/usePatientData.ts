@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { Measurement, BPAlert, Medication } from '../models/types'
+import type { Measurement, BPAlert, Medication, MeasurementSource } from '../models/types'
 import { useAuth } from '../contexts/AuthContext'
 import * as db from '../services/database'
-import { evaluateAlerts, createAlert, sendBrowserNotification } from '../services/alertService'
-import { enqueue } from '../services/syncEngine'
+import { evaluateAlerts, sendBrowserNotification } from '../services/alertService'
+import { persistEntity, pullFromServer } from '../services/syncEngine'
 
 export function usePatientData() {
   const { currentPatient } = useAuth()
@@ -45,9 +45,9 @@ export function usePatientData() {
     systolic: number,
     diastolic: number,
     heartRate?: number,
-    source: 'manual' | 'ble' = 'manual'
+    source: MeasurementSource = 'manual'
   ) => {
-    if (!patientId) return
+    if (!patientId) throw new Error('Não foi possível identificar o paciente.')
 
     const m: Measurement = {
       id: crypto.randomUUID(),
@@ -60,34 +60,26 @@ export function usePatientData() {
       measuredAt: new Date().toISOString(),
     }
 
-    // Update UI immediately
-    setAllMeasurements((prev) => [m, ...prev])
-    setTodayMeasurements((prev) => [m, ...prev])
+    const persistence = await persistEntity(
+      'measurement', m.id, 'create', m,
+      () => db.saveMeasurement(m)
+    )
 
-    // Persist locally
-    await db.saveMeasurement(m)
+    setAllMeasurements((prev) => [m, ...prev.filter((item) => item.id !== m.id)])
+    setTodayMeasurements((prev) => [m, ...prev.filter((item) => item.id !== m.id)])
 
     // Check alerts
-    const recent = await db.fetchRecentMeasurements(patientId, 3)
+    const recent = (await db.fetchRecentMeasurements(patientId, 4)).filter((item) => item.id !== m.id)
     const alertResults = evaluateAlerts(m, recent)
     for (const result of alertResults) {
-      const alert = createAlert(patientId, m.id, result)
-      await db.saveAlert(alert)
-      setActiveAlerts((prev) => [alert, ...prev])
       sendBrowserNotification(
-        alert.type === 'urgent' ? '⚠️ Alerta Urgente' : '⚡ Atenção',
-        alert.rule
+        result.type === 'urgent' ? '⚠️ Alerta Urgente' : '⚡ Atenção',
+        result.rule
       )
-      // O alerta remoto é criado por regra no backend junto com a medição.
-      // O registro local mantém a resposta imediata enquanto o Railway sincroniza.
     }
 
-    // Update streak
-    const newStreak = await db.fetchStreak(patientId)
-    setStreak(newStreak)
-
-    // Sync
-    enqueue('measurement', m.id, 'create', m)
+    if (persistence === 'remote') await pullFromServer()
+    await loadData()
   }
 
   const addMedication = async (
@@ -99,7 +91,7 @@ export function usePatientData() {
     endDate?: string,
     notes?: string
   ) => {
-    if (!patientId) return
+    if (!patientId) throw new Error('Não foi possível identificar o paciente.')
     const med: Medication = {
       id: crypto.randomUUID(),
       patientId,
@@ -112,22 +104,19 @@ export function usePatientData() {
       endDate,
       notes,
     }
-    await db.saveMedication(med)
+    await persistEntity('medication', med.id, 'create', med, () => db.saveMedication(med))
     setMedications((prev) => [...prev, med])
-    enqueue('medication', med.id, 'create', med)
   }
 
   const removeMedication = async (id: string) => {
-    await db.deleteMedication(id)
+    await persistEntity('medication', id, 'delete', undefined, () => db.deleteMedication(id))
     setMedications((prev) => prev.filter((m) => m.id !== id))
-    enqueue('medication', id, 'delete')
   }
 
   const toggleMedication = async (med: Medication) => {
     const updated = { ...med, active: !med.active }
-    await db.saveMedication(updated)
+    await persistEntity('medication', med.id, 'update', updated, () => db.saveMedication(updated))
     setMedications((prev) => prev.map((m) => (m.id === med.id ? updated : m)))
-    enqueue('medication', med.id, 'update', updated)
   }
 
   return {

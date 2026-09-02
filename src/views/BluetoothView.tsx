@@ -10,6 +10,7 @@ import { usePatientData } from '../hooks/usePatientData'
 import { classifyBP, classificationConfig } from '../config/theme'
 import * as db from '../services/database'
 import { useAuth } from '../contexts/AuthContext'
+import { persistEntity } from '../services/syncEngine'
 import ManualEntryView from './ManualEntryView'
 import styles from './BluetoothView.module.css'
 
@@ -26,6 +27,7 @@ export default function BluetoothView({ embedded = false }: Props = {}) {
   const [lastReading, setLastReading] = useState<BloodPressureReading | null>(null)
   const [savedDevices, setSavedDevices] = useState<{ id: string; model: string; lastConnectedAt?: string }[]>([])
   const [showManual, setShowManual] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const bleSupported = isWebBluetoothSupported()
 
   useEffect(() => {
@@ -34,10 +36,18 @@ export default function BluetoothView({ embedded = false }: Props = {}) {
     }
   }, [currentPatient])
 
-  const handleReading = (reading: BloodPressureReading) => {
+  const persistReading = async (reading: BloodPressureReading) => {
     setLastReading(reading)
-    addMeasurement(reading.systolic, reading.diastolic, reading.pulseRate, 'ble')
+    setSaveError('')
+    try {
+      await addMeasurement(reading.systolic, reading.diastolic, reading.pulseRate, 'ble')
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'A leitura chegou, mas não pôde ser salva.')
+      throw error
+    }
   }
+
+  const handleReading = (reading: BloodPressureReading) => { void persistReading(reading).catch(() => {}) }
 
   const handleScan = async () => {
     const d = await scanAndConnect(handleReading, setConnectionState)
@@ -50,7 +60,7 @@ export default function BluetoothView({ embedded = false }: Props = {}) {
           model: d.name || 'Aparelho BLE',
           lastConnectedAt: new Date().toISOString(),
         }
-        await db.saveDevice(dev)
+        await persistEntity('device', dev.id, 'create', dev, () => db.saveDevice(dev))
         setSavedDevices((prev) => {
           const exists = prev.some((p) => p.id === dev.id)
           if (exists) return prev.map((p) => (p.id === dev.id ? dev : p))
@@ -87,6 +97,8 @@ export default function BluetoothView({ embedded = false }: Props = {}) {
           </div>
         </div>
       )}
+
+      {saveError && <div role="alert" style={{ color: 'var(--cardio-red)', fontSize: 14, margin: '12px 0' }}>{saveError}</div>}
 
       {/* Status */}
       <div className={styles.statusCard}>
@@ -188,8 +200,7 @@ export default function BluetoothView({ embedded = false }: Props = {}) {
               pulseRate: heartRate,
               timestamp: new Date(),
             }
-            await handleReading(reading)
-            setLastReading(reading)
+            await persistReading(reading)
             setShowManual(false)
           }}
           onCancel={() => setShowManual(false)}

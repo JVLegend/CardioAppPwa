@@ -66,6 +66,53 @@ export function onSyncStateChange(listener: (next: SyncState) => void) {
   return () => { listeners.delete(listener) }
 }
 
+type LocalWrite = () => Promise<unknown>
+
+/**
+ * Persiste primeiro no Railway quando há rede e mantém o Dexie como cache/fila
+ * offline. Erros de validação ou permissão não são escondidos na fila.
+ */
+export async function persistEntity(
+  entityType: string,
+  entityId: string,
+  operation: SyncOperation['operation'],
+  payload: unknown,
+  writeLocal: LocalWrite
+): Promise<'remote' | 'queued'> {
+  let savedRemotely = false
+  let remoteError: unknown
+
+  if (isOnline) {
+    try {
+      if (entityType === 'patient' && payload) {
+        await repo.updateProfileRemote(payload as Parameters<typeof repo.updateProfileRemote>[0])
+      } else if (operation === 'delete') {
+        await repo.deleteEntityRemote(entityType, entityId)
+      } else {
+        await repo.upsertEntityRemote(entityType, entityId, payload)
+      }
+      savedRemotely = true
+    } catch (error) {
+      const status = typeof error === 'object' && error && 'status' in error
+        ? Number(error.status)
+        : 0
+      if (status > 0 && status < 500 && status !== 408 && status !== 429) throw error
+      remoteError = error
+      console.warn(`[sync] ${entityType} não chegou ao Railway; usando fila local`, error)
+    }
+  }
+
+  try {
+    await writeLocal()
+    if (!savedRemotely) await enqueue(entityType, entityId, operation, payload)
+  } catch (localError) {
+    if (!savedRemotely) throw remoteError || localError
+    console.warn(`[sync] ${entityType} salvo no Railway, mas o cache local falhou`, localError)
+  }
+
+  return savedRemotely ? 'remote' : 'queued'
+}
+
 export async function enqueue(
   entityType: string,
   entityId: string,

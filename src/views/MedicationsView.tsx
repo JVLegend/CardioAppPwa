@@ -122,6 +122,8 @@ export default function MedicationsView() {
   const [notes, setNotes] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [fromAI, setFromAI] = useState(false) // sinaliza que campos vieram de foto/PDF
   const cameraRef = useRef<HTMLInputElement>(null)
   const pdfRef = useRef<HTMLInputElement>(null)
@@ -139,20 +141,45 @@ export default function MedicationsView() {
   const resetForm = () => {
     setName(''); setDose(''); setFrequency(frequencyOptions[0])
     setScheduleInput(''); setStartDate(new Date().toISOString().split('T')[0])
-    setEndDate(''); setNotes(''); setAiError(''); setFromAI(false)
+    setEndDate(''); setNotes(''); setAiError(''); setSaveError(''); setFromAI(false)
+  }
+
+  const saveMedication = async () => {
+    if (saving) return
+    if (!name.trim() || !dose.trim()) {
+      setSaveError('Informe o nome e a dose do remédio.')
+      return
+    }
+    setSaving(true)
+    setSaveError('')
+    try {
+      const schedule = scheduleInput.split(',').map((s) => s.trim()).filter(Boolean)
+      await addMedication(name.trim(), dose.trim(), frequency, schedule.length > 0 ? schedule : undefined, startDate || undefined, endDate || undefined, notes.trim() || undefined)
+      resetForm()
+      setShowAdd(false)
+    } catch (error) {
+      console.error('[medications] falha ao salvar', error)
+      setSaveError(error instanceof Error ? error.message : 'Não foi possível salvar o remédio. Tente novamente.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleAdd = (e: FormEvent) => {
     e.preventDefault()
-    if (!name || !dose) return
-    if (fromAI) {
-      const ok = confirm(`Confirmar dados do remédio?\n\n• ${name}\n• ${dose}\n• ${frequency}${notes ? `\n• Obs: ${notes}` : ''}`)
-      if (!ok) return
-    }
-    const schedule = scheduleInput.split(',').map((s) => s.trim()).filter(Boolean)
-    addMedication(name, dose, frequency, schedule.length > 0 ? schedule : undefined, startDate || undefined, endDate || undefined, notes || undefined)
-    resetForm()
-    setShowAdd(false)
+    void saveMedication()
+  }
+
+  const handleToggle = async (med: Medication) => {
+    setSaveError('')
+    try { await toggleMedication(med) }
+    catch (error) { setSaveError(error instanceof Error ? error.message : 'Não foi possível atualizar o remédio.') }
+  }
+
+  const handleRemove = async (id: string) => {
+    setSaveError('')
+    try { await removeMedication(id) }
+    catch (error) { setSaveError(error instanceof Error ? error.message : 'Não foi possível remover o remédio.') }
   }
 
   const processPrescriptionFile = (file: File, defaultMime: string, sourceLabel: 'foto' | 'PDF') => {
@@ -369,11 +396,12 @@ export default function MedicationsView() {
             </div>
 
             <div className={styles.formActions}>
-              <button type="button" className={styles.cancelBtn} onClick={() => { resetForm(); setShowAdd(false) }}>Cancelar</button>
-              <button type="submit" className={styles.saveBtn} disabled={aiLoading}>
-                {fromAI ? 'Confirmar e Salvar' : 'Salvar'}
+              <button type="button" className={styles.cancelBtn} disabled={saving} onClick={() => { resetForm(); setShowAdd(false) }}>Cancelar</button>
+              <button type="button" className={styles.saveBtn} disabled={aiLoading || saving} onClick={() => void saveMedication()}>
+                {saving ? 'Salvando...' : fromAI ? 'Confirmar e Salvar' : 'Salvar'}
               </button>
             </div>
+            {saveError && <div className={styles.aiError} role="alert">{saveError}</div>}
           </form>
         </div>
       )}
@@ -383,7 +411,7 @@ export default function MedicationsView() {
           <h2 className={styles.sectionTitle}>Ativos</h2>
           <div className={styles.medList}>
             {activeMeds.map((med, i) => (
-              <MedCard key={med.id} med={med} index={i} onToggle={toggleMedication} onRemove={removeMedication} />
+              <MedCard key={med.id} med={med} index={i} onToggle={handleToggle} onRemove={handleRemove} />
             ))}
           </div>
         </div>
@@ -394,7 +422,7 @@ export default function MedicationsView() {
           <h2 className={styles.sectionTitle}>Tratamento Encerrado</h2>
           <div className={styles.medList}>
             {expiredMeds.map((med, i) => (
-              <MedCard key={med.id} med={med} index={i} onToggle={toggleMedication} onRemove={removeMedication} expired />
+              <MedCard key={med.id} med={med} index={i} onToggle={handleToggle} onRemove={handleRemove} expired />
             ))}
           </div>
         </div>
@@ -411,7 +439,7 @@ export default function MedicationsView() {
                   <div className={styles.medName}>{med.name}</div>
                   <div className={styles.medDetail}>{med.dose} — {med.frequency}</div>
                 </div>
-                <button className={styles.iconBtn} onClick={() => toggleMedication(med)}>
+                <button className={styles.iconBtn} onClick={() => void handleToggle(med)} aria-label={`Reativar ${med.name}`}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-green)" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                 </button>
               </div>
@@ -419,6 +447,8 @@ export default function MedicationsView() {
           </div>
         </div>
       )}
+
+      {!showAdd && saveError && <div className={styles.aiError} role="alert">{saveError}</div>}
 
       {medications.length === 0 && !showAdd && (
         <div className={styles.empty}>
@@ -439,7 +469,7 @@ export default function MedicationsView() {
 
 function MedCard({ med, index, onToggle, onRemove, expired }: {
   med: Medication; index: number
-  onToggle: (m: Medication) => void; onRemove: (id: string) => void
+  onToggle: (m: Medication) => void | Promise<void>; onRemove: (id: string) => void | Promise<void>
   expired?: boolean
 }) {
   const daysLeft = treatmentDaysLeft(med.endDate)

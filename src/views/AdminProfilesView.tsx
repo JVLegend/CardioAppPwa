@@ -159,7 +159,9 @@ export default function AdminProfilesView({ onBack }: Props) {
           <p className={styles.eyebrow}>Administração protegida</p>
           <h1 className={styles.title}>Perfis de acesso</h1>
           <p className={styles.subtitle}>
-            Crie acessos e redefina senhas provisórias para pacientes, médicos e gestoras.
+            {currentPatient?.role === 'controller'
+              ? 'Crie acessos e redefina senhas provisórias para pacientes e médicos.'
+              : 'Crie acessos e redefina senhas provisórias para seus pacientes.'}
           </p>
         </div>
         <div className={styles.adminBadge}>{currentUserEmail}</div>
@@ -185,7 +187,7 @@ export default function AdminProfilesView({ onBack }: Props) {
               <input
                 value={form.name}
                 onChange={(event) => updateField('name', event.target.value)}
-                placeholder="Nome do paciente"
+                placeholder="Nome completo"
                 autoComplete="name"
                 required
               />

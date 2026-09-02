@@ -9,7 +9,7 @@ import type { Patient, Measurement, GlucoseMeasurement, BPAlert, AlertStatus } f
 import * as db from '../services/database'
 import { db as dexieDb } from '../services/database'
 import { classifyBP, classificationConfig, type BPClassification } from '../config/theme'
-import { enqueue, pullFromServer } from '../services/syncEngine'
+import { persistEntity, pullFromServer } from '../services/syncEngine'
 import styles from './PatientManagementSection.module.css'
 
 type DrillFilter =
@@ -290,8 +290,7 @@ export default function PatientManagementSection() {
           actorRole={currentPatient?.role ?? 'operator'}
           onClose={() => setDrawer(null)}
           onUpdate={async (updated) => {
-            await db.savePatient(updated)
-            await enqueue('patient', updated.id, 'update', updated)
+            await persistEntity('patient', updated.id, 'update', updated, () => db.savePatient(updated))
             await loadData()
             setDrawer((prev) => (prev ? { ...prev, patient: updated } : prev))
           }}
@@ -338,6 +337,8 @@ function DetailDrawer({
   const [inTreatmentPlan, setInTreatmentPlan] = useState(patient.inTreatmentPlan ?? false)
   const activeAlert = row.alerts[0]
   const [alertStatus, setAlertStatus] = useState<AlertStatus | null>(activeAlert?.status ?? null)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   const updateAlert = async (status: AlertStatus) => {
     if (!activeAlert) return
@@ -348,20 +349,33 @@ function DetailDrawer({
       acknowledgedAt: status === 'acknowledged' ? now : activeAlert.acknowledgedAt,
       resolvedAt: status === 'resolved' ? now : activeAlert.resolvedAt,
     }
-    await db.saveAlert(updated)
-    await enqueue('alert', updated.id, 'update', updated)
-    setAlertStatus(status)
+    setSaveError('')
+    try {
+      await persistEntity('alert', updated.id, 'update', updated, () => db.saveAlert(updated))
+      setAlertStatus(status)
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Não foi possível atualizar o alerta.')
+    }
   }
 
   const save = async () => {
-    await onUpdate({
-      ...patient,
-      phone: phone || undefined,
-      comorbidities: comorbInput.split(',').map((s) => s.trim()).filter(Boolean),
-      planStatus: actorRole === 'controller' ? planStatus : patient.planStatus,
-      inTreatmentPlan,
-    })
-    setEditing(false)
+    if (saving) return
+    setSaving(true)
+    setSaveError('')
+    try {
+      await onUpdate({
+        ...patient,
+        phone: phone || undefined,
+        comorbidities: comorbInput.split(',').map((s) => s.trim()).filter(Boolean),
+        planStatus: actorRole === 'controller' ? planStatus : patient.planStatus,
+        inTreatmentPlan,
+      })
+      setEditing(false)
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Não foi possível salvar as informações.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -485,13 +499,14 @@ function DetailDrawer({
                 Em plano de tratamento
               </label>
               <div className={styles.editActions}>
-                <button className={styles.btnGhost} onClick={() => setEditing(false)}>Cancelar</button>
-                <button className={styles.btnPrimary} onClick={save}>Salvar</button>
+                <button className={styles.btnGhost} disabled={saving} onClick={() => setEditing(false)}>Cancelar</button>
+                <button className={styles.btnPrimary} disabled={saving} onClick={() => void save()}>{saving ? 'Salvando...' : 'Salvar'}</button>
               </div>
             </div>
           ) : (
             <button className={styles.btnOutline} onClick={() => setEditing(true)}>Editar informações</button>
           )}
+          {saveError && <div role="alert" className={styles.measureReason}>{saveError}</div>}
         </section>
 
         <section className={styles.drawerSection}>
@@ -517,8 +532,13 @@ function PushModal({ patient, onClose }: { patient: Patient; onClose: () => void
     `Olá ${patient.name.split(' ')[0]}, lembre-se de medir sua pressão hoje!`
   )
   const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
 
   const send = async () => {
+    if (sending || !message.trim()) return
+    setSending(true)
+    setError('')
     const msg = {
       id: crypto.randomUUID(),
       operatorId: patient.operatorId,
@@ -528,10 +548,15 @@ function PushModal({ patient, onClose }: { patient: Patient; onClose: () => void
       sentAt: new Date().toISOString(),
       read: false,
     }
-    await db.saveChatMessage(msg)
-    await enqueue('chatMessage', msg.id, 'create', msg)
-    setSent(true)
-    setTimeout(onClose, 1400)
+    try {
+      await persistEntity('chatMessage', msg.id, 'create', msg, () => db.saveChatMessage(msg))
+      setSent(true)
+      setTimeout(onClose, 1400)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível enviar a mensagem.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -552,10 +577,11 @@ function PushModal({ patient, onClose }: { patient: Patient; onClose: () => void
             />
             <div className={styles.editActions}>
               <button className={styles.btnGhost} onClick={onClose}>Cancelar</button>
-              <button className={styles.btnPrimary} onClick={send} disabled={!message.trim()}>
-                Enviar
+              <button className={styles.btnPrimary} onClick={() => void send()} disabled={!message.trim() || sending}>
+                {sending ? 'Enviando...' : 'Enviar'}
               </button>
             </div>
+            {error && <div role="alert" className={styles.measureReason}>{error}</div>}
           </>
         )}
       </div>
