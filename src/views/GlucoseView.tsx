@@ -14,6 +14,11 @@ const contextOptions: { id: MealContext; label: string }[] = [
   { id: 'aleatorio', label: 'Aleatório' },
 ]
 
+type GlucoseUnit = 'mg/dL' | 'mmol/L'
+const MIN_GLUCOSE_MG_DL = 10
+const MAX_GLUCOSE_MG_DL = 800
+const MMOL_TO_MG_DL = 18
+
 interface GlucoseClass {
   label: string
   color: string
@@ -40,6 +45,7 @@ export default function GlucoseView() {
   const [history, setHistory] = useState<GlucoseMeasurement[]>([])
   const [showEntry, setShowEntry] = useState(false)
   const [value, setValue] = useState('')
+  const [unit, setUnit] = useState<GlucoseUnit>('mg/dL')
   const [context, setContext] = useState<MealContext>('jejum')
   const [source, setSource] = useState<MeasurementSource>('manual')
   const [fromPhoto, setFromPhoto] = useState(false)
@@ -65,20 +71,27 @@ export default function GlucoseView() {
     }
   }, [showEntry, fromPhoto])
 
-  const num = Number(value) || 0
-  const isValid = Number.isInteger(num) && num >= 20 && num <= 800
+  const enteredValue = Number(value) || 0
+  const num = unit === 'mmol/L' ? Math.round(enteredValue * MMOL_TO_MG_DL) : enteredValue
+  const isValid = Number.isFinite(enteredValue)
+    && enteredValue > 0
+    && (unit === 'mmol/L' || Number.isInteger(enteredValue))
+    && num >= MIN_GLUCOSE_MG_DL
+    && num <= MAX_GLUCOSE_MG_DL
 
   const classification = isValid ? classifyGlucose(num, context) : null
 
   const resetForm = () => {
-    setValue(''); setContext('jejum'); setSource('manual')
+    setValue(''); setUnit('mg/dL'); setContext('jejum'); setSource('manual')
     setFromPhoto(false); setOcrError(''); setSaveError('')
   }
 
   const saveReading = async () => {
     if (savingRef.current) return
     if (!isValid) {
-      setSaveError('Informe um valor inteiro entre 20 e 800 mg/dL.')
+      setSaveError(unit === 'mmol/L'
+        ? 'Informe um valor entre 0,6 e 44,4 mmol/L.'
+        : 'Informe um valor inteiro entre 10 e 800 mg/dL.')
       return
     }
     if (!currentPatient) {
@@ -140,7 +153,9 @@ export default function GlucoseView() {
       if (reading.value === null) {
         setOcrError('A IA não conseguiu ler o número. Tente outra foto ou registre manualmente.')
       } else {
-        setValue(String(reading.value))
+        const useOriginalMmol = reading.originalUnit === 'mmol/L' && reading.originalValue !== null
+        setValue(String(useOriginalMmol ? reading.originalValue : reading.value))
+        setUnit(useOriginalMmol ? 'mmol/L' : 'mg/dL')
         setSource('photo')
         setFromPhoto(true)
         setShowEntry(true)
@@ -199,9 +214,12 @@ export default function GlucoseView() {
               className={styles.previewValue}
               style={{ color: classification?.color || 'var(--text-muted)' }}
             >
-              {num || '---'}
+              {enteredValue || '---'}
             </span>
-            <span className={styles.previewUnit}>mg/dL</span>
+            <span className={styles.previewUnit}>{unit}</span>
+            {unit === 'mmol/L' && isValid && (
+              <span className={styles.convertedValue}>Equivale a {num} mg/dL</span>
+            )}
             {classification && (
               <div className={styles.previewClass}>
                 <span className={styles.previewDot} style={{ background: classification.color }} />
@@ -209,6 +227,12 @@ export default function GlucoseView() {
               </div>
             )}
           </div>
+
+          {isValid && num < 54 && (
+            <div className={styles.criticalNotice} role="alert">
+              <strong>Glicemia muito baixa.</strong> Confira a unidade e repita a medição. Se o valor for confirmado ou houver sintomas, siga seu plano de hipoglicemia e procure ajuda médica imediatamente.
+            </div>
+          )}
 
           <div className={styles.inputGroup}>
             <div className={styles.inputRow}>
@@ -218,15 +242,24 @@ export default function GlucoseView() {
                 aria-label="Glicemia"
                 className={styles.input}
                 type="number"
-                inputMode="numeric"
+                inputMode="decimal"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="100"
-                min={20}
-                max={800}
+                min={unit === 'mmol/L' ? 0.6 : MIN_GLUCOSE_MG_DL}
+                max={unit === 'mmol/L' ? 44.4 : MAX_GLUCOSE_MG_DL}
+                step={unit === 'mmol/L' ? 0.1 : 1}
                 required
               />
-              <span className={styles.unit}>mg/dL</span>
+              <select
+                className={styles.unitSelect}
+                aria-label="Unidade da glicemia"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value as GlucoseUnit)}
+              >
+                <option value="mg/dL">mg/dL</option>
+                <option value="mmol/L">mmol/L</option>
+              </select>
             </div>
           </div>
 

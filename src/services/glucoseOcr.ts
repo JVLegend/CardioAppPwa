@@ -9,8 +9,11 @@ export class MissingGeminiKeyError extends Error {
 export interface GlucoseReading {
   /** mg/dL — null se ilegível */
   value: number | null
-  /** Algumas máquinas mostram a unidade no display */
+  /** Unidade normalizada usada pelo banco. */
   unit: 'mg/dL' | 'mmol/L' | null
+  /** Valor e unidade exatamente como identificados no aparelho. */
+  originalValue: number | null
+  originalUnit: 'mg/dL' | 'mmol/L' | null
 }
 
 export async function readGlucoseFromImage(base64: string, mimeType: string): Promise<GlucoseReading> {
@@ -58,9 +61,11 @@ export async function readGlucoseFromImage(base64: string, mimeType: string): Pr
     return Number.isFinite(n) ? n : null
   }
 
-  let value = num(rawValue)
-  let unit: 'mg/dL' | 'mmol/L' | null =
+  const originalValue = num(rawValue)
+  const originalUnit: 'mg/dL' | 'mmol/L' | null =
     rawUnit === 'mmol/L' ? 'mmol/L' : rawUnit === 'mg/dL' ? 'mg/dL' : null
+  let value = originalValue
+  let unit = originalUnit
 
   // Normaliza para mg/dL se vier em mmol/L (1 mmol/L = 18 mg/dL)
   if (value !== null && unit === 'mmol/L') {
@@ -68,5 +73,5 @@ export async function readGlucoseFromImage(base64: string, mimeType: string): Pr
     unit = 'mg/dL'
   }
 
-  return { value, unit }
+  return { value, unit, originalValue, originalUnit }
 }

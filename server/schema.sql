@@ -61,13 +61,27 @@ CREATE TABLE IF NOT EXISTS glucose_measurements (
   id uuid PRIMARY KEY,
   patient_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   device_id text,
-  value integer NOT NULL CHECK (value BETWEEN 20 AND 800),
+  value integer NOT NULL CHECK (value BETWEEN 10 AND 800),
   context text NOT NULL CHECK (context IN ('jejum', 'pre_refeicao', 'pos_refeicao', 'aleatorio')),
   source text NOT NULL CHECK (source IN ('ble', 'manual', 'photo')),
   measured_at timestamptz NOT NULL,
   notes text,
   synced_at timestamptz NOT NULL DEFAULT now()
 );
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'glucose_measurements'::regclass
+      AND conname = 'glucose_measurements_value_check'
+      AND pg_get_constraintdef(oid) LIKE '%value >= 20%'
+  ) THEN
+    ALTER TABLE glucose_measurements DROP CONSTRAINT glucose_measurements_value_check;
+    ALTER TABLE glucose_measurements
+      ADD CONSTRAINT glucose_measurements_value_check CHECK (value BETWEEN 10 AND 800);
+  END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS glucose_patient_time_idx ON glucose_measurements(patient_id, measured_at DESC);
 
 CREATE TABLE IF NOT EXISTS medications (
@@ -89,6 +103,7 @@ CREATE TABLE IF NOT EXISTS alerts (
   id uuid PRIMARY KEY,
   patient_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   measurement_id uuid REFERENCES measurements(id) ON DELETE SET NULL,
+  glucose_measurement_id uuid REFERENCES glucose_measurements(id) ON DELETE SET NULL,
   type text NOT NULL CHECK (type IN ('urgent', 'attention', 'adherence')),
   rule text NOT NULL,
   status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'acknowledged', 'resolved')),
@@ -100,9 +115,12 @@ CREATE TABLE IF NOT EXISTS alerts (
   escalated_at timestamptz,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE alerts ADD COLUMN IF NOT EXISTS glucose_measurement_id uuid REFERENCES glucose_measurements(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS alerts_patient_status_idx ON alerts(patient_id, status, created_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS alerts_measurement_type_unique_idx
   ON alerts(measurement_id, type) WHERE measurement_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS alerts_glucose_measurement_type_unique_idx
+  ON alerts(glucose_measurement_id, type) WHERE glucose_measurement_id IS NOT NULL;
 
 ALTER TABLE alerts ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 

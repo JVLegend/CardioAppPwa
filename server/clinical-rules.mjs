@@ -22,3 +22,14 @@ export function evaluateMeasurementAlerts(measurement, recentMeasurements = [], 
   }
   return []
 }
+
+export function evaluateGlucoseAlerts(measurement) {
+  const reading = `${measurement.value} mg/dL`
+  if (measurement.value < 54) {
+    return [{ type: 'urgent', rule: `Glicemia muito baixa: ${reading}` }]
+  }
+  if (measurement.value < 70) {
+    return [{ type: 'attention', rule: `Glicemia baixa: ${reading}` }]
+  }
+  return []
+}

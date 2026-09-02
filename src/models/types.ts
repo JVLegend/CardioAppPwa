@@ -65,6 +65,7 @@ export interface BPAlert {
   id: string
   patientId: string
   measurementId?: string
+  glucoseMeasurementId?: string
   type: AlertType
   rule: string
   status: AlertStatus

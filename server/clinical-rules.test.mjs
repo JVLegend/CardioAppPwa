@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { evaluateMeasurementAlerts } from './clinical-rules.mjs'
+import { evaluateGlucoseAlerts, evaluateMeasurementAlerts } from './clinical-rules.mjs'
 
 const reading = (systolic, diastolic, minutesAgo = 0) => ({
   systolic,
@@ -26,4 +26,20 @@ test('três leituras elevadas consecutivas geram alerta de atenção', () => {
 
 test('leitura isolada normal não gera alerta', () => {
   assert.deepEqual(evaluateMeasurementAlerts(reading(118, 76), []), [])
+})
+
+test('glicemia abaixo de 54 mg/dL gera alerta urgente', () => {
+  assert.deepEqual(evaluateGlucoseAlerts({ value: 14 }), [
+    { type: 'urgent', rule: 'Glicemia muito baixa: 14 mg/dL' },
+  ])
+})
+
+test('glicemia entre 54 e 69 mg/dL gera alerta de atenção', () => {
+  assert.deepEqual(evaluateGlucoseAlerts({ value: 65 }), [
+    { type: 'attention', rule: 'Glicemia baixa: 65 mg/dL' },
+  ])
+})
+
+test('glicemia a partir de 70 mg/dL não gera alerta de hipoglicemia', () => {
+  assert.deepEqual(evaluateGlucoseAlerts({ value: 70 }), [])
 })

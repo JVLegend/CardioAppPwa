@@ -57,6 +57,13 @@
   letter-spacing: 0.5px;
 }
 
+.convertedValue {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
 .previewClass {
   display: flex;
   align-items: center;
@@ -125,6 +132,21 @@
   margin-left: 8px;
   color: var(--text-muted);
   font-size: 14px;
+}
+
+.unitSelect {
+  margin-left: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.unitSelect:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--cardio-red) 35%, transparent);
+  outline-offset: 2px;
 }
 
 .contextRow {
@@ -221,6 +243,16 @@
   border-radius: 12px;
   font-size: 14px;
   line-height: 1.4;
+}
+
+.criticalNotice {
+  padding: 13px 14px;
+  border: 2px solid #dc2626;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .error {

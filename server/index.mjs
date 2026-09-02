@@ -18,7 +18,7 @@ import {
   isValidState,
   sanitizeProfilePatch,
 } from './policy.mjs'
-import { evaluateMeasurementAlerts } from './clinical-rules.mjs'
+import { evaluateGlucoseAlerts, evaluateMeasurementAlerts } from './clinical-rules.mjs'
 import {
   SESSION_COOKIE,
   clearSessionCookie,
@@ -580,6 +580,7 @@ app.put('/api/entities/:type/:id', async (req, res, next) => {
     const result = await client.query(config.upsert(payload, req.profile.id))
     await client.query('DELETE FROM sync_tombstones WHERE entity_type=$1 AND entity_id=$2', [req.params.type, req.params.id])
     if (req.params.type === 'measurement') await createMeasurementAlerts(client, payload)
+    if (req.params.type === 'glucoseMeasurement') await createGlucoseAlerts(client, payload)
     if (req.params.type === 'alert') {
       await client.query('INSERT INTO alert_events (alert_id, actor_id, event_type) VALUES ($1,$2,$3)', [payload.id, req.profile.id, payload.status || 'updated'])
     }
@@ -703,7 +704,7 @@ function validateEntityPayload(type, payload) {
     if (!['ble', 'manual', 'photo'].includes(payload.source) || !isValidIsoDate(payload.measuredAt)) return 'Origem ou data da medição inválida'
   }
   if (type === 'glucoseMeasurement') {
-    if (!Number.isInteger(payload.value) || payload.value < 20 || payload.value > 800) return 'Valor de glicose inválido'
+    if (!Number.isInteger(payload.value) || payload.value < 10 || payload.value > 800) return 'Valor de glicose inválido'
     if (!['jejum', 'pre_refeicao', 'pos_refeicao', 'aleatorio'].includes(payload.context)) return 'Contexto da glicose inválido'
     if (!['ble', 'manual', 'photo'].includes(payload.source) || !isValidIsoDate(payload.measuredAt)) return 'Origem ou data da medição inválida'
   }
@@ -752,10 +753,30 @@ async function createMeasurementAlerts(client, measurement) {
   }
 }
 
+async function createGlucoseAlerts(client, measurement) {
+  const alerts = evaluateGlucoseAlerts(measurement)
+  for (const alert of alerts) {
+    const inserted = await client.query(
+      `INSERT INTO alerts (id,patient_id,glucose_measurement_id,type,rule,status,created_at,updated_at)
+       VALUES (gen_random_uuid(),$1,$2,$3,$4,'pending',now(),now())
+       ON CONFLICT (glucose_measurement_id,type) WHERE glucose_measurement_id IS NOT NULL DO NOTHING
+       RETURNING id`,
+      [measurement.patientId, measurement.id, alert.type, alert.rule]
+    )
+    if (inserted.rows[0]) {
+      await client.query(
+        `INSERT INTO alert_events (alert_id,actor_id,event_type,details)
+         VALUES ($1,$2,'created',jsonb_build_object('source','server_glucose_rule'))`,
+        [inserted.rows[0].id, measurement.patientId]
+      )
+    }
+  }
+}
+
 function mapMeasurement(r) { return { id:r.id, patientId:r.patient_id, deviceId:r.device_id, systolic:r.systolic, diastolic:r.diastolic, heartRate:r.heart_rate, meanArterialPressure:r.mean_arterial_pressure, source:r.source, measuredAt:r.measured_at, syncedAt:r.synced_at } }
 function mapGlucose(r) { return { id:r.id, patientId:r.patient_id, deviceId:r.device_id, value:r.value, context:r.context, source:r.source, measuredAt:r.measured_at, notes:r.notes, syncedAt:r.synced_at } }
 function mapMedication(r) { return { id:r.id, patientId:r.patient_id, name:r.name, dose:r.dose, frequency:r.frequency, schedule:r.schedule, active:r.active, startDate:r.start_date, endDate:r.end_date, notes:r.notes } }
-function mapAlert(r) { return { id:r.id, patientId:r.patient_id, measurementId:r.measurement_id, type:r.type, rule:r.rule, status:r.status, createdAt:r.created_at, acknowledgedAt:r.acknowledged_at, resolvedAt:r.resolved_at, resolvedBy:r.resolved_by } }
+function mapAlert(r) { return { id:r.id, patientId:r.patient_id, measurementId:r.measurement_id, glucoseMeasurementId:r.glucose_measurement_id, type:r.type, rule:r.rule, status:r.status, createdAt:r.created_at, acknowledgedAt:r.acknowledged_at, resolvedAt:r.resolved_at, resolvedBy:r.resolved_by } }
 function mapDevice(r) { return { id:r.id, patientId:r.patient_id, model:r.model, serialNumber:r.serial_number, lastConnectedAt:r.last_connected_at } }
 function mapMessage(r) { return { id:r.id, operatorId:r.operator_id, patientId:r.patient_id, fromRole:r.from_role, content:r.content, sentAt:r.sent_at, read:r.read } }
 
@@ -763,7 +784,7 @@ const entityConfigs = {
   measurement: { table:'measurements', map:mapMeasurement, upsert:p=>({ text:`INSERT INTO measurements (id,patient_id,device_id,systolic,diastolic,heart_rate,mean_arterial_pressure,source,measured_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(id) DO UPDATE SET systolic=EXCLUDED.systolic,diastolic=EXCLUDED.diastolic,heart_rate=EXCLUDED.heart_rate,synced_at=now() RETURNING *`, values:[p.id,p.patientId,p.deviceId||null,p.systolic,p.diastolic,p.heartRate||null,p.meanArterialPressure||null,p.source,p.measuredAt] }) },
   glucoseMeasurement: { table:'glucose_measurements', map:mapGlucose, upsert:p=>({ text:`INSERT INTO glucose_measurements (id,patient_id,device_id,value,context,source,measured_at,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(id) DO UPDATE SET value=EXCLUDED.value,context=EXCLUDED.context,notes=EXCLUDED.notes,synced_at=now() RETURNING *`, values:[p.id,p.patientId,p.deviceId||null,p.value,p.context,p.source,p.measuredAt,p.notes||null] }) },
   medication: { table:'medications', map:mapMedication, upsert:p=>({ text:`INSERT INTO medications (id,patient_id,name,dose,frequency,schedule,active,start_date,end_date,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name,dose=EXCLUDED.dose,frequency=EXCLUDED.frequency,schedule=EXCLUDED.schedule,active=EXCLUDED.active,start_date=EXCLUDED.start_date,end_date=EXCLUDED.end_date,notes=EXCLUDED.notes,updated_at=now() RETURNING *`, values:[p.id,p.patientId,p.name,p.dose,p.frequency,JSON.stringify(p.schedule||[]),p.active!==false,p.startDate||null,p.endDate||null,p.notes||null] }) },
-  alert: { table:'alerts', map:mapAlert, upsert:(p,actorId)=>({ text:`INSERT INTO alerts (id,patient_id,measurement_id,type,rule,status,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,now()) ON CONFLICT(id) DO UPDATE SET status=EXCLUDED.status,acknowledged_at=CASE WHEN EXCLUDED.status='acknowledged' THEN COALESCE(alerts.acknowledged_at,now()) ELSE alerts.acknowledged_at END,acknowledged_by=CASE WHEN EXCLUDED.status='acknowledged' THEN $8 ELSE alerts.acknowledged_by END,resolved_at=CASE WHEN EXCLUDED.status='resolved' THEN COALESCE(alerts.resolved_at,now()) ELSE alerts.resolved_at END,resolved_by=CASE WHEN EXCLUDED.status='resolved' THEN $8 ELSE alerts.resolved_by END,updated_at=now() RETURNING *`, values:[p.id,p.patientId,p.measurementId||null,p.type,p.rule,p.status||'pending',p.createdAt,actorId] }) },
+  alert: { table:'alerts', map:mapAlert, upsert:(p,actorId)=>({ text:`INSERT INTO alerts (id,patient_id,measurement_id,glucose_measurement_id,type,rule,status,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now()) ON CONFLICT(id) DO UPDATE SET status=EXCLUDED.status,acknowledged_at=CASE WHEN EXCLUDED.status='acknowledged' THEN COALESCE(alerts.acknowledged_at,now()) ELSE alerts.acknowledged_at END,acknowledged_by=CASE WHEN EXCLUDED.status='acknowledged' THEN $9 ELSE alerts.acknowledged_by END,resolved_at=CASE WHEN EXCLUDED.status='resolved' THEN COALESCE(alerts.resolved_at,now()) ELSE alerts.resolved_at END,resolved_by=CASE WHEN EXCLUDED.status='resolved' THEN $9 ELSE alerts.resolved_by END,updated_at=now() RETURNING *`, values:[p.id,p.patientId,p.measurementId||null,p.glucoseMeasurementId||null,p.type,p.rule,p.status||'pending',p.createdAt,actorId] }) },
   device: { table:'devices', map:mapDevice, upsert:p=>({ text:`INSERT INTO devices (id,patient_id,model,serial_number,last_connected_at,updated_at) VALUES ($1,$2,$3,$4,$5,now()) ON CONFLICT(id) DO UPDATE SET model=EXCLUDED.model,serial_number=EXCLUDED.serial_number,last_connected_at=EXCLUDED.last_connected_at,updated_at=now() RETURNING *`, values:[p.id,p.patientId,p.model,p.serialNumber||null,p.lastConnectedAt||null] }) },
   chatMessage: { table:'chat_messages', map:mapMessage, upsert:p=>({ text:`INSERT INTO chat_messages (id,operator_id,patient_id,from_role,content,sent_at,read,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,now()) ON CONFLICT(id) DO UPDATE SET read=EXCLUDED.read,updated_at=now() RETURNING *`, values:[p.id,p.operatorId,p.patientId,p.fromRole,String(p.content||'').trim(),p.sentAt,p.read===true] }) },
 }
