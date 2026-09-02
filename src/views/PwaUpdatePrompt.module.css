@@ -85,6 +85,17 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .primaryButton:hover { background: #e2c45e; }
+  .secondaryButton:hover { background: rgba(255, 255, 255, 0.18); }
+}
+
 .primaryButton:disabled,
 .secondaryButton:disabled {
   cursor: wait;
