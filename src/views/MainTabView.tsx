@@ -76,7 +76,9 @@ export default function MainTabView() {
     <div className={styles.container}>
       <div className={styles.content}>
         <Suspense fallback={<div style={{ padding: 24, color: 'var(--text-secondary)' }}>Carregando...</div>}>
-          {renderTab()}
+          <div className={styles.pageFrame}>
+            {renderTab()}
+          </div>
         </Suspense>
       </div>
       <nav className={styles.tabBar}>
