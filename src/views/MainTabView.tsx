@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import HomeView from './HomeView'
-import HistoryView from './HistoryView'
-import GlucoseView from './GlucoseView'
-import MedicationsView from './MedicationsView'
-import SettingsView from './SettingsView'
 import ChatView from './ChatView'
 import styles from './MainTabView.module.css'
+
+const HistoryView = lazy(() => import('./HistoryView'))
+const GlucoseView = lazy(() => import('./GlucoseView'))
+const MedicationsView = lazy(() => import('./MedicationsView'))
+const SettingsView = lazy(() => import('./SettingsView'))
 
 type Tab = 'home' | 'history' | 'glucose' | 'medications' | 'chat' | 'settings'
 
@@ -73,7 +74,11 @@ export default function MainTabView() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.content}>{renderTab()}</div>
+      <div className={styles.content}>
+        <Suspense fallback={<div style={{ padding: 24, color: 'var(--text-secondary)' }}>Carregando...</div>}>
+          {renderTab()}
+        </Suspense>
+      </div>
       <nav className={styles.tabBar}>
         {tabs.map((tab) => (
           <button

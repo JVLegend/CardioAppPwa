@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { getIsOnline } from '../services/syncEngine'
+import { getSyncState, onSyncStateChange, processPendingOperations, pullFromServer } from '../services/syncEngine'
 import { isWebBluetoothSupported } from '../services/bluetoothService'
 import { wipeAccountData } from '../services/database'
+import { deleteRemoteAccount } from '../services/railwayRepository'
 import DisclaimerView from './DisclaimerView'
 import ReminderControls from './ReminderControls'
 import DocumentSheetView from './DocumentSheetView'
@@ -24,11 +25,19 @@ export default function SettingsView() {
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [syncState, setSyncState] = useState(getSyncState)
+
+  useEffect(() => onSyncStateChange(setSyncState), [])
+
+  const retrySync = () => {
+    void processPendingOperations().then(() => pullFromServer())
+  }
 
   const handleDeleteAccount = async () => {
     setDeleting(true)
     setDeleteError(null)
     try {
+      await deleteRemoteAccount()
       await wipeAccountData()
       // logout clears in-memory state e leva pra LoginView. localStorage já
       // foi limpo dentro de wipeAccountData (incluindo o disclaimer flag).
@@ -75,11 +84,24 @@ export default function SettingsView() {
           </div>
           <div className={styles.divider} />
           <div className={styles.row}>
-            <span className={styles.rowLabel}>Conexão</span>
-            <span className={styles.badge} style={{ color: getIsOnline() ? 'var(--cardio-green)' : 'var(--cardio-red)' }}>
-              {getIsOnline() ? 'Online' : 'Offline'}
+            <span className={styles.rowLabel}>Sincronização</span>
+            <span className={styles.badge} style={{ color: syncState.status === 'idle' ? 'var(--cardio-green)' : syncState.status === 'syncing' ? 'var(--cardio-warm)' : 'var(--cardio-red)' }}>
+              {syncState.status === 'offline' ? 'Offline' : syncState.status === 'syncing' ? 'Sincronizando…' : syncState.status === 'error' ? 'Atenção' : 'Atualizada'}
             </span>
           </div>
+          {(syncState.pending > 0 || syncState.failed > 0 || syncState.message) && (
+            <>
+              <div className={styles.divider} />
+              <button className={styles.linkRow} onClick={retrySync}>
+                <span className={styles.rowLabel}>
+                  {syncState.failed > 0
+                    ? `${syncState.failed} alteração(ões) com falha`
+                    : `${syncState.pending} alteração(ões) pendente(s)`}
+                </span>
+                <span className={styles.chevron}>Tentar novamente</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 // OCR de tela de glicosímetro (Accu-Chek, OneTouch, FreeStyle, etc.) via Gemini.
 // Lê o valor da glicemia em mg/dL.
+import { generateWithGemini } from './railwayRepository'
 
 export class MissingGeminiKeyError extends Error {
   constructor() { super('MISSING_GEMINI_KEY') }
@@ -13,15 +14,8 @@ export interface GlucoseReading {
 }
 
 export async function readGlucoseFromImage(base64: string, mimeType: string): Promise<GlucoseReading> {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-  if (!apiKey) throw new MissingGeminiKeyError()
-
-  const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+  const data = await generateWithGemini({
+        purpose: 'glucose_ocr',
         contents: [
           {
             parts: [
@@ -45,17 +39,8 @@ export async function readGlucoseFromImage(base64: string, mimeType: string): Pr
           temperature: 0,
           response_mime_type: 'application/json',
         },
-      }),
-    }
-  )
-
-  if (!resp.ok) {
-    const errBody = await resp.text().catch(() => '')
-    console.error('[Gemini Glucose OCR] HTTP', resp.status, errBody)
-    throw new Error(`Gemini ${resp.status}`)
-  }
-  const data = await resp.json()
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
+  })
+  const text = (data as any).candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
   console.debug('[Gemini Glucose OCR] raw response:', text)
   let parsed: Record<string, unknown> = {}
   try {

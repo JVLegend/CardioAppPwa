@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import type { Patient, Measurement } from '../models/types'
 import * as db from '../services/database'
+import { enqueue, pullFromServer } from '../services/syncEngine'
 import { db as dexieDb } from '../services/database'
 import { classifyBP, classificationConfig, type BPClassification } from '../config/theme'
 import { sendBrowserNotification } from '../services/alertService'
@@ -36,7 +37,7 @@ interface PatientStats {
 function computeReason(c: BPClassification | null): string | null {
   if (!c) return null
   switch (c) {
-    case 'crisis': return 'Crise hipertensiva — PA ≥ 180/110 mmHg'
+    case 'crisis': return 'Pressão muito elevada — PA ≥ 180/110 mmHg'
     case 'stage2': return 'Hipertensão estágio II — PA 160-179/100-109 mmHg'
     case 'stage1': return 'Hipertensão estágio I — PA 140-159/90-99 mmHg'
     default: return null
@@ -59,6 +60,7 @@ export default function PatientListView() {
   }, [currentPatient])
 
   async function loadData() {
+    await pullFromServer()
     if (!currentPatient) return
     setLoading(true)
     try {
@@ -142,6 +144,7 @@ export default function PatientListView() {
 
   async function handleUpdatePatient(updated: Patient) {
     await db.savePatient(updated)
+    await enqueue('patient', updated.id, 'update', updated)
     await loadData()
     setDetailPatient((prev) => (prev ? { ...prev, patient: updated } : null))
   }
@@ -218,7 +221,7 @@ export default function PatientListView() {
           <h2 className={styles.sectionTitle}>Pressão Arterial</h2>
           <div className={styles.kpiGrid}>
             <StatCard value={inGoal} label="Dentro da Meta" sub="Normal ou pré-hipertensão" color="#16A34A" active={drillFilter === 'inGoal'} onClick={() => setDrillFilter(drillFilter === 'inGoal' ? 'all' : 'inGoal')} />
-            <StatCard value={outOfGoal} label="Fora da Meta" sub="Hipertensão I, II ou crise" color="#C5A050" active={drillFilter === 'outOfGoal'} onClick={() => setDrillFilter(drillFilter === 'outOfGoal' ? 'all' : 'outOfGoal')} />
+            <StatCard value={outOfGoal} label="Fora da Meta" sub="Leituras acima da faixa" color="#C5A050" active={drillFilter === 'outOfGoal'} onClick={() => setDrillFilter(drillFilter === 'outOfGoal' ? 'all' : 'outOfGoal')} />
           </div>
         </div>
         {critical > 0 && (
@@ -231,7 +234,7 @@ export default function PatientListView() {
             </div>
             <div className={styles.alertContent}>
               <div className={styles.alertTitle}>{critical} paciente{critical !== 1 ? 's' : ''} em estado crítico</div>
-              <div className={styles.alertSub}>Toque para ver hipertensão II ou crise</div>
+              <div className={styles.alertSub}>Toque para ver leituras que exigem prioridade</div>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--cardio-red)" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
           </button>
@@ -548,7 +551,7 @@ function PushNotificationModal({ patient, onClose }: { patient: Patient; onClose
 
   async function handleSend() {
     // Mensagem entra direto no chat do paciente (Dexie local).
-    // Quando o backend de sync (Supabase realtime) entrar, propaga cross-device.
+    // A sincronização do Railway propaga esta alteração entre dispositivos.
     const msg = {
       id: crypto.randomUUID(),
       operatorId: patient.operatorId,
@@ -559,6 +562,7 @@ function PushNotificationModal({ patient, onClose }: { patient: Patient; onClose
       read: false,
     }
     await db.saveChatMessage(msg)
+    await enqueue('chatMessage', msg.id, 'create', msg)
     setSent(true)
     setTimeout(onClose, 1400)
   }

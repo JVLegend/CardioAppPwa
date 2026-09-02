@@ -1,6 +1,7 @@
 // OCR de tela de aparelho de pressão (Omron e similares) via Gemini.
 // Lê SYS / DIA / PULSE da foto e devolve números. Os campos podem vir
 // vazios (null) se o modelo não conseguir ler com confiança.
+import { generateWithGemini } from './railwayRepository'
 
 export class MissingGeminiKeyError extends Error {
   constructor() { super('MISSING_GEMINI_KEY') }
@@ -13,15 +14,8 @@ export interface BpReading {
 }
 
 export async function readBpFromImage(base64: string, mimeType: string): Promise<BpReading> {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-  if (!apiKey) throw new MissingGeminiKeyError()
-
-  const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+  const data = await generateWithGemini({
+        purpose: 'bp_ocr',
         contents: [
           {
             parts: [
@@ -47,17 +41,8 @@ export async function readBpFromImage(base64: string, mimeType: string): Promise
           temperature: 0,
           response_mime_type: 'application/json',
         },
-      }),
-    }
-  )
-
-  if (!resp.ok) {
-    const errBody = await resp.text().catch(() => '')
-    console.error('[Gemini BP OCR] HTTP', resp.status, errBody)
-    throw new Error(`Gemini ${resp.status}`)
-  }
-  const data = await resp.json()
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
+  })
+  const text = (data as any).candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
   console.debug('[Gemini BP OCR] raw response:', text)
   let parsed: Record<string, unknown> = {}
   try {

@@ -7,11 +7,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'KPS Cardio',
-        short_name: 'KPS Cardio',
+        name: 'KardiaApp',
+        short_name: 'KardiaApp',
         description: 'Monitoramento cardiovascular',
         theme_color: '#0A1628',
         background_color: '#F7F9FC',
@@ -22,27 +22,21 @@ export default defineConfig({
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-        ]
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+        ],
       },
       workbox: {
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-cache',
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 }
-            }
-          }
-        ]
-      }
-    })
+      },
+    }),
   ],
+  server: {
+    proxy: { '/api': 'http://localhost:3000' },
+  },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
-    }
-  }
+      '@': path.resolve(import.meta.dirname, './src'),
+    },
+  },
 })

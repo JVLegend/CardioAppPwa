@@ -65,7 +65,7 @@ export default function HomeView() {
     } catch (err) {
       console.error(err)
       if (err instanceof MissingGeminiKeyError) {
-        setOcrError('Leitura por foto não está configurada (falta VITE_GEMINI_API_KEY).')
+        setOcrError('Leitura por foto não está configurada no servidor.')
       } else {
         setOcrError('Erro ao ler a foto. Tente novamente.')
       }
@@ -92,7 +92,7 @@ export default function HomeView() {
       {/* Header */}
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>KPS Cardio</h1>
+          <h1 className={styles.title}>KardiaApp</h1>
           <p className={styles.date}>
             {new Date().toLocaleDateString('pt-BR', {
               weekday: 'long',
@@ -236,11 +236,17 @@ export default function HomeView() {
                   <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
               </div>
-              <div>
+              <div className={styles.alertContent}>
                 <div className={styles.alertTitle}>
                   {alert.type === 'urgent' ? 'Urgente' : 'Atenção'}
                 </div>
                 <div className={styles.alertDesc}>{alert.rule}</div>
+                {alert.type === 'urgent' && (
+                  <div className={styles.emergencyActions}>
+                    <strong>Sem sintomas e em segurança, repita a medição após 5 minutos. Com dor no peito, falta de ar, alteração visual, confusão ou perda de força, procure urgência imediatamente.</strong>
+                    <a className={styles.emergencyButton} href="tel:192">Ligar 192 · SAMU</a>
+                  </div>
+                )}
               </div>
             </div>
           ))}

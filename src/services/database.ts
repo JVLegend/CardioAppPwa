@@ -298,7 +298,15 @@ export async function saveSyncOperation(op: SyncOperation) {
 }
 
 export async function fetchPendingSyncOperations(): Promise<SyncOperation[]> {
-  return db.syncOperations.where('attempts').below(3).toArray()
+  return db.syncOperations.where('attempts').below(20).sortBy('createdAt')
+}
+
+export async function countPendingSyncOperations(): Promise<number> {
+  return db.syncOperations.where('attempts').below(20).count()
+}
+
+export async function countFailedSyncOperations(): Promise<number> {
+  return db.syncOperations.where('attempts').aboveOrEqual(20).count()
 }
 
 export async function deleteSyncOperation(id: string) {
@@ -330,5 +338,23 @@ export async function wipeAccountData() {
   ])
   localStorage.removeItem('cardioapp_auth')
   localStorage.removeItem('cardioapp_auth_user')
+  localStorage.removeItem('kardiaapp_disclaimer_accepted')
   localStorage.removeItem('cardioapp_disclaimer_accepted')
+  localStorage.removeItem('kardiaapp:last-sync')
+  localStorage.removeItem('kardiaapp:cache-owner')
+}
+
+/** Evita vazamento de dados entre contas no mesmo navegador sem apagar o aceite legal. */
+export async function clearClinicalCache() {
+  await Promise.all([
+    db.measurements.clear(),
+    db.glucoseMeasurements.clear(),
+    db.medications.clear(),
+    db.alerts.clear(),
+    db.devices.clear(),
+    db.patients.clear(),
+    db.chatMessages.clear(),
+    db.syncOperations.clear(),
+  ])
+  localStorage.removeItem('kardiaapp:last-sync')
 }

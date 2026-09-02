@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useAuth, type CreatePatientProfileInput } from '../contexts/AuthContext'
 import type { Patient, PlanStatus, UserRole } from '../models/types'
-import * as db from '../services/database'
+import { fetchManagedProfiles, type ManagedProfile } from '../services/railwayRepository'
 import styles from './AdminProfilesView.module.css'
 
 interface Props {
@@ -15,6 +15,8 @@ interface FormState {
   role: UserRole
   phone: string
   birthDate: string
+  state: string
+  operatorId: string
   comorbidities: string
   planStatus: PlanStatus
   inTreatmentPlan: boolean
@@ -27,6 +29,8 @@ const EMPTY_FORM: FormState = {
   role: 'patient',
   phone: '',
   birthDate: '',
+  state: '',
+  operatorId: '',
   comorbidities: '',
   planStatus: 'pendente',
   inTreatmentPlan: false,
@@ -39,24 +43,26 @@ function roleLabel(role: UserRole) {
 }
 
 export default function AdminProfilesView({ onBack }: Props) {
-  const { isAdmin, currentPatient, currentUserEmail, createPatientProfile } = useAuth()
-  const [profiles, setProfiles] = useState<Patient[]>([])
+  const { isAdmin, currentPatient, currentUserEmail, createPatientProfile, resetProfilePassword } = useAuth()
+  const [profiles, setProfiles] = useState<ManagedProfile[]>([])
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [loadingProfiles, setLoadingProfiles] = useState(true)
   const [error, setError] = useState('')
   const [createdProfile, setCreatedProfile] = useState<Patient | null>(null)
+  const [resetTarget, setResetTarget] = useState<ManagedProfile | null>(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('')
+  const [resetting, setResetting] = useState(false)
+  const [resetNotice, setResetNotice] = useState('')
 
   const loadProfiles = useCallback(async () => {
     if (!currentPatient) return
     setLoadingProfiles(true)
     try {
-      const list = await db.db.patients.toArray()
-      setProfiles(
-        list
-          .filter((profile) => profile.id !== currentPatient.id)
-          .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
-      )
+      setProfiles(await fetchManagedProfiles())
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível carregar os acessos.')
     } finally {
       setLoadingProfiles(false)
     }
@@ -83,6 +89,8 @@ export default function AdminProfilesView({ onBack }: Props) {
       role: form.role,
       phone: form.phone,
       birthDate: form.role === 'patient' ? form.birthDate : undefined,
+      state: form.role === 'patient' ? form.state.trim().toUpperCase() : undefined,
+      operatorId: form.role === 'patient' && currentPatient?.role === 'controller' ? form.operatorId || undefined : undefined,
       comorbidities:
         form.role === 'patient'
           ? form.comorbidities
@@ -106,13 +114,37 @@ export default function AdminProfilesView({ onBack }: Props) {
     }
   }
 
+  const handlePasswordReset = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!resetTarget) return
+    setError('')
+    setResetNotice('')
+    if (newPassword.length < 12 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      return setError('A senha provisória deve ter ao menos 12 caracteres, combinando letras e números.')
+    }
+    if (newPassword !== newPasswordConfirmation) return setError('As senhas provisórias não coincidem.')
+    setResetting(true)
+    try {
+      await resetProfilePassword(resetTarget.id, newPassword)
+      setResetNotice(`Senha de ${resetTarget.name} redefinida. A troca será obrigatória no próximo acesso.`)
+      setResetTarget(null)
+      setNewPassword('')
+      setNewPasswordConfirmation('')
+      await loadProfiles()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível redefinir a senha.')
+    } finally {
+      setResetting(false)
+    }
+  }
+
   if (!isAdmin) {
     return (
       <main className={styles.container}>
         <section className={styles.denied}>
           <span className={styles.deniedIcon}>!</span>
           <h1>Acesso restrito</h1>
-          <p>Esta área está disponível somente para o administrador do KPS Cardio.</p>
+          <p>Esta área está disponível somente para o administrador do KardiaApp.</p>
           <button className={styles.secondaryButton} onClick={onBack}>Voltar ao painel</button>
         </section>
       </main>
@@ -127,7 +159,7 @@ export default function AdminProfilesView({ onBack }: Props) {
           <p className={styles.eyebrow}>Administração protegida</p>
           <h1 className={styles.title}>Perfis de acesso</h1>
           <p className={styles.subtitle}>
-            Crie acessos para pacientes, médicos e gestoras sem editar o código do aplicativo.
+            Crie acessos e redefina senhas provisórias para pacientes, médicos e gestoras.
           </p>
         </div>
         <div className={styles.adminBadge}>{currentUserEmail}</div>
@@ -144,7 +176,7 @@ export default function AdminProfilesView({ onBack }: Props) {
           </div>
 
           <p className={styles.notice}>
-            O perfil poderá entrar usando o e-mail e a senha inicial definidos abaixo. Dados clínicos aparecem somente para pacientes.
+            A senha definida aqui é provisória e deverá ser substituída pelo usuário no primeiro acesso.
           </p>
 
           <form className={styles.form} onSubmit={handleSubmit}>
@@ -177,9 +209,9 @@ export default function AdminProfilesView({ onBack }: Props) {
                   type="password"
                   value={form.password}
                   onChange={(event) => updateField('password', event.target.value)}
-                  placeholder="Mínimo de 6 caracteres"
+                  placeholder="Mínimo de 12 caracteres"
                   autoComplete="new-password"
-                  minLength={6}
+                  minLength={12}
                   required
                 />
               </label>
@@ -193,8 +225,7 @@ export default function AdminProfilesView({ onBack }: Props) {
                   onChange={(event) => updateField('role', event.target.value as UserRole)}
                 >
                   <option value="patient">Paciente</option>
-                  <option value="operator">Médico</option>
-                  <option value="controller">Gestora</option>
+                  {currentPatient?.role === 'controller' && <option value="operator">Médico</option>}
                 </select>
               </label>
               <label className={styles.field}>
@@ -218,6 +249,26 @@ export default function AdminProfilesView({ onBack }: Props) {
                     onChange={(event) => updateField('birthDate', event.target.value)}
                   />
                 </label>
+                <label className={styles.field}>
+                  <span>UF</span>
+                  <input
+                    value={form.state}
+                    onChange={(event) => updateField('state', event.target.value.toUpperCase().slice(0, 2))}
+                    placeholder="SP"
+                    maxLength={2}
+                  />
+                </label>
+                {currentPatient?.role === 'controller' && (
+                  <label className={styles.field}>
+                    <span>Médico responsável</span>
+                    <select value={form.operatorId} onChange={(event) => updateField('operatorId', event.target.value)}>
+                      <option value="">Sem médico definido</option>
+                      {profiles.filter((profile) => profile.role === 'operator').map((profile) => (
+                        <option key={profile.id} value={profile.id}>{profile.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 <label className={styles.field}>
                   <span>Comorbidades</span>
                   <input
@@ -294,16 +345,58 @@ export default function AdminProfilesView({ onBack }: Props) {
                     <span>{profile.email ?? 'E-mail não informado'}</span>
                     {profile.phone && <small>{profile.phone}</small>}
                   </div>
-                  <span className={styles.profileStatus}>{roleLabel(profile.role)}</span>
+                  <div className={styles.profileActions}>
+                    <span className={styles.profileStatus}>{roleLabel(profile.role)}</span>
+                    <button
+                      className={styles.passwordButton}
+                      type="button"
+                      onClick={() => {
+                        setResetTarget(profile)
+                        setNewPassword('')
+                        setNewPasswordConfirmation('')
+                        setResetNotice('')
+                        setError('')
+                      }}
+                    >
+                      Mudar senha
+                    </button>
+                  </div>
                 </article>
               ))}
             </div>
+          )}
+
+          {resetNotice && <div className={styles.success}>{resetNotice}</div>}
+
+          {resetTarget && (
+            <form className={styles.resetForm} onSubmit={handlePasswordReset}>
+              <div className={styles.resetHeader}>
+                <div>
+                  <strong>Nova senha provisória</strong>
+                  <span>{resetTarget.name} · {resetTarget.email}</span>
+                </div>
+                <button type="button" onClick={() => setResetTarget(null)} aria-label="Cancelar redefinição">×</button>
+              </div>
+              <label className={styles.field}>
+                <span>Senha provisória *</span>
+                <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" minLength={12} required />
+                <small>Mínimo de 12 caracteres, com letras e números.</small>
+              </label>
+              <label className={styles.field}>
+                <span>Confirmar senha provisória *</span>
+                <input type="password" value={newPasswordConfirmation} onChange={(event) => setNewPasswordConfirmation(event.target.value)} autoComplete="new-password" minLength={12} required />
+              </label>
+              {error && <div className={styles.error}>{error}</div>}
+              <button className={styles.primaryButton} type="submit" disabled={resetting}>
+                {resetting ? 'Redefinindo...' : 'Redefinir e encerrar sessões'}
+              </button>
+            </form>
           )}
         </section>
       </div>
 
       <p className={styles.footerNote}>
-        O cadastro é salvo nesta instalação do KPS Cardio e fica disponível para o acesso correspondente neste PWA.
+        O cadastro é criado no KardiaApp e fica disponível, conforme as permissões, em qualquer dispositivo autorizado.
       </p>
     </main>
   )

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-const UPDATED = '7 de maio de 2026'
+const UPDATED = '2 de setembro de 2026'
 const SUPPORT_EMAIL = 'suporte@kardiaapp.app'
 
 export const PRIVACY_SUBTITLE = `Última atualização: ${UPDATED}`
@@ -10,7 +10,7 @@ export function PrivacyContent(): ReactNode {
   return (
     <>
       <p>
-        Esta política descreve quais dados o <strong>KPS Cardio</strong> coleta, como são
+        Esta política descreve quais dados o <strong>KardiaApp</strong> coleta, como são
         usados, com quem são compartilhados e como você pode acessá-los, corrigi-los ou
         excluí-los, em conformidade com a LGPD (Lei 13.709/2018).
       </p>
@@ -35,16 +35,18 @@ export function PrivacyContent(): ReactNode {
       <p>
         Seus dados clínicos são compartilhados apenas com a operadora à qual você está
         vinculado e seu médico responsável. Não vendemos dados a terceiros nem usamos
-        para fins publicitários. A IA de leitura (Google Gemini) processa as imagens
-        em tempo real e <strong>não retém</strong> os arquivos.
+        para fins publicitários. Quando você escolhe a leitura por foto, a imagem é
+        enviada ao nosso servidor e processada pelo Google Gemini conforme os termos
+        desse fornecedor; o KardiaApp não guarda o arquivo após o processamento.
       </p>
 
       <h2>4. Armazenamento e segurança</h2>
       <p>
-        Os dados são armazenados localmente no seu dispositivo (IndexedDB) e replicados
-        em servidores criptografados (Supabase + Railway, sediados na União Europeia ou
-        nos EUA, com cláusulas-padrão de transferência internacional). Senhas são
-        sempre armazenadas com hash + sal.
+        O PostgreSQL do Railway é a fonte oficial dos dados clínicos, cadastrais,
+        mensagens e registros de auditoria. Uma cópia temporária pode ser mantida no seu
+        dispositivo (IndexedDB) para uso offline. A autenticação também fica no PostgreSQL:
+        senhas são armazenadas somente como hash criptográfico e as sessões usam cookie
+        seguro, inacessível ao JavaScript. A comunicação com os serviços usa conexão criptografada.
       </p>
 
       <h2>5. Seus direitos (LGPD)</h2>
@@ -56,14 +58,15 @@ export function PrivacyContent(): ReactNode {
 
       <h2>6. Cookies e armazenamento local</h2>
       <p>
-        Usamos <strong>localStorage</strong> e <strong>IndexedDB</strong> só para guardar suas
-        preferências (lembretes, idioma) e suas medições offline. Não usamos cookies de
-        rastreamento de terceiros.
+        Usamos <strong>localStorage</strong> para preferências e <strong>IndexedDB</strong>
+        como cache offline das informações autorizadas para a conta conectada. O cache
+        clínico é limpo ao sair. Usamos apenas um cookie essencial de sessão, sem cookies
+        de rastreamento ou publicidade.
       </p>
 
       <h2>7. Crianças</h2>
       <p>
-        O KPS Cardio não é direcionado a menores de 16 anos sem consentimento dos
+        O KardiaApp não é direcionado a menores de 16 anos sem consentimento dos
         responsáveis. Se identificarmos cadastro de menor sem consentimento, removeremos
         os dados.
       </p>
@@ -86,13 +89,13 @@ export function TermsContent(): ReactNode {
   return (
     <>
       <p>
-        Ao usar o <strong>KPS Cardio</strong> você concorda com estes Termos. Leia com
+        Ao usar o <strong>KardiaApp</strong> você concorda com estes Termos. Leia com
         atenção — eles definem o que o app faz e o que <strong>não</strong> faz.
       </p>
 
       <h2>1. Sobre o serviço</h2>
       <p>
-        O KPS Cardio é uma ferramenta digital de <strong>monitoramento e registro</strong>
+        O KardiaApp é uma ferramenta digital de <strong>monitoramento e registro</strong>
         de medições de pressão arterial e glicemia. Permite registro manual, leitura por
         Bluetooth (Web BLE), leitura por foto/PDF com auxílio de IA e envio dos dados à
         sua operadora/médico.
@@ -100,10 +103,10 @@ export function TermsContent(): ReactNode {
 
       <h2>2. O que o app NÃO é</h2>
       <div className="note">
-        O KPS Cardio <strong>não substitui</strong> consulta, diagnóstico ou tratamento
-        médico. Classificações exibidas (Normal, Pré-hipertensão, Hipertensão I/II, Crise)
-        seguem a Diretriz Brasileira de Hipertensão Arterial (SBC, 2025) e são apenas
-        <strong> informativas</strong>. Em emergência, ligue <strong>192 (SAMU)</strong>.
+        O KardiaApp <strong>não substitui</strong> consulta, diagnóstico ou tratamento
+        médico. As faixas e os alertas são configurados conforme o protocolo clínico da
+        instituição e são apenas <strong>informativos</strong>. Em emergência, ligue
+        <strong> 192 (SAMU)</strong>.
       </div>
 
       <h2>3. Sua conta</h2>
@@ -123,9 +126,9 @@ export function TermsContent(): ReactNode {
 
       <h2>5. Alertas automáticos</h2>
       <p>
-        Os alertas (PA ≥ 180/110, leituras consecutivas alteradas etc.) são gatilhos
-        configuráveis, não diagnósticos. Sempre fale com seu médico antes de ajustar
-        medicações.
+        Os alertas de leitura muito elevada ou baixa e de medições consecutivas alteradas
+        são gatilhos configuráveis, não diagnósticos. Sempre fale com seu médico antes de
+        ajustar medicações.
       </p>
 
       <h2>6. Operadora & médico</h2>
@@ -173,7 +176,6 @@ export function SupportContent(): ReactNode {
       <h2>Falar com a gente</h2>
       <ul>
         <li>E-mail: <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></li>
-        <li>WhatsApp: <a href="https://wa.me/5511999990000" target="_blank" rel="noreferrer">(11) 99999-0000</a></li>
         <li>Horário: seg–sex, 9h–18h (Brasília)</li>
       </ul>
       <p>
@@ -186,9 +188,9 @@ export function SupportContent(): ReactNode {
 
       <p><strong>O aparelho Bluetooth não conecta.</strong></p>
       <ul>
-        <li>No iPhone, o Bluetooth do navegador (Web BLE) ainda não é suportado pelo Safari. Use o registro manual ou faça pelo app no Android/Chrome.</li>
-        <li>No Android, confira se o Bluetooth está ligado e se o aparelho está em modo de pareamento (geralmente botão SET por alguns segundos).</li>
-        <li>Esqueça o aparelho nas Configurações do sistema e pareie de novo pelo KPS Cardio.</li>
+        <li>Use um dispositivo e navegador compatíveis com Web Bluetooth. Quando o recurso não estiver disponível, use o registro manual ou por foto.</li>
+        <li>Confira se o Bluetooth está ligado e se o aparelho está em modo de pareamento (geralmente botão SET por alguns segundos).</li>
+        <li>Esqueça o aparelho nas Configurações do sistema e pareie de novo pelo KardiaApp.</li>
       </ul>
 
       <p><strong>A foto/PDF da receita não foi lida certo.</strong></p>
@@ -201,7 +203,7 @@ export function SupportContent(): ReactNode {
       <p><strong>Não recebi a notificação de lembrete.</strong></p>
       <ul>
         <li>Confira se a permissão de notificação está liberada nas configurações do navegador.</li>
-        <li>Os lembretes só disparam com o app aberto (em aba ou como PWA instalado). Para notificações com app fechado, instale como PWA na tela inicial.</li>
+        <li>Os lembretes locais dependem do navegador e podem exigir que o PWA esteja aberto. Não use essa função como único lembrete de medicação.</li>
         <li>Cheque o horário em Ajustes → Lembretes.</li>
       </ul>
 
@@ -213,8 +215,9 @@ export function SupportContent(): ReactNode {
 
       <p><strong>Minha pressão está alta o que faço?</strong></p>
       <p>
-        O app classifica e alerta, mas não trata. Procure seu médico assistente. Em
-        crise (≥ 180/110 com sintomas), ligue o SAMU (192).
+        O app classifica e alerta, mas não trata. Se for seguro, repita uma leitura muito
+        elevada após 5 minutos de repouso. Se persistir ou houver sintomas graves, ligue
+        para o SAMU (192) ou procure atendimento de urgência.
       </p>
     </>
   )

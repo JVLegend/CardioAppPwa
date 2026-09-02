@@ -128,7 +128,7 @@ export default function DashboardCharts({ patients }: Props) {
                 <YAxis fontSize={10} tickLine={false} axisLine={false} stroke="rgba(10, 22, 40,0.4)" domain={[60, 180]} />
                 <Tooltip
                   contentStyle={{ borderRadius: 10, border: 0, boxShadow: '0 6px 24px rgba(10, 22, 40,0.12)' }}
-                  formatter={(v: number, name: string) => [`${v} mmHg`, name === 'systolic' ? 'Sistólica' : 'Diastólica']}
+                  formatter={(value, name) => [`${Number(value ?? 0)} mmHg`, name === 'systolic' ? 'Sistólica' : 'Diastólica']}
                 />
                 <Line type="monotone" dataKey="systolic" stroke="#C5A050" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                 <Line type="monotone" dataKey="diastolic" stroke="#001F3F" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
@@ -154,7 +154,7 @@ export default function DashboardCharts({ patients }: Props) {
                 <YAxis fontSize={10} tickLine={false} axisLine={false} stroke="rgba(10, 22, 40,0.4)" domain={[40, 130]} />
                 <Tooltip
                   contentStyle={{ borderRadius: 10, border: 0, boxShadow: '0 6px 24px rgba(10, 22, 40,0.12)' }}
-                  formatter={(v: number) => [`${v} bpm`, 'FC média']}
+                  formatter={(value) => [`${Number(value ?? 0)} bpm`, 'FC média']}
                 />
                 <Line type="monotone" dataKey="hr" stroke="#001F3F" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
               </LineChart>
@@ -179,11 +179,11 @@ export default function DashboardCharts({ patients }: Props) {
                 <YAxis fontSize={10} tickLine={false} axisLine={false} stroke="rgba(10, 22, 40,0.4)" domain={[60, 240]} />
                 <Tooltip
                   contentStyle={{ borderRadius: 10, border: 0, boxShadow: '0 6px 24px rgba(10, 22, 40,0.12)' }}
-                  formatter={(v: number, _name, item) => {
+                  formatter={(value, _name, item) => {
                     const payload = (item as { payload?: DailyGlucose })?.payload
                     const count = payload?.count ?? 0
                     return [
-                      count > 0 ? `${v} mg/dL · ${count} medição(ões)` : 'sem dados',
+                      count > 0 ? `${Number(value ?? 0)} mg/dL · ${count} medição(ões)` : 'sem dados',
                       'Glicemia média',
                     ]
                   }}

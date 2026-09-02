@@ -7,14 +7,14 @@ interface Props {
 }
 
 /**
- * Marca do KPS Cardio: coração + pulso em um símbolo proprietário.
+ * Marca do KardiaApp: coração + pulso em um símbolo proprietário.
  * O SVG fica no código para funcionar também offline e em telas pequenas.
  */
 export default function KardiaLogo({ size = 32, variant = 'full' }: Props) {
   const h = size
   const markOnly = variant === 'mark'
   const width = markOnly ? size : Math.round(size * (330 / 88))
-  const gradientId = `kps-cardio-gradient-${useId().replace(/:/g, '')}`
+  const gradientId = `kardiaapp-gradient-${useId().replace(/:/g, '')}`
 
   return (
     <div className={styles.wrapper} style={{ height: h, width }}>
@@ -24,7 +24,7 @@ export default function KardiaLogo({ size = 32, variant = 'full' }: Props) {
         height={h}
         xmlns="http://www.w3.org/2000/svg"
         role="img"
-        aria-label="KPS Cardio"
+        aria-label="KardiaApp"
         focusable="false"
       >
         <defs>

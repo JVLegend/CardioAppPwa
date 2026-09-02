@@ -116,7 +116,7 @@ export default function GlucoseView() {
     } catch (err) {
       console.error(err)
       if (err instanceof MissingGeminiKeyError) {
-        setOcrError('Leitura por foto não está configurada (falta VITE_GEMINI_API_KEY).')
+        setOcrError('Leitura por foto não está configurada no servidor.')
       } else {
         setOcrError('Erro ao ler a foto. Tente novamente.')
       }

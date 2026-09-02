@@ -60,7 +60,7 @@ export const classificationConfig: Record<BPClassification, {
     bg: '#E8EEF5',
   },
   crisis: {
-    label: 'Crise Hipertensiva',
+    label: 'Pressão muito elevada',
     color: '#001F3F',
     icon: '●',
     gradient: 'linear-gradient(135deg, #001F3F 0%, #122036 100%)',

@@ -78,7 +78,8 @@ export function usePatientData() {
         alert.type === 'urgent' ? '⚠️ Alerta Urgente' : '⚡ Atenção',
         alert.rule
       )
-      enqueue('alert', alert.id, 'create', alert)
+      // O alerta remoto é criado por regra no backend junto com a medição.
+      // O registro local mantém a resposta imediata enquanto o Railway sincroniza.
     }
 
     // Update streak

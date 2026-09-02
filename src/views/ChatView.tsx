@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import type { ChatMessage } from '../models/types'
 import * as db from '../services/database'
+import { enqueue, pullFromServer } from '../services/syncEngine'
 import styles from './ChatView.module.css'
 
 export default function ChatView() {
@@ -23,6 +24,7 @@ export default function ChatView() {
   }, [operatorId, patientId])
 
   async function loadMessages() {
+    await pullFromServer()
     const msgs = await db.fetchChatMessages(operatorId, patientId)
     setMessages(msgs)
     await db.markMessagesRead(operatorId, patientId, isOperator ? 'operator' : 'patient')
@@ -44,6 +46,7 @@ export default function ChatView() {
     setMessages((prev) => [...prev, msg])
     setInput('')
     await db.saveChatMessage(msg)
+    await enqueue('chatMessage', msg.id, 'create', msg)
     setSending(false)
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
   }

@@ -571,3 +571,22 @@
   from { transform: translateY(40px); opacity: 0 }
   to { transform: translateY(0); opacity: 1 }
 }
+.drawerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.drawerActions button,
+.drawerActions a {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: var(--casal-red-deep);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}

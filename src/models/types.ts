@@ -14,6 +14,7 @@ export interface Patient {
   name: string
   birthDate?: string
   phone?: string
+  state?: string
   createdAt?: string
   role: UserRole
   comorbidities?: string[]

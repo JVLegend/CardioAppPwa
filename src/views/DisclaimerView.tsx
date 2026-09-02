@@ -16,7 +16,7 @@ export default function DisclaimerView({ variant, onAccept, onClose }: Props) {
             <KardiaLogo size={72} variant="mark" />
           </div>
           <h1 className={styles.title}>
-            {variant === 'onboarding' ? 'Bem-vindo ao KPS Cardio' : 'Aviso médico'}
+            {variant === 'onboarding' ? 'Bem-vindo ao KardiaApp' : 'Aviso médico'}
           </h1>
           {variant === 'onboarding' && (
             <p className={styles.subtitle}>Antes de começar, leia este aviso.</p>
@@ -25,14 +25,14 @@ export default function DisclaimerView({ variant, onAccept, onClose }: Props) {
 
         <div className={styles.body}>
           <p>
-            O KPS Cardio é uma ferramenta de <strong>monitoramento e registro</strong>{' '}
+            O KardiaApp é uma ferramenta de <strong>monitoramento e registro</strong>{' '}
             de medições de pressão arterial. Ele <strong>não substitui</strong>{' '}
             consulta, diagnóstico ou tratamento médico.
           </p>
           <p>
-            As classificações exibidas (Normal, Pré-hipertensão, Hipertensão I, II e
-            Crise Hipertensiva) seguem a <strong>Diretriz Brasileira de Hipertensão
-            Arterial (SBC, 2025)</strong> e têm caráter <strong>informativo</strong>.
+            As classificações exibidas (Normal, faixas de atenção e pressão muito elevada)
+            seguem o protocolo clínico configurado para o programa e têm caráter{' '}
+            <strong>informativo</strong>.
           </p>
           <div className={styles.warn}>
             <strong>⚠️ Em PA ≥ 180/110 mmHg</strong> ou sintomas como dor no peito,

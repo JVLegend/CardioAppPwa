@@ -13,14 +13,14 @@ export function evaluateAlerts(
   const results: AlertResult[] = []
   const { systolic, diastolic } = measurement
 
-  // Urgent: Hypertensive crisis
+  // Leitura muito elevada: gera alerta; diagnóstico depende de avaliação clínica.
   if (
     systolic >= AppEnvironment.defaultSystolicHigh ||
     diastolic >= AppEnvironment.defaultDiastolicHigh
   ) {
     results.push({
       type: 'urgent',
-      rule: `Crise hipertensiva: ${systolic}/${diastolic} mmHg`,
+      rule: `Pressão muito elevada: ${systolic}/${diastolic} mmHg`,
     })
   }
 
@@ -31,7 +31,7 @@ export function evaluateAlerts(
   ) {
     results.push({
       type: 'urgent',
-      rule: `Hipotensão: ${systolic}/${diastolic} mmHg`,
+      rule: `Pressão muito baixa: ${systolic}/${diastolic} mmHg`,
     })
   }
 

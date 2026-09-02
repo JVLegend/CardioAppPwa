@@ -267,6 +267,27 @@
   gap: 12px;
 }
 
+.alertContent { flex: 1; }
+
+.emergencyActions {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.emergencyButton {
+  display: inline-flex;
+  width: fit-content;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: var(--cardio-red);
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .alertIcon {
   flex-shrink: 0;
   margin-top: 1px;

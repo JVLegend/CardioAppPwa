@@ -107,6 +107,80 @@
   opacity: 0.4;
 }
 
+.linkButton {
+  align-self: center;
+  padding: 8px 12px;
+  color: var(--casal-red-deep);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.notice {
+  padding: 14px 16px;
+  border: 1px solid rgba(22, 163, 74, 0.25);
+  border-radius: var(--radius);
+  background: rgba(22, 163, 74, 0.1);
+  color: #166534;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.passwordHint {
+  margin: -10px 4px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.helpCard {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.helpCard h2 {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: 19px;
+}
+
+.helpCard p { margin: 0; }
+
+.mfaCard {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.qrCode {
+  display: block;
+  width: 200px;
+  height: 200px;
+  margin: 16px auto;
+  border-radius: 10px;
+  background: white;
+}
+
+.secret {
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  user-select: all;
+}
+
 .footer {
   margin-top: 48px;
   font-size: 13px;

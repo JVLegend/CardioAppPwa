@@ -1,17 +1,42 @@
-import { useState, useEffect } from 'react'
+import { lazy, Suspense, useState, useEffect } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import LoginView from './views/LoginView'
-import MainTabView from './views/MainTabView'
-import PatientListView from './views/PatientListView'
-import ControllerDashboardView from './views/ControllerDashboardView'
 import DisclaimerView from './views/DisclaimerView'
+import PwaUpdatePrompt from './views/PwaUpdatePrompt'
 
-const DISCLAIMER_KEY = 'cardioapp_disclaimer_accepted'
+const MainTabView = lazy(() => import('./views/MainTabView'))
+const ControllerDashboardView = lazy(() => import('./views/ControllerDashboardView'))
+
+const DISCLAIMER_KEY = 'kardiaapp_disclaimer_accepted'
+const LEGACY_DISCLAIMER_KEY = 'cardioapp_disclaimer_accepted'
+
+function hasAcceptedDisclaimer() {
+  const accepted = localStorage.getItem(DISCLAIMER_KEY) === 'true'
+    || localStorage.getItem(LEGACY_DISCLAIMER_KEY) === 'true'
+
+  if (accepted && localStorage.getItem(DISCLAIMER_KEY) !== 'true') {
+    localStorage.setItem(DISCLAIMER_KEY, 'true')
+  }
+
+  return accepted
+}
+
+function LoadingScreen() {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      height: '100vh', flexDirection: 'column', gap: 12
+    }}>
+      <div style={{ fontSize: 48 }}>❤️</div>
+      <div style={{ color: 'var(--text-secondary)' }}>Carregando...</div>
+    </div>
+  )
+}
 
 function AppContent() {
-  const { isAuthenticated, isLoading, currentPatient } = useAuth()
+  const { isAuthenticated, isLoading, mustChangePassword, currentPatient } = useAuth()
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(
-    () => localStorage.getItem(DISCLAIMER_KEY) === 'true'
+    hasAcceptedDisclaimer
   )
 
   useEffect(() => {
@@ -24,17 +49,9 @@ function AppContent() {
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
-  if (isLoading) {
-    return (
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        height: '100vh', flexDirection: 'column', gap: 12
-      }}>
-        <div style={{ fontSize: 48 }}>❤️</div>
-        <div style={{ color: 'var(--text-secondary)' }}>Carregando...</div>
-      </div>
-    )
-  }
+  if (isLoading) return <LoadingScreen />
+
+  if (mustChangePassword) return <LoginView />
 
   if (!disclaimerAccepted) {
     return (
@@ -50,27 +67,20 @@ function AppContent() {
 
   if (!isAuthenticated) return <LoginView />
 
-  // Operadora de saúde (role=operator) → dashboard unificado: BI + gestão
-  // de pacientes no mesmo painel.
-  //
-  // Controladora (role=controller) está desativada conforme decisão do cliente
-  // — mas mantemos PatientListView no código pra reativar depois se for o
-  // caso. O usuário controller acessa o mesmo painel da operadora.
+  // operator = médico/equipe clínica; controller = gestora da operadora.
+  // Ambos usam o painel de gestão, com escopo de dados aplicado pela API.
   if (currentPatient?.role === 'operator' || currentPatient?.role === 'controller') {
-    return <ControllerDashboardView />
+    return <Suspense fallback={<LoadingScreen />}><ControllerDashboardView /></Suspense>
   }
 
-  return <MainTabView />
+  return <Suspense fallback={<LoadingScreen />}><MainTabView /></Suspense>
 }
-
-// PatientListView é referenciado aqui só para preservar a importação enquanto
-// a view não está roteada (cliente pediu pra manter o arquivo no código).
-void PatientListView
 
 export default function App() {
   return (
     <AuthProvider>
       <AppContent />
+      <PwaUpdatePrompt />
     </AuthProvider>
   )
 }

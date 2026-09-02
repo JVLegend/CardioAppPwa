@@ -1,6 +1,7 @@
 import { useState, useRef, type FormEvent, type ChangeEvent } from 'react'
 import { usePatientData } from '../hooks/usePatientData'
 import type { Medication } from '../models/types'
+import { generateWithGemini } from '../services/railwayRepository'
 import styles from './MedicationsView.module.css'
 
 const frequencyOptions = [
@@ -65,18 +66,11 @@ class MissingGeminiKeyError extends Error {
 }
 
 async function analyzePrescription(base64: string, mimeType: string): Promise<Partial<{ name: string; dose: string; frequency: string; notes: string }>> {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-  if (!apiKey) throw new MissingGeminiKeyError()
-
   const isPdf = mimeType === 'application/pdf'
 
   // gemini-2.5-flash aceita imagens (image/*) e PDFs (application/pdf) inline.
-  const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+  const data = await generateWithGemini({
+        purpose: 'medication_ocr',
         contents: [
           {
             parts: [
@@ -103,17 +97,8 @@ async function analyzePrescription(base64: string, mimeType: string): Promise<Pa
           temperature: 0.1,
           response_mime_type: 'application/json',
         },
-      }),
-    }
-  )
-
-  if (!resp.ok) {
-    const errBody = await resp.text().catch(() => '')
-    console.error('[Gemini] HTTP', resp.status, errBody)
-    throw new Error(`Gemini ${resp.status}`)
-  }
-  const data = await resp.json()
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
+  })
+  const text = (data as any).candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
   console.debug('[Gemini] raw response:', text)
   try {
     return JSON.parse(text)
@@ -195,7 +180,7 @@ export default function MedicationsView() {
         }
       } catch (err) {
         if (err instanceof MissingGeminiKeyError) {
-          setAiError('IA de receita não está configurada (falta VITE_GEMINI_API_KEY no servidor). Preencha manualmente.')
+          setAiError('IA de receita não está configurada no servidor. Preencha manualmente.')
         } else {
           const msg = err instanceof Error ? err.message : ''
           setAiError(`Não foi possível analisar o ${sourceLabel} (${msg}). Preencha manualmente.`)

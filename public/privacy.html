@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Política de Privacidade — KPS Cardio</title>
+<title>Política de Privacidade — KardiaApp</title>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
          background:#F7F9FC; color:#0A1628; max-width:720px; margin:0 auto; padding:32px 20px; line-height:1.6; }
@@ -12,12 +12,12 @@
 </style>
 </head>
 <body>
-<p><a href="/">← KPS Cardio</a></p>
+<p><a href="/">← KardiaApp</a></p>
 <h1>Política de Privacidade</h1>
-<p><small>Última atualização: 27 de abril de 2026</small></p>
+<p><small>Última atualização: 2 de setembro de 2026</small></p>
 
-<p>Esta política descreve quais dados o KPS Cardio coleta, como são usados, com quem
-são compartilhados e como você pode acessá-los, corrigi-los ou excluí-los. O KPS Cardio
+<p>Esta política descreve quais dados o KardiaApp coleta, como são usados, com quem
+são compartilhados e como você pode acessá-los, corrigi-los ou excluí-los. O KardiaApp
 é operado em conformidade com a Lei Geral de Proteção de Dados (LGPD, Lei 13.709/2018).</p>
 
 <h2>1. Dados que coletamos</h2>
@@ -25,9 +25,11 @@ são compartilhados e como você pode acessá-los, corrigi-los ou excluí-los. O
   <li><strong>Cadastro:</strong> nome, e-mail, telefone, data de nascimento, comorbidades informadas pela operadora.</li>
   <li><strong>Dados clínicos:</strong> medições de pressão arterial (sistólica, diastólica, frequência cardíaca, data/hora, fonte — Bluetooth ou manual), medicações cadastradas e adesão.</li>
   <li><strong>Comunicação:</strong> mensagens trocadas no chat com a operadora.</li>
-  <li><strong>Técnicos:</strong> identificador anônimo do aparelho Bluetooth pareado, versão do app, modelo do dispositivo iOS, logs de erro.</li>
+  <li><strong>Técnicos:</strong> identificador do aparelho Bluetooth pareado, versão do app, navegador e logs técnicos de segurança e sincronização.</li>
 </ul>
-<p>Não coletamos localização, contatos, fotos, vídeos, áudio ou histórico de navegação.</p>
+<p>Não coletamos localização, contatos, vídeos, áudio ou histórico de navegação. Fotos
+e PDFs enviados voluntariamente para leitura por IA são processados em memória e não
+são armazenados pelo KardiaApp após a extração.</p>
 
 <h2>2. Para que usamos</h2>
 <ul>
@@ -41,8 +43,8 @@ são compartilhados e como você pode acessá-los, corrigi-los ou excluí-los. O
 <ul>
   <li><strong>Sua operadora de saúde / equipe clínica vinculada:</strong> recebe suas medições e
       mensagens de chat para acompanhamento — esse é o serviço contratado por você.</li>
-  <li><strong>Provedores técnicos (data processors):</strong> infraestrutura de banco de dados e
-      autenticação. Nenhum desses parceiros usa seus dados para finalidades próprias.</li>
+  <li><strong>Railway/PostgreSQL:</strong> armazena os dados clínicos, cadastrais, mensagens e registros de auditoria.</li>
+  <li><strong>Autenticação própria:</strong> credenciais e sessões são mantidas no PostgreSQL do Railway, sem provedor externo de login.</li>
   <li><strong>Não vendemos</strong> seus dados, não os usamos para publicidade e não
       compartilhamos com redes sociais ou corretoras de dados.</li>
 </ul>
@@ -57,19 +59,20 @@ com mínimo de 5 anos quando exigido por regulação de saúde suplementar (ANS)
 <ul>
   <li>Acessar e corrigir seus dados em <em>Ajustes</em>.</li>
   <li><strong>Excluir sua conta e todos os dados clínicos</strong> em <em>Ajustes →
-      Conta → Excluir minha conta</em>. A exclusão é imediata e irreversível.</li>
+      Conta → Excluir minha conta</em>. Os dados e a credencial são apagados do PostgreSQL imediatamente.</li>
   <li>Solicitar portabilidade ou esclarecimentos enviando e-mail para
       <a href="mailto:privacidade@kardiaapp.app">privacidade@kardiaapp.app</a>.</li>
   <li>Revogar o consentimento — note que isso encerra o serviço.</li>
 </ul>
 
 <h2>6. Segurança</h2>
-<p>Comunicação criptografada em trânsito (TLS 1.2+). Senhas armazenadas com hash bcrypt.
-Credenciais Bluetooth nunca saem do seu aparelho. Acesso ao banco é restrito por
-políticas Row Level Security por usuário/operadora.</p>
+<p>Comunicação criptografada em trânsito (TLS). Senhas são armazenadas somente como hash
+criptográfico, nunca em texto legível. Sessões usam cookie seguro e inacessível ao
+JavaScript. O backend aplica autorização por perfil e vínculo de paciente, bloqueio de
+tentativas repetidas e trilha de auditoria no PostgreSQL do Railway.</p>
 
 <h2>7. Crianças</h2>
-<p>O KPS Cardio não é destinado a menores de 13 anos. Pacientes adolescentes só são
+<p>O KardiaApp não é destinado a menores de 13 anos. Pacientes adolescentes só são
 cadastrados pela operadora com consentimento do responsável legal.</p>
 
 <h2>8. Mudanças nesta política</h2>

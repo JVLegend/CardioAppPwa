@@ -87,6 +87,17 @@ export default function ManualEntryView({
               <span style={{ color: classConfig.color }}>{classConfig.label}</span>
             </div>
           )}
+          {classification === 'crisis' && (
+            <div role="alert" style={{
+              margin: '16px 16px 0', padding: '14px 16px', borderRadius: 12,
+              background: '#FEE2E2', color: '#7F1D1D', fontSize: 14,
+              lineHeight: 1.5, textAlign: 'left',
+            }}>
+              <strong>Leitura muito elevada.</strong> Registre o valor. Se estiver sem sintomas e em segurança,
+              permaneça sentado e repita a medição após 5 minutos. Com dor no peito, falta de ar,
+              alteração visual, confusão ou perda de força, procure urgência ou ligue 192.
+            </div>
+          )}
         </div>
 
         <div className={styles.inputGroup}>
@@ -138,7 +149,7 @@ export default function ManualEntryView({
         </div>
 
         <button className={styles.saveBtn} type="submit" disabled={!isValid}>
-          {fromPhoto ? 'Confirmar e Registrar' : 'Registrar'}
+          {fromPhoto ? 'Confirmar e registrar' : 'Registrar medição'}
         </button>
       </form>
     </div>

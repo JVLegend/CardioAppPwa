@@ -12,14 +12,10 @@ import BrazilMap from './BrazilMap'
 import KardiaLogo from './KardiaLogo'
 import PatientManagementSection from './PatientManagementSection'
 import AdminProfilesView from './AdminProfilesView'
+import { pullFromServer } from '../services/syncEngine'
+import { generateWithGemini } from '../services/railwayRepository'
 import styles from './ControllerDashboardView.module.css'
 
-const STATE_SIGLAS = BRAZIL_STATES.map((s) => s.sigla)
-function stateFor(patientId: string): string {
-  let h = 0
-  for (let i = 0; i < patientId.length; i++) h = (h * 31 + patientId.charCodeAt(i)) >>> 0
-  return STATE_SIGLAS[h % STATE_SIGLAS.length]
-}
 function stateName(s: string) {
   return BRAZIL_STATES.find((x) => x.sigla === s)?.name ?? s
 }
@@ -49,12 +45,7 @@ interface Aggregates {
   alerts: BPAlert[]
 }
 
-const GEMINI_KEY = (import.meta as any).env?.VITE_GEMINI_API_KEY as string | undefined
-
 async function generateInsight(agg: Aggregates): Promise<string> {
-  if (!GEMINI_KEY) {
-    return fallbackInsight(agg)
-  }
   try {
     const prompt = `Você é uma IA assistente de um controlador de plano de saúde.
 Analise os dados abaixo e produza um INSIGHT DIÁRIO em português (máx. 180 palavras), no tom executivo, com:
@@ -67,23 +58,13 @@ Dados agregados:
 - Operadores: ${agg.totalOperators}
 - Medição hoje: ${agg.measuredToday} / sem medição: ${agg.notMeasuredToday}
 - Dentro da meta: ${agg.inGoal} / fora da meta: ${agg.outOfGoal}
-- Em crise hipertensiva: ${agg.critical}
+- Com pressão muito elevada: ${agg.critical}
 - Baixa aderência à medicação: ${agg.nonAdhering}
 - Inadimplentes: ${agg.inadimplentes}
 - Em plano de tratamento ativo: ${agg.inTreatment}
 - Alertas pendentes: ${agg.alerts.length}`
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
-      }
-    )
-    const data = await resp.json()
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+    const data = await generateWithGemini({ purpose: 'daily_insight', contents: [{ parts: [{ text: prompt }] }] })
+    const text = (data as any)?.candidates?.[0]?.content?.parts?.[0]?.text
     if (typeof text === 'string' && text.trim().length > 0) return text.trim()
     return fallbackInsight(agg)
   } catch {
@@ -94,12 +75,12 @@ Dados agregados:
 function fallbackInsight(agg: Aggregates): string {
   const parts: string[] = []
   parts.push(
-    `Hoje ${agg.measuredToday} de ${agg.totalPatients} pacientes realizaram medição. ${agg.outOfGoal} estão fora da meta pressórica e ${agg.critical} em crise hipertensiva.`
+    `Hoje ${agg.measuredToday} de ${agg.totalPatients} pacientes realizaram medição. ${agg.outOfGoal} estão fora da meta pressórica e ${agg.critical} com pressão muito elevada.`
   )
   parts.push('')
   parts.push('Ações recomendadas:')
   if (agg.critical > 0)
-    parts.push(`• Priorizar contato imediato com ${agg.critical} paciente(s) em crise hipertensiva.`)
+    parts.push(`• Priorizar contato imediato com ${agg.critical} paciente(s) com pressão muito elevada.`)
   if (agg.nonAdhering > 0)
     parts.push(`• Reforçar aderência com ${agg.nonAdhering} paciente(s) sem medição recente.`)
   if (agg.inadimplentes > 0)
@@ -110,6 +91,7 @@ function fallbackInsight(agg: Aggregates): string {
 
 export default function ControllerDashboardView() {
   const { logout, currentPatient, isAdmin } = useAuth()
+  const isClinician = currentPatient?.role === 'operator'
   const [agg, setAgg] = useState<Aggregates | null>(null)
   const [allPatients, setAllPatients] = useState<Patient[]>([])
   const [insight, setInsight] = useState<string>('')
@@ -121,6 +103,7 @@ export default function ControllerDashboardView() {
 
   async function loadAll() {
     setLoading(true)
+    await pullFromServer()
     const dbPatients = await db.patients.toArray()
     const patients = dbPatients.filter((p) => p.role === 'patient')
     setAllPatients(patients)
@@ -217,13 +200,14 @@ export default function ControllerDashboardView() {
   // de pacientes lá embaixo (que tem o próprio search).
   const stateCounts: Record<string, number> = {}
   for (const p of allPatients) {
-    const s = stateFor(p.id)
+    const s = p.state?.toUpperCase()
+    if (!s || !BRAZIL_STATES.some((state) => state.sigla === s)) continue
     stateCounts[s] = (stateCounts[s] ?? 0) + 1
   }
   const sortedStates = Object.entries(stateCounts).sort((a, b) => b[1] - a[1])
   const q = search.trim().toLowerCase()
   const filteredPatients = allPatients.filter((p) => {
-    if (stateFilter !== 'all' && stateFor(p.id) !== stateFilter) return false
+    if (stateFilter !== 'all' && p.state?.toUpperCase() !== stateFilter) return false
     if (!q) return true
     return (
       p.name.toLowerCase().includes(q) ||
@@ -250,8 +234,8 @@ export default function ControllerDashboardView() {
         <div className={styles.headerLeft}>
           <KardiaLogo size={40} />
           <div>
-            <div className={styles.eyebrow}>Painel da Operadora</div>
-            <h1 className={styles.title}>Olá, {currentPatient?.name ?? 'Doutor(a)'}</h1>
+            <div className={styles.eyebrow}>{isClinician ? 'Painel Médico' : 'Painel da Operadora'}</div>
+            <h1 className={styles.title}>Olá, {currentPatient?.name ?? (isClinician ? 'Doutor(a)' : 'Gestor(a)')}</h1>
             <div className={styles.subtitle}>{today}</div>
           </div>
         </div>
@@ -289,11 +273,11 @@ export default function ControllerDashboardView() {
 
       {/* KPI STRIP — 5 métricas resumidas */}
       <div className={styles.kpiStrip}>
-        <KpiTile label="Pacientes" value={agg.totalPatients} hint={`${agg.totalOperators} operadora(s)`} accent="plum" />
+        <KpiTile label="Pacientes" value={agg.totalPatients} hint={`${agg.totalOperators} médico(s) responsável(is)`} accent="plum" />
         <KpiTile label="Mediram hoje" value={`${measurementRate}%`} hint={`${agg.measuredToday}/${agg.totalPatients}`} accent="green" />
         <KpiTile label="Dentro da meta" value={`${goalRate}%`} hint={`${agg.inGoal} pacientes`} accent="green" />
         <KpiTile label="Aderência" value={`${adherenceRate}%`} hint={`${agg.nonAdhering} sem medição 3d`} accent="amber" />
-        <KpiTile label="Em crise / críticos" value={agg.critical} hint="PA ≥ 180/110 mmHg" accent={agg.critical > 0 ? 'coral' : 'plum'} />
+        <KpiTile label="Pressão muito elevada" value={agg.critical} hint="Limite urgente configurado" accent={agg.critical > 0 ? 'coral' : 'plum'} />
       </div>
 
       {/* HERO — Insight (esquerda) + Mapa do Brasil (direita) */}
@@ -328,7 +312,7 @@ export default function ControllerDashboardView() {
         <section className={styles.mapCard}>
           <div className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>Distribuição geográfica</h2>
-            <span className={styles.cardHint}>{filteredPatients.length} paciente(s) selecionado(s)</span>
+            <span className={styles.cardHint}>{filteredPatients.length} paciente(s) · somente UF cadastrada</span>
           </div>
           <BrazilMap
             counts={stateCounts}
@@ -359,7 +343,7 @@ export default function ControllerDashboardView() {
                 <span className={styles.actionBadge}>Urgente</span>
                 <span className={styles.actionCount}>{agg.critical}</span>
               </div>
-              <div className={styles.actionTitle}>Crise hipertensiva</div>
+              <div className={styles.actionTitle}>Pressão muito elevada</div>
               <p className={styles.actionBody}>
                 PA ≥ 180/110 mmHg na última medição. Contato médico imediato.
               </p>
@@ -409,7 +393,7 @@ export default function ControllerDashboardView() {
       <PatientManagementSection />
 
       <footer className={styles.footer}>
-        KPS Cardio · Painel da Operadora
+        KardiaApp · {isClinician ? 'Painel Médico' : 'Painel da Operadora'}
       </footer>
     </div>
   )

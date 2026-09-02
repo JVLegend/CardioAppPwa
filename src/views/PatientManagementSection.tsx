@@ -1,15 +1,15 @@
-// Painel de gestão de pacientes para a operadora.
-// Migrado do PatientListView original (controladora) e melhorado com:
+// Gestão de pacientes para médico responsável e gestora da operadora.
 //   • paleta KPS Apps (sem cores de marca hard-coded)
 //   • KPI extra "Glicemia alterada" (>= 126 jejum / >= 200 aleatório)
 //   • estatísticas de glicose carregadas em paralelo com BP
 //   • compatível com modo embutido em outro dashboard
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import type { Patient, Measurement, GlucoseMeasurement } from '../models/types'
+import type { Patient, Measurement, GlucoseMeasurement, BPAlert, AlertStatus } from '../models/types'
 import * as db from '../services/database'
 import { db as dexieDb } from '../services/database'
 import { classifyBP, classificationConfig, type BPClassification } from '../config/theme'
+import { enqueue, pullFromServer } from '../services/syncEngine'
 import styles from './PatientManagementSection.module.css'
 
 type DrillFilter =
@@ -37,12 +37,13 @@ interface PatientRow {
   outOfGoalReason: string | null
   latestGlucose: GlucoseMeasurement | undefined
   glucoseAltered: boolean
+  alerts: BPAlert[]
 }
 
 function computeReason(c: BPClassification | null): string | null {
   if (!c) return null
   switch (c) {
-    case 'crisis': return 'Crise hipertensiva — PA ≥ 180/110 mmHg'
+    case 'crisis': return 'Pressão muito elevada — PA ≥ 180/110 mmHg'
     case 'stage2': return 'Hipertensão estágio II — PA 160-179/100-109 mmHg'
     case 'stage1': return 'Hipertensão estágio I — PA 140-159/90-99 mmHg'
     default: return null
@@ -75,13 +76,15 @@ export default function PatientManagementSection() {
     if (!currentPatient) return
     setLoading(true)
     try {
+      await pullFromServer()
       const list = currentPatient.role === 'controller'
         ? (await dexieDb.patients.toArray()).filter((p) => p.role === 'patient')
         : await db.fetchPatientsByOperator(currentPatient.id)
       const ids = list.map((p) => p.id)
-      const [stats, allGlucose] = await Promise.all([
+      const [stats, allGlucose, allAlerts] = await Promise.all([
         db.fetchOperatorPatientStats(ids),
         dexieDb.glucoseMeasurements.toArray(),
+        dexieDb.alerts.toArray(),
       ])
       const latestGlucoseByPatient = new Map<string, GlucoseMeasurement>()
       for (const g of allGlucose) {
@@ -107,6 +110,7 @@ export default function PatientManagementSection() {
           outOfGoalReason: computeReason(c),
           latestGlucose,
           glucoseAltered: isGlucoseAltered(latestGlucose),
+          alerts: allAlerts.filter((alert) => alert.patientId === p.id && alert.status !== 'resolved'),
         }
       })
       setRows(out)
@@ -208,7 +212,7 @@ export default function PatientManagementSection() {
         >
           <span className={styles.alertIcon}>⚠</span>
           <div className={styles.alertText}>
-            <strong>{m.critical} paciente{m.critical !== 1 ? 's' : ''}</strong> em estado crítico (hipertensão II ou crise)
+            <strong>{m.critical} paciente{m.critical !== 1 ? 's' : ''}</strong> com leitura que exige atenção prioritária
           </div>
           <span className={styles.alertChevron}>›</span>
         </button>
@@ -283,9 +287,11 @@ export default function PatientManagementSection() {
       {drawer && (
         <DetailDrawer
           row={drawer}
+          actorRole={currentPatient?.role ?? 'operator'}
           onClose={() => setDrawer(null)}
           onUpdate={async (updated) => {
             await db.savePatient(updated)
+            await enqueue('patient', updated.id, 'update', updated)
             await loadData()
             setDrawer((prev) => (prev ? { ...prev, patient: updated } : prev))
           }}
@@ -315,9 +321,10 @@ function KpiPill({
 }
 
 function DetailDrawer({
-  row, onClose, onUpdate, onSendMessage,
+  row, actorRole, onClose, onUpdate, onSendMessage,
 }: {
   row: PatientRow
+  actorRole: Patient['role']
   onClose: () => void
   onUpdate: (p: Patient) => Promise<void>
   onSendMessage: () => void
@@ -329,13 +336,29 @@ function DetailDrawer({
   const [comorbInput, setComorbInput] = useState((patient.comorbidities ?? []).join(', '))
   const [planStatus, setPlanStatus] = useState(patient.planStatus ?? 'pendente')
   const [inTreatmentPlan, setInTreatmentPlan] = useState(patient.inTreatmentPlan ?? false)
+  const activeAlert = row.alerts[0]
+  const [alertStatus, setAlertStatus] = useState<AlertStatus | null>(activeAlert?.status ?? null)
+
+  const updateAlert = async (status: AlertStatus) => {
+    if (!activeAlert) return
+    const now = new Date().toISOString()
+    const updated: BPAlert = {
+      ...activeAlert,
+      status,
+      acknowledgedAt: status === 'acknowledged' ? now : activeAlert.acknowledgedAt,
+      resolvedAt: status === 'resolved' ? now : activeAlert.resolvedAt,
+    }
+    await db.saveAlert(updated)
+    await enqueue('alert', updated.id, 'update', updated)
+    setAlertStatus(status)
+  }
 
   const save = async () => {
     await onUpdate({
       ...patient,
       phone: phone || undefined,
       comorbidities: comorbInput.split(',').map((s) => s.trim()).filter(Boolean),
-      planStatus,
+      planStatus: actorRole === 'controller' ? planStatus : patient.planStatus,
       inTreatmentPlan,
     })
     setEditing(false)
@@ -373,6 +396,16 @@ function DetailDrawer({
             </div>
           ) : (
             <div className={styles.drawerEmpty}>Sem medições registradas.</div>
+          )}
+          {activeAlert && alertStatus !== 'resolved' && (
+            <div className={styles.measureReason}>
+              <strong>Alerta {alertStatus === 'acknowledged' ? 'em atendimento' : 'pendente'}</strong>
+              <div className={styles.drawerActions}>
+                {alertStatus === 'pending' && <button onClick={() => void updateAlert('acknowledged')}>Assumir atendimento</button>}
+                <button onClick={() => void updateAlert('resolved')}>Marcar resolvido</button>
+                {patient.phone && <a href={`tel:${patient.phone}`}>Ligar para paciente</a>}
+              </div>
+            </div>
           )}
         </section>
 
@@ -438,13 +471,15 @@ function DetailDrawer({
               <label className={styles.editLabel}>Comorbidades (separadas por vírgula)
                 <input className={styles.editInput} value={comorbInput} onChange={(e) => setComorbInput(e.target.value)} placeholder="Diabetes, Dislipidemia..." />
               </label>
-              <label className={styles.editLabel}>Plano financeiro
-                <select className={styles.editInput} value={planStatus} onChange={(e) => setPlanStatus(e.target.value as NonNullable<Patient['planStatus']>)}>
-                  <option value="pendente">Pendente</option>
-                  <option value="adimplente">Adimplente</option>
-                  <option value="inadimplente">Inadimplente</option>
-                </select>
-              </label>
+              {actorRole === 'controller' && (
+                <label className={styles.editLabel}>Plano financeiro
+                  <select className={styles.editInput} value={planStatus} onChange={(e) => setPlanStatus(e.target.value as NonNullable<Patient['planStatus']>)}>
+                    <option value="pendente">Pendente</option>
+                    <option value="adimplente">Adimplente</option>
+                    <option value="inadimplente">Inadimplente</option>
+                  </select>
+                </label>
+              )}
               <label className={styles.editCheckLabel}>
                 <input type="checkbox" checked={inTreatmentPlan} onChange={(e) => setInTreatmentPlan(e.target.checked)} />
                 Em plano de tratamento
@@ -484,15 +519,17 @@ function PushModal({ patient, onClose }: { patient: Patient; onClose: () => void
   const [sent, setSent] = useState(false)
 
   const send = async () => {
-    await db.saveChatMessage({
+    const msg = {
       id: crypto.randomUUID(),
       operatorId: patient.operatorId,
       patientId: patient.id,
-      fromRole: 'operator',
+      fromRole: 'operator' as const,
       content: message,
       sentAt: new Date().toISOString(),
       read: false,
-    })
+    }
+    await db.saveChatMessage(msg)
+    await enqueue('chatMessage', msg.id, 'create', msg)
     setSent(true)
     setTimeout(onClose, 1400)
   }
