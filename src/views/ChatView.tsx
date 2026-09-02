@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import type { ChatMessage } from '../models/types'
 import * as db from '../services/database'
 import { enqueue, pullFromServer } from '../services/syncEngine'
+import AppPageHeader from './AppPageHeader'
 import styles from './ChatView.module.css'
 
 export default function ChatView() {
@@ -74,18 +75,15 @@ export default function ChatView() {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.headerAvatar}>
+      <AppPageHeader
+        title="Chat"
+        subtitle={isOperator ? 'Paciente selecionado · Online' : 'Minha equipe · Online'}
+        inset
+        flush
+        actions={<div className={styles.headerAvatar}>
           {isOperator ? 'P' : 'M'}
-        </div>
-        <div className={styles.headerInfo}>
-          <p className={styles.headerName}>
-            {isOperator ? 'Paciente' : 'Minha Equipe'}
-          </p>
-          <p className={styles.headerStatus}>Online</p>
-        </div>
-      </div>
+        </div>}
+      />
 
       {/* Messages */}
       <div className={styles.messages}>

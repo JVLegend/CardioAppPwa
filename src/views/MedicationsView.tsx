@@ -2,6 +2,7 @@ import { useState, useRef, type FormEvent, type ChangeEvent } from 'react'
 import { usePatientData } from '../hooks/usePatientData'
 import type { Medication } from '../models/types'
 import { generateWithGemini } from '../services/railwayRepository'
+import AppPageHeader from './AppPageHeader'
 import styles from './MedicationsView.module.css'
 
 const frequencyOptions = [
@@ -229,12 +230,11 @@ export default function MedicationsView() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.headerRow}>
-        <div>
-          <h1 className={styles.title}>Remédios</h1>
-          <p className={styles.subtitle}>{activeMeds.length} ativo{activeMeds.length !== 1 ? 's' : ''}</p>
-        </div>
-        <div className={styles.addActions}>
+      <AppPageHeader
+        title="Remédios"
+        subtitle={`${activeMeds.length} ativo${activeMeds.length !== 1 ? 's' : ''}`}
+        inset
+        actions={<div className={styles.addActions}>
           <button className={styles.aiBtn} onClick={openCamera} title="Foto da receita">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></svg>
             Foto
@@ -246,8 +246,8 @@ export default function MedicationsView() {
           <button className={styles.addBtn} onClick={() => { setAddMode('manual'); setShowAdd(true) }}>
             + Manual
           </button>
-        </div>
-      </div>
+        </div>}
+      />
 
       {/* Hidden camera & PDF inputs */}
       <input

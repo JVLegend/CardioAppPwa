@@ -1,29 +1,8 @@
 .container {
-  padding: 20px 20px 32px;
+  padding: 0 20px 32px;
   max-width: 500px;
   margin: 0 auto;
   animation: fadeIn 0.4s ease;
-}
-
-/* Header */
-.header {
-  margin-bottom: 28px;
-}
-
-.title {
-  font-family: 'Sora', sans-serif;
-  font-size: 38px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-  color: var(--casal-red-deep);
-  line-height: 1.05;
-}
-
-.date {
-  font-size: 15px;
-  color: var(--text-secondary);
-  margin-top: 4px;
-  text-transform: capitalize;
 }
 
 /* Progress Ring */

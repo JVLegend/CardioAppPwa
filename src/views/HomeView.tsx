@@ -5,6 +5,7 @@ import ManualEntryView from './ManualEntryView'
 import FloatingChat from './FloatingChat'
 import BluetoothView from './BluetoothView'
 import ReminderControls from './ReminderControls'
+import AppPageHeader from './AppPageHeader'
 import { readBpFromImage, MissingGeminiKeyError, type BpReading } from '../services/bpOcr'
 import styles from './HomeView.module.css'
 
@@ -89,19 +90,14 @@ export default function HomeView() {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>KPS Cardio</h1>
-          <p className={styles.date}>
-            {new Date().toLocaleDateString('pt-BR', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-            })}
-          </p>
-        </div>
-      </header>
+      <AppPageHeader
+        title="Pressão"
+        subtitle={new Date().toLocaleDateString('pt-BR', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+        })}
+      />
 
       {/* Progress Ring + Streak */}
       <div className={styles.progressSection}>

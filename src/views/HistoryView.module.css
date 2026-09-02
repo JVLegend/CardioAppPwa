@@ -1,15 +1,8 @@
 .container {
-  padding: 20px 20px 32px;
+  padding: 0 20px 32px;
   max-width: 500px;
   margin: 0 auto;
   animation: fadeIn 0.4s ease;
-}
-
-.title {
-  font-size: 34px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  margin-bottom: 20px;
 }
 
 .subTabs {

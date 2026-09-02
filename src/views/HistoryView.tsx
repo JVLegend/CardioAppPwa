@@ -6,6 +6,7 @@ import {
 import { usePatientData } from '../hooks/usePatientData'
 import { classifyBP, classificationConfig } from '../config/theme'
 import AnalyticsView from './AnalyticsView'
+import AppPageHeader from './AppPageHeader'
 import styles from './HistoryView.module.css'
 
 type Period = 7 | 30 | 90
@@ -37,7 +38,7 @@ export default function HistoryView() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Histórico</h1>
+      <AppPageHeader title="Histórico" subtitle="Medições e tendências" />
 
       <div className={styles.subTabs}>
         {(['history', 'analytics'] as SubTab[]).map((t) => (

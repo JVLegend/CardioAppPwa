@@ -4,6 +4,7 @@ import * as db from '../services/database'
 import { enqueue } from '../services/syncEngine'
 import { readGlucoseFromImage, MissingGeminiKeyError } from '../services/glucoseOcr'
 import type { GlucoseMeasurement, MealContext, MeasurementSource } from '../models/types'
+import AppPageHeader from './AppPageHeader'
 import styles from './GlucoseView.module.css'
 
 const contextOptions: { id: MealContext; label: string }[] = [
@@ -218,16 +219,12 @@ export default function GlucoseView() {
 
   return (
     <div className={styles.container}>
-      <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Glicose</h1>
-          <p className={styles.subtitle}>
-            {todayCount > 0
-              ? `${todayCount} medição${todayCount > 1 ? 'ões' : ''} hoje`
-              : 'Nenhuma medição hoje'}
-          </p>
-        </div>
-      </header>
+      <AppPageHeader
+        title="Glicose"
+        subtitle={todayCount > 0
+          ? `${todayCount} medição${todayCount > 1 ? 'ões' : ''} hoje`
+          : 'Nenhuma medição hoje'}
+      />
 
       <div className={styles.actions}>
         <button
