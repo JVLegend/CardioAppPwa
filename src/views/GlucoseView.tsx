@@ -276,7 +276,7 @@ export default function GlucoseView() {
       <AppPageHeader
         title="Glicose"
         subtitle={todayCount > 0
-          ? `${todayCount} medição${todayCount > 1 ? 'ões' : ''} hoje`
+          ? `${todayCount} ${todayCount === 1 ? 'medição' : 'medições'} hoje`
           : 'Nenhuma medição hoje'}
       />
 
