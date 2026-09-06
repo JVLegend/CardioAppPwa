@@ -29,6 +29,15 @@ interface DailyGlucose {
   count: number
 }
 
+function localDateKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+function dateFromLocalKey(key: string) {
+  const [year, month, day] = key.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
 export default function DashboardCharts({ patients }: Props) {
   const [series, setSeries] = useState<DailyAvg[]>([])
   const [glucoseSeries, setGlucoseSeries] = useState<DailyGlucose[]>([])
@@ -42,6 +51,7 @@ export default function DashboardCharts({ patients }: Props) {
       setLoading(true)
       const ids = new Set(patients.map((p) => p.id))
       const cutoff = new Date()
+      cutoff.setHours(0, 0, 0, 0)
       cutoff.setDate(cutoff.getDate() - 6)
 
       const [allMeas, allGlc] = await Promise.all([
@@ -58,13 +68,13 @@ export default function DashboardCharts({ patients }: Props) {
       for (let i = 6; i >= 0; i--) {
         const d = new Date()
         d.setDate(d.getDate() - i)
-        const key = d.toISOString().slice(0, 10)
+        const key = localDateKey(d)
         dayKeys.push(key)
         byDay.set(key, { sys: [], dia: [], hr: [] })
         byDayGlc.set(key, [])
       }
       for (const m of recent) {
-        const key = new Date(m.measuredAt).toISOString().slice(0, 10)
+        const key = localDateKey(new Date(m.measuredAt))
         const bucket = byDay.get(key)
         if (!bucket) continue
         bucket.sys.push(m.systolic)
@@ -72,7 +82,7 @@ export default function DashboardCharts({ patients }: Props) {
         if (m.heartRate) bucket.hr.push(m.heartRate)
       }
       for (const g of recentGlc) {
-        const key = new Date(g.measuredAt).toISOString().slice(0, 10)
+        const key = localDateKey(new Date(g.measuredAt))
         const arr = byDayGlc.get(key)
         if (arr) arr.push(g.value)
       }
@@ -80,7 +90,7 @@ export default function DashboardCharts({ patients }: Props) {
         xs.length ? Math.round(xs.reduce((a, c) => a + c, 0) / xs.length) : 0
       const out: DailyAvg[] = dayKeys.map((key) => {
         const b = byDay.get(key)!
-        const d = new Date(key)
+        const d = dateFromLocalKey(key)
         return {
           date: key,
           label: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
@@ -92,7 +102,7 @@ export default function DashboardCharts({ patients }: Props) {
       })
       const outGlc: DailyGlucose[] = dayKeys.map((key) => {
         const arr = byDayGlc.get(key)!
-        const d = new Date(key)
+        const d = dateFromLocalKey(key)
         return {
           date: key,
           label: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),

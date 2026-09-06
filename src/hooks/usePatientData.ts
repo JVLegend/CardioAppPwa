@@ -3,7 +3,19 @@ import type { Measurement, BPAlert, Medication, MeasurementSource, GlucoseMeasur
 import { useAuth } from '../contexts/AuthContext'
 import * as db from '../services/database'
 import { evaluateAlerts, sendBrowserNotification } from '../services/alertService'
-import { persistEntity, pullFromServer } from '../services/syncEngine'
+import { onSyncStateChange, persistEntity, pullFromServer } from '../services/syncEngine'
+
+async function readLocalPatientData(patientId: string) {
+  const [all, today, glucose, s, alerts, meds] = await Promise.all([
+    db.fetchAllMeasurements(patientId),
+    db.fetchTodayMeasurements(patientId),
+    db.fetchAllGlucose(patientId),
+    db.fetchStreak(patientId),
+    db.fetchActiveAlerts(patientId),
+    db.fetchMedications(patientId),
+  ])
+  return { all, today, glucose, streak: s, alerts, meds }
+}
 
 export function usePatientData() {
   const { currentPatient } = useAuth()
@@ -21,21 +33,22 @@ export function usePatientData() {
     if (!patientId) return
     setIsLoading(true)
     try {
+      const applyLocalData = async () => {
+        const data = await readLocalPatientData(patientId)
+        setAllMeasurements(data.all)
+        setTodayMeasurements(data.today)
+        setAllGlucoseMeasurements(data.glucose)
+        setStreak(data.streak)
+        setActiveAlerts(data.alerts)
+        setMedications(data.meds)
+      }
+
+      // O cache aparece primeiro; a atualização remota acontece em seguida.
+      // Assim uma rede lenta não transforma uma tela já disponível em spinner.
+      await applyLocalData()
+      setIsLoading(false)
       await pullFromServer()
-      const [all, today, glucose, s, alerts, meds] = await Promise.all([
-        db.fetchAllMeasurements(patientId),
-        db.fetchTodayMeasurements(patientId),
-        db.fetchAllGlucose(patientId),
-        db.fetchStreak(patientId),
-        db.fetchActiveAlerts(patientId),
-        db.fetchMedications(patientId),
-      ])
-      setAllMeasurements(all)
-      setTodayMeasurements(today)
-      setAllGlucoseMeasurements(glucose)
-      setStreak(s)
-      setActiveAlerts(alerts)
-      setMedications(meds)
+      await applyLocalData()
     } finally {
       setIsLoading(false)
     }
@@ -44,6 +57,25 @@ export function usePatientData() {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  useEffect(() => {
+    if (!patientId) return
+    let active = true
+    const refresh = async () => {
+      const data = await readLocalPatientData(patientId)
+      if (!active) return
+      setAllMeasurements(data.all)
+      setTodayMeasurements(data.today)
+      setAllGlucoseMeasurements(data.glucose)
+      setStreak(data.streak)
+      setActiveAlerts(data.alerts)
+      setMedications(data.meds)
+    }
+    const unsubscribe = onSyncStateChange((next) => {
+      if (next.status === 'idle') void refresh()
+    })
+    return () => { active = false; unsubscribe() }
+  }, [patientId])
 
   const addMeasurement = async (
     systolic: number,
@@ -64,7 +96,7 @@ export function usePatientData() {
       measuredAt: new Date().toISOString(),
     }
 
-    const persistence = await persistEntity(
+    await persistEntity(
       'measurement', m.id, 'create', m,
       () => db.saveMeasurement(m)
     )
@@ -82,7 +114,8 @@ export function usePatientData() {
       )
     }
 
-    if (persistence === 'remote') await pullFromServer()
+    // loadData reaproveita o cache local e espera a sincronização em andamento
+    // quando necessário, sem disparar duas leituras remotas em sequência.
     await loadData()
   }
 

@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState, type FormEvent } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { getSyncState, onSyncStateChange, processPendingOperations, pullFromServer } from '../services/syncEngine'
+import { getSyncState, onSyncStateChange, processPendingOperations, pullFromServer, retryFailedSyncOperations } from '../services/syncEngine'
 import { isWebBluetoothSupported } from '../services/bluetoothService'
 import { wipeAccountData } from '../services/database'
 import { deleteRemoteAccount } from '../services/railwayRepository'
 import DisclaimerView from './DisclaimerView'
 import ReminderControls from './ReminderControls'
 import DocumentSheetView from './DocumentSheetView'
+import { useModalAccessibility } from '../hooks/useModalAccessibility'
+import { useBlockingActivity } from '../services/activityState'
 import AppPageHeader from './AppPageHeader'
 import {
   PrivacyContent,
@@ -18,21 +20,63 @@ import {
 import styles from './SettingsView.module.css'
 
 type LegalDoc = 'privacy' | 'terms' | 'support'
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || '1.0.0'
 
 export default function SettingsView() {
-  const { logout, currentPatient } = useAuth()
+  const { logout, currentPatient, updatePassword } = useAuth()
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null)
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [syncState, setSyncState] = useState(getSyncState)
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [passwordConfirmation, setPasswordConfirmation] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordNotice, setPasswordNotice] = useState('')
+
+  useBlockingActivity('settings-password', showPasswordForm || passwordSaving)
 
   useEffect(() => onSyncStateChange(setSyncState), [])
 
   const retrySync = () => {
-    void processPendingOperations().then(() => pullFromServer())
+    void (syncState.failed > 0 ? retryFailedSyncOperations() : processPendingOperations())
+      .then(() => pullFromServer())
   }
+
+  const handlePasswordChange = async (event: FormEvent) => {
+    event.preventDefault()
+    setPasswordError('')
+    setPasswordNotice('')
+    if (newPassword.length < 12 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      setPasswordError('A senha deve ter ao menos 12 caracteres, combinando letras e números.')
+      return
+    }
+    if (newPassword !== passwordConfirmation) {
+      setPasswordError('As senhas novas não coincidem.')
+      return
+    }
+    setPasswordSaving(true)
+    try {
+      await updatePassword(newPassword, currentPassword)
+      setCurrentPassword('')
+      setNewPassword('')
+      setPasswordConfirmation('')
+      setShowPasswordForm(false)
+      setPasswordNotice('Senha atualizada com sucesso.')
+    } catch (error) {
+      setPasswordError(error instanceof Error ? error.message : 'Não foi possível atualizar a senha.')
+    } finally {
+      setPasswordSaving(false)
+    }
+  }
+
+  const lastSyncLabel = syncState.lastSyncedAt
+    ? new Date(syncState.lastSyncedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+    : 'Ainda não sincronizada nesta sessão'
 
   const handleDeleteAccount = async () => {
     setDeleting(true)
@@ -91,6 +135,12 @@ export default function SettingsView() {
               {syncState.status === 'offline' ? 'Offline' : syncState.status === 'syncing' ? 'Sincronizando…' : syncState.status === 'error' ? 'Atenção' : 'Atualizada'}
             </span>
           </div>
+          <div className={styles.divider} />
+          <div className={styles.row}>
+            <span className={styles.rowLabel}>Última atualização</span>
+            <span className={styles.rowValue}>{lastSyncLabel}</span>
+          </div>
+          {syncState.message && <div role="status" className={styles.syncMessage}>{syncState.message}</div>}
           {(syncState.pending > 0 || syncState.failed > 0 || syncState.message) && (
             <>
               <div className={styles.divider} />
@@ -100,7 +150,7 @@ export default function SettingsView() {
                     ? `${syncState.failed} alteração(ões) com falha`
                     : `${syncState.pending} alteração(ões) pendente(s)`}
                 </span>
-                <span className={styles.chevron}>Tentar novamente</span>
+                <span className={styles.chevron}>{syncState.failed > 0 ? 'Reabrir tentativa' : 'Tentar novamente'}</span>
               </button>
             </>
           )}
@@ -113,7 +163,7 @@ export default function SettingsView() {
         <div className={styles.group}>
           <div className={styles.row}>
             <span className={styles.rowLabel}>Versão</span>
-            <span className={styles.rowValue}>1.0.0</span>
+            <span className={styles.rowValue}>{APP_VERSION}</span>
           </div>
           <div className={styles.divider} />
           <div className={styles.row}>
@@ -125,6 +175,76 @@ export default function SettingsView() {
             <span className={styles.rowLabel}>Tipo</span>
             <span className={styles.rowValue}>Progressive Web App</span>
           </div>
+        </div>
+      </div>
+
+      {/* Segurança */}
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>Segurança</h2>
+        <div className={styles.group}>
+          {!showPasswordForm ? (
+            <button
+              className={styles.linkRow}
+              onClick={() => { setPasswordError(''); setPasswordNotice(''); setShowPasswordForm(true) }}
+            >
+              <span className={styles.rowLabel}>Trocar senha</span>
+              <span className={styles.chevron}>›</span>
+            </button>
+          ) : (
+            <form className={styles.passwordForm} onSubmit={handlePasswordChange}>
+              <p className={styles.rowDesc}>A senha deve ter ao menos 12 caracteres, com letras e números.</p>
+              <label className={styles.passwordField}>
+                <span>Senha atual</span>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+              </label>
+              <label className={styles.passwordField}>
+                <span>Nova senha</span>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  autoComplete="new-password"
+                  minLength={12}
+                  required
+                />
+              </label>
+              <label className={styles.passwordField}>
+                <span>Confirmar nova senha</span>
+                <input
+                  type="password"
+                  value={passwordConfirmation}
+                  onChange={(event) => setPasswordConfirmation(event.target.value)}
+                  autoComplete="new-password"
+                  minLength={12}
+                  required
+                />
+              </label>
+              {passwordError && <div className={styles.errorText} role="alert">{passwordError}</div>}
+              {passwordNotice && <div className={styles.passwordNotice} role="status">{passwordNotice}</div>}
+              <div className={styles.passwordActions}>
+                <button
+                  type="button"
+                  className={styles.secondaryAction}
+                  onClick={() => { setShowPasswordForm(false); setCurrentPassword(''); setNewPassword(''); setPasswordConfirmation('') }}
+                  disabled={passwordSaving}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className={styles.primaryAction} disabled={passwordSaving}>
+                  {passwordSaving ? 'Atualizando…' : 'Atualizar senha'}
+                </button>
+              </div>
+            </form>
+          )}
+          {!showPasswordForm && passwordNotice && (
+            <div className={styles.passwordNoticeStandalone} role="status">{passwordNotice}</div>
+          )}
         </div>
       </div>
 
@@ -202,55 +322,72 @@ export default function SettingsView() {
         </DocumentSheetView>
       )}
 
-      {/* Confirmação 1/2 */}
-      {deleteStep === 1 && (
-        <div className={styles.confirmOverlay}>
-          <div className={styles.confirmCard}>
-            <h3>Excluir minha conta?</h3>
-            <p>
-              Isto apagará permanentemente seu cadastro, todas as medições,
-              medicações, alertas e mensagens. A operação não pode ser desfeita.
-            </p>
-            <div className={styles.confirmRow}>
-              <button className={styles.cancelBtn} onClick={() => setDeleteStep(0)}>
-                Cancelar
-              </button>
-              <button className={styles.dangerBtn} onClick={() => setDeleteStep(2)}>
-                Continuar
-              </button>
-            </div>
-          </div>
-        </div>
+      {(deleteStep === 1 || deleteStep === 2) && (
+        <AccountDeletionDialog
+          key={deleteStep}
+          step={deleteStep}
+          deleting={deleting}
+          onCancel={() => setDeleteStep(0)}
+          onContinue={() => setDeleteStep(2)}
+          onConfirm={() => void handleDeleteAccount()}
+        />
       )}
+    </div>
+  )
+}
 
-      {/* Confirmação 2/2 */}
-      {deleteStep === 2 && (
-        <div className={styles.confirmOverlay}>
-          <div className={styles.confirmCard}>
-            <h3>Confirmar exclusão</h3>
-            <p>
-              Se você tiver uma assinatura ativa, lembre-se de cancelá-la com
-              sua operadora. Esta ação é definitiva.
-            </p>
-            <div className={styles.confirmRow}>
-              <button
-                className={styles.cancelBtn}
-                onClick={() => setDeleteStep(0)}
-                disabled={deleting}
-              >
-                Cancelar
-              </button>
-              <button
-                className={styles.dangerBtn}
-                onClick={handleDeleteAccount}
-                disabled={deleting}
-              >
-                {deleting ? 'Excluindo...' : 'Excluir definitivamente'}
-              </button>
-            </div>
-          </div>
+function AccountDeletionDialog({
+  step,
+  deleting,
+  onCancel,
+  onContinue,
+  onConfirm,
+}: {
+  step: 1 | 2
+  deleting: boolean
+  onCancel: () => void
+  onContinue: () => void
+  onConfirm: () => void
+}) {
+  const dialogRef = useModalAccessibility(() => {
+    if (!deleting) onCancel()
+  })
+  const titleId = useId()
+  const descriptionId = useId()
+  const isFinalStep = step === 2
+
+  return (
+    <div className={styles.confirmOverlay} role="presentation">
+      <div
+        ref={dialogRef}
+        className={styles.confirmCard}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        tabIndex={-1}
+      >
+        <h2 id={titleId}>{isFinalStep ? 'Confirmar exclusão' : 'Excluir minha conta?'}</h2>
+        <p id={descriptionId}>
+          {isFinalStep
+            ? 'Se você tiver uma assinatura ativa, lembre-se de cancelá-la com sua operadora. Esta ação é definitiva.'
+            : 'Isto apagará permanentemente seu cadastro, todas as medições, medicações, alertas e mensagens. A operação não pode ser desfeita.'}
+        </p>
+        <div className={styles.confirmRow}>
+          <button className={styles.cancelBtn} onClick={onCancel} disabled={deleting}>
+            Cancelar
+          </button>
+          {isFinalStep ? (
+            <button className={styles.dangerBtn} onClick={onConfirm} disabled={deleting}>
+              {deleting ? 'Excluindo...' : 'Excluir definitivamente'}
+            </button>
+          ) : (
+            <button className={styles.dangerBtn} onClick={onContinue}>
+              Continuar
+            </button>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }

@@ -43,7 +43,7 @@ export async function readBpFromImage(base64: string, mimeType: string): Promise
         },
   })
   const text = (data as any).candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
-  console.debug('[Gemini BP OCR] raw response:', text)
+  if (import.meta.env.DEV) console.debug('[Gemini BP OCR] resposta recebida')
   let parsed: Record<string, unknown> = {}
   try {
     parsed = JSON.parse(text)

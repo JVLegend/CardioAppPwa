@@ -18,13 +18,28 @@ const DEFAULT: Record<ReminderKey, ReminderConfig> = {
 const STORAGE_KEY = 'kpscardio:reminders'
 const ORIGINAL_LEGACY_STORAGE_KEY = 'leve-control:reminders'
 const EVENT = 'kpscardio:reminders-change'
+let activeOwnerId: string | null = null
+
+function ownerStorageKey(base: string) {
+  return activeOwnerId ? `${base}:${activeOwnerId}` : `${base}:anonymous`
+}
+
+export function setReminderOwner(ownerId: string | null) {
+  activeOwnerId = ownerId
+  if (ownerId && !localStorage.getItem(ownerStorageKey(STORAGE_KEY))) {
+    const legacy = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(ORIGINAL_LEGACY_STORAGE_KEY)
+    if (legacy) localStorage.setItem(ownerStorageKey(STORAGE_KEY), legacy)
+  }
+  window.dispatchEvent(new CustomEvent(EVENT, { detail: load() }))
+}
 
 function load(): Record<ReminderKey, ReminderConfig> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-      ?? localStorage.getItem(ORIGINAL_LEGACY_STORAGE_KEY)
+    // Lembretes pertencem à conta. Antes do login usamos somente o padrão e
+    // não criamos preferências compartilhadas no aparelho.
+    if (!activeOwnerId) return { ...DEFAULT }
+    const raw = localStorage.getItem(ownerStorageKey(STORAGE_KEY))
     if (!raw) return { ...DEFAULT }
-    if (!localStorage.getItem(STORAGE_KEY)) localStorage.setItem(STORAGE_KEY, raw)
     const parsed = JSON.parse(raw)
     return {
       pressao: { ...DEFAULT.pressao, ...parsed.pressao },
@@ -36,7 +51,8 @@ function load(): Record<ReminderKey, ReminderConfig> {
 }
 
 function persist(all: Record<ReminderKey, ReminderConfig>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all))
+  if (!activeOwnerId) return
+  localStorage.setItem(ownerStorageKey(STORAGE_KEY), JSON.stringify(all))
   window.dispatchEvent(new CustomEvent(EVENT, { detail: all }))
 }
 
@@ -68,7 +84,7 @@ const REMINDER_COPY: Record<ReminderKey, { title: string; body: string }> = {
 }
 
 function lastFiredKey(key: ReminderKey) {
-  return `kpscardio:reminders:last:${key}`
+  return ownerStorageKey(`kpscardio:reminders:last:${key}`)
 }
 
 async function fire(key: ReminderKey) {
@@ -83,9 +99,10 @@ async function fire(key: ReminderKey) {
 }
 
 function tick() {
+  if (!activeOwnerId) return
   const all = load()
   const now = new Date()
-  const today = now.toISOString().slice(0, 10) // YYYY-MM-DD
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   for (const k of Object.keys(all) as ReminderKey[]) {
     const cfg = all[k]
     if (!cfg.enabled) continue

@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 import { usePatientData } from '../hooks/usePatientData'
 import { classifyBP, classificationConfig } from '../config/theme'
 import ManualEntryView from './ManualEntryView'
@@ -7,9 +8,12 @@ import BluetoothView from './BluetoothView'
 import ReminderControls from './ReminderControls'
 import AppPageHeader from './AppPageHeader'
 import { readBpFromImage, MissingGeminiKeyError, type BpReading } from '../services/bpOcr'
+import { prepareImageForAi } from '../services/imageProcessing'
+import { useBlockingActivity } from '../services/activityState'
 import styles from './HomeView.module.css'
 
 export default function HomeView() {
+  const { currentPatient } = useAuth()
   const {
     allMeasurements,
     todayMeasurements,
@@ -23,6 +27,8 @@ export default function HomeView() {
   const [ocrLoading, setOcrLoading] = useState(false)
   const [ocrError, setOcrError] = useState('')
   const cameraRef = useRef<HTMLInputElement>(null)
+
+  useBlockingActivity(`pressure-ocr:${currentPatient?.id ?? 'session'}`, ocrLoading)
 
   const lastMeasurement = allMeasurements[0]
   const classification = lastMeasurement
@@ -48,15 +54,8 @@ export default function HomeView() {
     setOcrLoading(true)
     setOcrError('')
     try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = (ev) => resolve(ev.target?.result as string)
-        reader.onerror = () => reject(reader.error)
-        reader.readAsDataURL(file)
-      })
-      const base64 = dataUrl.split(',')[1]
-      const mimeType = file.type || 'image/jpeg'
-      const reading = await readBpFromImage(base64, mimeType)
+      const prepared = await prepareImageForAi(file)
+      const reading = await readBpFromImage(prepared.base64, prepared.mimeType)
       if (reading.systolic === null && reading.diastolic === null && reading.heartRate === null) {
         setOcrError('A IA não conseguiu ler nenhum número. Tente outra foto ou registre manualmente.')
       } else {
@@ -84,6 +83,7 @@ export default function HomeView() {
         initialDiastolic={photoReading?.diastolic ?? undefined}
         initialHeartRate={photoReading?.heartRate ?? undefined}
         fromPhoto={!!photoReading}
+        draftKey={currentPatient?.id ? `pressure:${currentPatient.id}` : undefined}
       />
     )
   }

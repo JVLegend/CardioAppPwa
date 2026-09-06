@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useId } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import type { Patient, Measurement, GlucoseMeasurement } from '../models/types'
 import * as db from '../services/database'
@@ -6,6 +6,9 @@ import { persistEntity, pullFromServer } from '../services/syncEngine'
 import { classifyBP, classificationConfig, type BPClassification } from '../config/theme'
 import { classifyGlucose, glucoseContextLabel } from '../config/glucose'
 import MainTabView from './MainTabView'
+import { readPatientFromLocation, writeNavigationState } from '../navigation/navigationState'
+import { useModalAccessibility } from '../hooks/useModalAccessibility'
+import { useBlockingActivity } from '../services/activityState'
 import styles from './PatientListView.module.css'
 
 type DrillFilter =
@@ -60,6 +63,41 @@ export default function PatientListView() {
     if (currentPatient?.role === 'operator') void loadData()
   }, [currentPatient])
 
+  // Permite retomar o prontuário por um link ou após recarregar a PWA. A
+  // carteira continua vindo do servidor; o parâmetro apenas escolhe a tela.
+  useEffect(() => {
+    if (currentPatient?.role !== 'operator' || viewingPatient || patients.length === 0) return
+    const patientId = readPatientFromLocation()
+    if (!patientId) return
+    const target = patients.find((patient) => patient.id === patientId)
+    if (!target) {
+      writeNavigationState({ patientId: null, mode: 'replace' })
+      return
+    }
+    selectPatient(target)
+    setViewingPatient(target)
+  }, [currentPatient?.role, patients, selectPatient, viewingPatient])
+
+  useEffect(() => {
+    const onPopState = () => {
+      const patientId = readPatientFromLocation()
+      if (!patientId) {
+        if (viewingPatient) {
+          setViewingPatient(null)
+          void restoreSelf()
+        }
+        return
+      }
+      const target = patients.find((patient) => patient.id === patientId)
+      if (target && target.id !== viewingPatient?.id) {
+        selectPatient(target)
+        setViewingPatient(target)
+      }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [patients, restoreSelf, selectPatient, viewingPatient])
+
   async function loadData() {
     if (!currentPatient) return
     setLoading(true)
@@ -68,11 +106,11 @@ export default function PatientListView() {
       const list = await db.fetchPatientsByOperator(currentPatient.id)
       setPatients(list)
       const ids = list.map((p) => p.id)
-      const [{ latestMeasurements, measuredToday, activeMedicationCount, measuredLast3Days }, glucoseRows, alertRows] =
+      const [{ latestMeasurements, measuredToday, activeMedicationCount, measuredLast3Days }, latestGlucoseByPatient, activeAlertsByPatient] =
         await Promise.all([
           db.fetchOperatorPatientStats(ids),
-          Promise.all(list.map((p) => db.fetchAllGlucose(p.id))),
-          Promise.all(list.map((p) => db.fetchActiveAlerts(p.id))),
+          db.fetchLatestGlucoseForPatients(ids),
+          db.fetchActiveAlertsForPatients(ids),
         ])
 
       const s: PatientStats[] = list.map((p, index) => {
@@ -85,8 +123,8 @@ export default function PatientListView() {
         return {
           patient: p,
           latest,
-          latestGlucose: glucoseRows[index]?.[0],
-          activeAlerts: alertRows[index]?.length ?? 0,
+          latestGlucose: latestGlucoseByPatient.get(p.id),
+          activeAlerts: activeAlertsByPatient.get(p.id)?.length ?? 0,
           classification: c,
           measuredToday: mt,
           measuredLast3Days: m3,
@@ -138,6 +176,7 @@ export default function PatientListView() {
 
   async function handleBack() {
     setViewingPatient(null)
+    writeNavigationState({ patientId: null, tab: 'home', mode: 'replace' })
     await restoreSelf()
   }
 
@@ -145,6 +184,7 @@ export default function PatientListView() {
     selectPatient(patient)
     setViewingPatient(patient)
     setDetailPatient(null)
+    writeNavigationState({ patientId: patient.id, tab: 'home', mode: 'push' })
   }
 
   async function handleUpdatePatient(updated: Patient) {
@@ -383,12 +423,17 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
   onSendPush: () => void
 }) {
   const { patient, latest, latestGlucose, activeAlerts, classification, outOfGoalReason, adhering, activeMedications } = stats
+  const dialogRef = useModalAccessibility(onClose)
+  const titleId = useId()
+  const descriptionId = useId()
   const classConfig = classification ? classificationConfig[classification] : null
   const glucoseClass = latestGlucose ? classifyGlucose(latestGlucose.value, latestGlucose.context) : null
   const [editing, setEditing] = useState(false)
   const [comorbInput, setComorbInput] = useState((patient.comorbidities ?? []).join(', '))
   const [inTreatmentPlan, setInTreatmentPlan] = useState(patient.inTreatmentPlan ?? false)
   const [phone, setPhone] = useState(patient.phone ?? '')
+
+  useBlockingActivity(`patient-detail:${patient.id}`, editing)
 
   async function handleSave() {
     const updated: Patient = {
@@ -402,18 +447,31 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
   }
 
   return (
-    <div className={styles.drawerOverlay} onClick={onClose}>
-      <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.drawerOverlay} role="presentation" onClick={onClose}>
+      <div
+        ref={dialogRef}
+        className={styles.drawer}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className={styles.drawerHandle} />
 
         <div className={styles.drawerHeader}>
           <div className={styles.drawerAvatar}>{patient.name.charAt(0).toUpperCase()}</div>
           <div style={{ flex: 1 }}>
-            <div className={styles.drawerName}>{patient.name}</div>
+            <h2 id={titleId} className={styles.drawerName}>{patient.name}</h2>
             {patient.phone && <div className={styles.drawerPhone}>{patient.phone}</div>}
           </div>
-          <button className={styles.closeBtn} onClick={onClose}>×</button>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar detalhes do paciente">×</button>
         </div>
+
+        <p id={descriptionId} className={styles.srOnly}>
+          Detalhes clínicos, comunicação e edição do cadastro de {patient.name}.
+        </p>
 
         {/* Últimas medições */}
         <div className={styles.drawerSection}>
@@ -552,10 +610,15 @@ function PatientDetailDrawer({ stats, onClose, onUpdate, onOpenFullProfile, onSe
 }
 
 function PushNotificationModal({ patient, onClose }: { patient: Patient; onClose: () => void }) {
+  const dialogRef = useModalAccessibility(onClose)
+  const titleId = useId()
+  const descriptionId = useId()
   const [message, setMessage] = useState(
     `Olá ${patient.name.split(' ')[0]}, lembre-se de medir sua pressão hoje!`
   )
   const [sent, setSent] = useState(false)
+
+  useBlockingActivity(`patient-message:${patient.id}`, !sent)
 
   async function handleSend() {
     // Mensagem entra direto no chat do paciente (Dexie local).
@@ -575,10 +638,24 @@ function PushNotificationModal({ patient, onClose }: { patient: Patient; onClose
   }
 
   return (
-    <div className={styles.drawerOverlay} onClick={onClose}>
-      <div className={styles.pushModal} onClick={(e) => e.stopPropagation()}>
-        <h3 className={styles.pushTitle}>Enviar mensagem ao paciente</h3>
-        <p className={styles.pushSub}>Para {patient.name} · aparece no chat dele(a)</p>
+    <div className={styles.drawerOverlay} role="presentation" onClick={onClose}>
+      <div
+        ref={dialogRef}
+        className={styles.pushModal}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={styles.pushHeader}>
+          <div>
+            <h2 id={titleId} className={styles.pushTitle}>Enviar mensagem ao paciente</h2>
+            <p id={descriptionId} className={styles.pushSub}>Para {patient.name} · aparece no chat dele(a)</p>
+          </div>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar envio de mensagem">×</button>
+        </div>
 
         {sent ? (
           <div className={styles.sentState}>
@@ -598,7 +675,7 @@ function PushNotificationModal({ patient, onClose }: { patient: Patient; onClose
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={4}
-                autoFocus
+                aria-label="Mensagem para o paciente"
               />
             </div>
             <div className={styles.pushActions}>

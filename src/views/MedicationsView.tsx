@@ -1,7 +1,11 @@
-import { useState, useRef, type FormEvent, type ChangeEvent } from 'react'
+import { useState, useRef, useEffect, type FormEvent, type ChangeEvent } from 'react'
 import { usePatientData } from '../hooks/usePatientData'
+import { useAuth } from '../contexts/AuthContext'
 import type { Medication } from '../models/types'
 import { generateWithGemini } from '../services/railwayRepository'
+import { prepareImageForAi } from '../services/imageProcessing'
+import { clearDraft, readDraft, writeDraft } from '../services/draftStorage'
+import { useBlockingActivity } from '../services/activityState'
 import AppPageHeader from './AppPageHeader'
 import styles from './MedicationsView.module.css'
 
@@ -16,9 +20,18 @@ const frequencyOptions = [
 
 type AddMode = 'manual' | 'photo' | 'pdf'
 
+function localDateInputValue(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+function parseDateInput(value: string) {
+  const [year, month, day] = value.split('-').map(Number)
+  return year && month && day ? new Date(year, month - 1, day) : new Date(value)
+}
+
 function treatmentDaysLeft(endDate?: string): number | null {
   if (!endDate) return null
-  const end = new Date(endDate)
+  const end = parseDateInput(endDate)
   const now = new Date()
   const diff = Math.ceil((end.getTime() - now.setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24))
   return diff
@@ -26,8 +39,8 @@ function treatmentDaysLeft(endDate?: string): number | null {
 
 function TreatmentBar({ startDate, endDate }: { startDate?: string; endDate?: string }) {
   if (!startDate || !endDate) return null
-  const start = new Date(startDate).getTime()
-  const end = new Date(endDate).getTime()
+  const start = parseDateInput(startDate).getTime()
+  const end = parseDateInput(endDate).getTime()
   const now = Date.now()
   const progress = Math.min(Math.max((now - start) / (end - start), 0), 1)
   const daysLeft = treatmentDaysLeft(endDate)
@@ -100,7 +113,7 @@ async function analyzePrescription(base64: string, mimeType: string): Promise<Pa
         },
   })
   const text = (data as any).candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
-  console.debug('[Gemini] raw response:', text)
+  if (import.meta.env.DEV) console.debug('[Gemini] resposta de receita recebida')
   try {
     return JSON.parse(text)
   } catch {
@@ -111,13 +124,14 @@ async function analyzePrescription(base64: string, mimeType: string): Promise<Pa
 
 export default function MedicationsView() {
   const { medications, addMedication, removeMedication, toggleMedication } = usePatientData()
+  const { currentPatient } = useAuth()
   const [showAdd, setShowAdd] = useState(false)
   const [addMode, setAddMode] = useState<AddMode>('manual')
   const [name, setName] = useState('')
   const [dose, setDose] = useState('')
   const [frequency, setFrequency] = useState(frequencyOptions[0])
   const [scheduleInput, setScheduleInput] = useState('')
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [startDate, setStartDate] = useState(localDateInputValue())
   const [endDate, setEndDate] = useState('')
   const [notes, setNotes] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
@@ -127,6 +141,45 @@ export default function MedicationsView() {
   const [fromAI, setFromAI] = useState(false) // sinaliza que campos vieram de foto/PDF
   const cameraRef = useRef<HTMLInputElement>(null)
   const pdfRef = useRef<HTMLInputElement>(null)
+  const draftHydratedRef = useRef(false)
+  const draftScope = currentPatient?.id ? `medication:${currentPatient.id}` : ''
+
+  useBlockingActivity(
+    `medication-entry:${currentPatient?.id ?? 'session'}`,
+    showAdd || aiLoading || saving,
+  )
+
+  useEffect(() => {
+    draftHydratedRef.current = false
+    if (!draftScope) return
+    const draft = readDraft<{
+      name?: string; dose?: string; frequency?: string; scheduleInput?: string
+      startDate?: string; endDate?: string; notes?: string; open?: boolean
+    }>(draftScope)
+    if (draft) {
+      setName(draft.name ?? '')
+      setDose(draft.dose ?? '')
+      setFrequency(frequencyOptions.includes(draft.frequency ?? '') ? draft.frequency! : frequencyOptions[0])
+      setScheduleInput(draft.scheduleInput ?? '')
+      setStartDate(draft.startDate ?? localDateInputValue())
+      setEndDate(draft.endDate ?? '')
+      setNotes(draft.notes ?? '')
+      setShowAdd(draft.open === true)
+    }
+    draftHydratedRef.current = true
+  }, [draftScope])
+
+  useEffect(() => {
+    if (!draftScope || !draftHydratedRef.current) return
+    const timer = window.setTimeout(() => {
+      if (showAdd && (name || dose || notes || scheduleInput)) {
+        writeDraft(draftScope, { name, dose, frequency, scheduleInput, startDate, endDate, notes, open: true })
+      } else if (!showAdd) {
+        clearDraft(draftScope)
+      }
+    }, 250)
+    return () => window.clearTimeout(timer)
+  }, [draftScope, dose, endDate, frequency, name, notes, scheduleInput, showAdd, startDate])
 
   const activeMeds = medications.filter((m) => {
     const daysLeft = treatmentDaysLeft(m.endDate)
@@ -140,8 +193,9 @@ export default function MedicationsView() {
 
   const resetForm = () => {
     setName(''); setDose(''); setFrequency(frequencyOptions[0])
-    setScheduleInput(''); setStartDate(new Date().toISOString().split('T')[0])
+    setScheduleInput(''); setStartDate(localDateInputValue())
     setEndDate(''); setNotes(''); setAiError(''); setSaveError(''); setFromAI(false)
+    clearDraft(draftScope)
   }
 
   const saveMedication = async () => {
@@ -155,6 +209,7 @@ export default function MedicationsView() {
     try {
       const schedule = scheduleInput.split(',').map((s) => s.trim()).filter(Boolean)
       await addMedication(name.trim(), dose.trim(), frequency, schedule.length > 0 ? schedule : undefined, startDate || undefined, endDate || undefined, notes.trim() || undefined)
+      clearDraft(draftScope)
       resetForm()
       setShowAdd(false)
     } catch (error) {
@@ -186,13 +241,10 @@ export default function MedicationsView() {
     setAiLoading(true)
     setAiError('')
     setFromAI(false)
-    const reader = new FileReader()
-    reader.onload = async (ev) => {
-      const dataUrl = ev.target?.result as string
-      const base64 = dataUrl.split(',')[1]
-      const mimeType = file.type || defaultMime
+    void (async () => {
       try {
-        const result = await analyzePrescription(base64, mimeType)
+        const prepared = await prepareImageForAi(file)
+        const result = await analyzePrescription(prepared.base64, prepared.mimeType || defaultMime)
         if (result.name) setName(result.name)
         if (result.dose) setDose(result.dose)
         if (result.frequency) {
@@ -217,12 +269,7 @@ export default function MedicationsView() {
       } finally {
         setAiLoading(false)
       }
-    }
-    reader.onerror = () => {
-      setAiError('Erro ao ler o arquivo.')
-      setAiLoading(false)
-    }
-    reader.readAsDataURL(file)
+    })()
   }
 
   const handlePhotoCapture = (e: ChangeEvent<HTMLInputElement>) => {

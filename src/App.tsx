@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import LoginView from './views/LoginView'
 import DisclaimerView from './views/DisclaimerView'
 import PwaUpdatePrompt from './views/PwaUpdatePrompt'
+import AppErrorBoundary from './AppErrorBoundary'
 
 const MainTabView = lazy(() => import('./views/MainTabView'))
 const PatientListView = lazy(() => import('./views/PatientListView'))
@@ -75,9 +76,11 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-      <PwaUpdatePrompt />
-    </AuthProvider>
+    <AppErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+        <PwaUpdatePrompt />
+      </AuthProvider>
+    </AppErrorBoundary>
   )
 }

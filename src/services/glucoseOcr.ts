@@ -44,7 +44,7 @@ export async function readGlucoseFromImage(base64: string, mimeType: string): Pr
         },
   })
   const text = (data as any).candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
-  console.debug('[Gemini Glucose OCR] raw response:', text)
+  if (import.meta.env.DEV) console.debug('[Gemini Glucose OCR] resposta recebida')
   let parsed: Record<string, unknown> = {}
   try {
     parsed = JSON.parse(text)

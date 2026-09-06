@@ -3,13 +3,15 @@
 //   • KPI extra "Glicemia alterada" (>= 126 jejum / >= 200 aleatório)
 //   • estatísticas de glicose carregadas em paralelo com BP
 //   • compatível com modo embutido em outro dashboard
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import type { Patient, Measurement, GlucoseMeasurement, BPAlert, AlertStatus } from '../models/types'
 import * as db from '../services/database'
 import { db as dexieDb } from '../services/database'
 import { classifyBP, classificationConfig, type BPClassification } from '../config/theme'
 import { persistEntity, pullFromServer } from '../services/syncEngine'
+import { useModalAccessibility } from '../hooks/useModalAccessibility'
+import { useBlockingActivity } from '../services/activityState'
 import styles from './PatientManagementSection.module.css'
 
 type DrillFilter =
@@ -81,18 +83,11 @@ export default function PatientManagementSection() {
         ? (await dexieDb.patients.toArray()).filter((p) => p.role === 'patient')
         : await db.fetchPatientsByOperator(currentPatient.id)
       const ids = list.map((p) => p.id)
-      const [stats, allGlucose, allAlerts] = await Promise.all([
+      const [stats, latestGlucoseByPatient, alertsByPatient] = await Promise.all([
         db.fetchOperatorPatientStats(ids),
-        dexieDb.glucoseMeasurements.toArray(),
-        dexieDb.alerts.toArray(),
+        db.fetchLatestGlucoseForPatients(ids),
+        db.fetchActiveAlertsForPatients(ids),
       ])
-      const latestGlucoseByPatient = new Map<string, GlucoseMeasurement>()
-      for (const g of allGlucose) {
-        const prev = latestGlucoseByPatient.get(g.patientId)
-        if (!prev || new Date(g.measuredAt) > new Date(prev.measuredAt)) {
-          latestGlucoseByPatient.set(g.patientId, g)
-        }
-      }
       const out: PatientRow[] = list.map((p) => {
         const latest = stats.latestMeasurements.get(p.id)
         const c = latest ? classifyBP(latest.systolic, latest.diastolic) : null
@@ -110,7 +105,7 @@ export default function PatientManagementSection() {
           outOfGoalReason: computeReason(c),
           latestGlucose,
           glucoseAltered: isGlucoseAltered(latestGlucose),
-          alerts: allAlerts.filter((alert) => alert.patientId === p.id && alert.status !== 'resolved'),
+          alerts: alertsByPatient.get(p.id) ?? [],
         }
       })
       setRows(out)
@@ -329,6 +324,9 @@ function DetailDrawer({
   onSendMessage: () => void
 }) {
   const { patient, latest, classification, outOfGoalReason, latestGlucose, glucoseAltered, adhering, activeMedications } = row
+  const dialogRef = useModalAccessibility(onClose)
+  const titleId = useId()
+  const descriptionId = useId()
   const classConfig = classification ? classificationConfig[classification] : null
   const [editing, setEditing] = useState(false)
   const [phone, setPhone] = useState(patient.phone ?? '')
@@ -339,6 +337,8 @@ function DetailDrawer({
   const [alertStatus, setAlertStatus] = useState<AlertStatus | null>(activeAlert?.status ?? null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+
+  useBlockingActivity(`managed-patient-detail:${patient.id}`, editing || saving)
 
   const updateAlert = async (status: AlertStatus) => {
     if (!activeAlert) return
@@ -379,17 +379,29 @@ function DetailDrawer({
   }
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <aside className={styles.drawer} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.overlay} role="presentation" onClick={onClose}>
+      <aside
+        ref={dialogRef}
+        className={styles.drawer}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
         <button className={styles.drawerClose} onClick={onClose} aria-label="Fechar">×</button>
 
         <header className={styles.drawerHeader}>
           <span className={styles.drawerAvatar}>{patient.name.charAt(0).toUpperCase()}</span>
           <div>
-            <h3 className={styles.drawerName}>{patient.name}</h3>
+            <h2 id={titleId} className={styles.drawerName}>{patient.name}</h2>
             {patient.phone && <p className={styles.drawerPhone}>{patient.phone}</p>}
           </div>
         </header>
+        <p id={descriptionId} className={styles.srOnly}>
+          Detalhes clínicos, alertas, comunicação e edição do cadastro de {patient.name}.
+        </p>
 
         <section className={styles.drawerSection}>
           <h4 className={styles.drawerSectionTitle}>Última medição</h4>
@@ -528,12 +540,17 @@ function ctxLabel(ctx: GlucoseMeasurement['context']): string {
 }
 
 function PushModal({ patient, onClose }: { patient: Patient; onClose: () => void }) {
+  const dialogRef = useModalAccessibility(onClose)
+  const titleId = useId()
+  const descriptionId = useId()
   const [message, setMessage] = useState(
     `Olá ${patient.name.split(' ')[0]}, lembre-se de medir sua pressão hoje!`
   )
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+
+  useBlockingActivity(`managed-patient-message:${patient.id}`, !sent || sending)
 
   const send = async () => {
     if (sending || !message.trim()) return
@@ -560,10 +577,24 @@ function PushModal({ patient, onClose }: { patient: Patient; onClose: () => void
   }
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.pushModal} onClick={(e) => e.stopPropagation()}>
-        <h3 className={styles.pushTitle}>Enviar mensagem</h3>
-        <p className={styles.pushSub}>Para {patient.name} · cai direto no chat dele(a)</p>
+    <div className={styles.overlay} role="presentation" onClick={onClose}>
+      <div
+        ref={dialogRef}
+        className={styles.pushModal}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={styles.pushHeader}>
+          <div>
+            <h2 id={titleId} className={styles.pushTitle}>Enviar mensagem</h2>
+            <p id={descriptionId} className={styles.pushSub}>Para {patient.name} · cai direto no chat dele(a)</p>
+          </div>
+          <button className={styles.drawerClose} onClick={onClose} aria-label="Fechar envio de mensagem">×</button>
+        </div>
         {sent ? (
           <div className={styles.pushSent}>✓ Mensagem enviada</div>
         ) : (
@@ -573,7 +604,7 @@ function PushModal({ patient, onClose }: { patient: Patient; onClose: () => void
               rows={4}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              autoFocus
+              aria-label="Mensagem para o paciente"
             />
             <div className={styles.editActions}>
               <button className={styles.btnGhost} onClick={onClose}>Cancelar</button>

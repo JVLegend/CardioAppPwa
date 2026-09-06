@@ -2,6 +2,7 @@ import express from 'express'
 import helmet from 'helmet'
 import { rateLimit } from 'express-rate-limit'
 import pg from 'pg'
+import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -77,6 +78,7 @@ const loginRateLimit = rateLimit({
 const aiRateLimit = rateLimit({
   windowMs: 60_000,
   limit: 12,
+  keyGenerator: (req) => String(req.profile?.id || req.ip),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Muitas solicitações de IA. Aguarde um minuto e tente novamente.' },
@@ -106,7 +108,7 @@ async function authenticate(req, res, next) {
     if (!token) return res.status(401).json({ error: 'Sessão expirada. Entre novamente.' })
     const tokenHash = hashSessionToken(token)
     const result = await pool.query(
-      `SELECT p.*, c.must_change_password
+      `SELECT p.*, c.must_change_password, s.last_seen_at
        FROM auth_sessions s
        JOIN profiles p ON p.id=s.user_id
        JOIN auth_credentials c ON c.user_id=p.id
@@ -120,7 +122,10 @@ async function authenticate(req, res, next) {
     req.sessionTokenHash = tokenHash
     req.profile = result.rows[0]
     req.mustChangePassword = result.rows[0].must_change_password === true
-    await pool.query('UPDATE auth_sessions SET last_seen_at=now() WHERE token_hash=$1', [tokenHash])
+    const lastSeenAt = result.rows[0].last_seen_at ? new Date(result.rows[0].last_seen_at).getTime() : 0
+    if (!lastSeenAt || Date.now() - lastSeenAt > 5 * 60_000) {
+      await pool.query('UPDATE auth_sessions SET last_seen_at=now() WHERE token_hash=$1', [tokenHash])
+    }
     next()
   } catch (error) {
     next(error)
@@ -132,8 +137,8 @@ function requirePasswordReady(req, res, next) {
   next()
 }
 
-function profileToClient(row) {
-  return {
+function profileToClient(row, viewerRole = row.role) {
+  const profile = {
     id: row.id,
     operatorId: row.operator_id || '',
     userId: row.id,
@@ -148,6 +153,10 @@ function profileToClient(row) {
     inTreatmentPlan: row.in_treatment_plan,
     createdAt: row.created_at,
   }
+  // Situação financeira só é necessária ao painel da operadora. O médico não
+  // deve receber esse campo pela API apenas porque a tela o oculta.
+  if (viewerRole === 'operator' && row.role === 'patient') delete profile.planStatus
+  return profile
 }
 
 async function accessiblePatientIds(profile) {
@@ -160,20 +169,20 @@ async function accessiblePatientIds(profile) {
   return result.rows.map((r) => r.id)
 }
 
-async function canAccessPatient(profile, patientId) {
+async function canAccessPatient(profile, patientId, dbClient = pool) {
   if (!isUuid(patientId)) return false
   if (profile.role !== 'operator') {
     return canAccessPatientScope(profile.role, profile.id, patientId)
   }
-  const result = await pool.query(
+  const result = await dbClient.query(
     "SELECT operator_id FROM profiles WHERE id = $1 AND role = 'patient'",
     [patientId]
   )
   return canAccessPatientScope(profile.role, profile.id, patientId, result.rows[0]?.operator_id)
 }
 
-async function requirePatientAccess(req, res, patientId) {
-  if (await canAccessPatient(req.profile, patientId)) return true
+async function requirePatientAccess(req, res, patientId, dbClient = pool) {
+  if (await canAccessPatient(req.profile, patientId, dbClient)) return true
   res.status(403).json({ error: 'Acesso negado a este paciente' })
   return false
 }
@@ -204,8 +213,22 @@ async function writeAudit(req, {
 }
 
 app.use('/api', requireSameOrigin)
+app.use('/api', (req, res, next) => {
+  const requestId = randomUUID()
+  const startedAt = performance.now()
+  req.requestId = requestId
+  res.setHeader('X-Request-ID', requestId)
+  res.setHeader('Cache-Control', 'no-store')
+  res.setHeader('Vary', 'Cookie')
+  res.on('finish', () => {
+    const durationMs = Math.round((performance.now() - startedAt) * 100) / 100
+    console.info(`[api] ${requestId} ${req.method} ${req.path} ${res.statusCode} ${durationMs}ms`)
+  })
+  next()
+})
 
 app.get('/api/health', async (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store')
   const status = { ok: false, database: false, auth: false, authProvider: 'postgres' }
   if (pool) {
     try {
@@ -284,6 +307,13 @@ app.post('/api/auth/login', requireServices, loginRateLimit, async (req, res, ne
 })
 
 app.use('/api', requireServices, authenticate)
+// Dados clínicos e de sessão não devem ficar em cache intermediário ou no
+// histórico de uma resposta HTTP reutilizada entre usuários.
+app.use('/api', (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store')
+  res.setHeader('Vary', 'Cookie')
+  next()
+})
 
 app.get('/api/auth/session', (req, res) => {
   res.setHeader('Cache-Control', 'no-store')
@@ -354,7 +384,7 @@ app.get('/api/bootstrap', async (req, res, next) => {
           [ids, since?.toISOString() || null]
         )).rows
     if (ids.length === 0) {
-      return res.json({ profile: profileToClient(req.profile), syncCursor, patients: [], measurements: [], glucoseMeasurements: [], medications: [], alerts: [], devices: [], chatMessages: [], deleted: [] })
+      return res.json({ profile: profileToClient(req.profile), syncCursor, authorizedPatientIds: [], patients: [], measurements: [], glucoseMeasurements: [], medications: [], alerts: [], devices: [], chatMessages: [], deleted: [] })
     }
     const cursor = since?.toISOString() || null
     const [measurements, glucose, medications, alerts, devices, messages, deleted] = await Promise.all([
@@ -369,7 +399,8 @@ app.get('/api/bootstrap', async (req, res, next) => {
     res.json({
       profile: profileToClient(req.profile),
       syncCursor,
-      patients: profiles.map(profileToClient),
+      authorizedPatientIds: ids,
+      patients: profiles.map((profile) => profileToClient(profile, req.profile.role)),
       measurements: measurements.rows.map(mapMeasurement),
       glucoseMeasurements: glucose.rows.map(mapGlucose),
       medications: medications.rows.map(mapMedication),
@@ -378,6 +409,32 @@ app.get('/api/bootstrap', async (req, res, next) => {
       chatMessages: messages.rows.map(mapMessage),
       deleted: deleted.rows.map((row) => ({ entityType: row.entity_type, entityId: row.entity_id })),
     })
+  } catch (error) { next(error) }
+})
+
+app.post('/api/chat/read', async (req, res, next) => {
+  try {
+    if (!['patient', 'operator'].includes(req.profile.role)) {
+      return res.status(403).json({ error: 'Este perfil não participa do chat clínico' })
+    }
+    const patientId = String(req.body?.patientId || '')
+    if (!isUuid(patientId) || !(await requirePatientAccess(req, res, patientId))) return
+    const patient = await pool.query(
+      "SELECT operator_id FROM profiles WHERE id=$1 AND role='patient'",
+      [patientId]
+    )
+    const operatorId = patient.rows[0]?.operator_id
+    if (!operatorId) return res.status(409).json({ error: 'Paciente sem médico responsável para o chat' })
+    if (req.profile.role === 'operator' && operatorId !== req.profile.id) {
+      return res.status(403).json({ error: 'Paciente não pertence à sua carteira' })
+    }
+    const result = await pool.query(
+      `UPDATE chat_messages
+       SET read=true, updated_at=now()
+       WHERE patient_id=$1 AND operator_id=$2 AND from_role<>$3 AND read=false`,
+      [patientId, operatorId, req.profile.role]
+    )
+    res.json({ updated: result.rowCount || 0 })
   } catch (error) { next(error) }
 })
 
@@ -398,7 +455,7 @@ app.get('/api/profiles', async (req, res, next) => {
           [req.profile.id]
         )
     res.json(result.rows.map((row) => ({
-      ...profileToClient(row),
+      ...profileToClient(row, req.profile.role),
       credentialConfigured: row.credential_configured,
       mustChangePassword: row.must_change_password === true,
       lastLoginAt: row.last_login_at,
@@ -452,7 +509,7 @@ app.post('/api/profiles', async (req, res, next) => {
       changedFields: ['email', 'name', 'role', 'operatorId'],
     }, client)
     await client.query('COMMIT')
-    res.status(201).json(profileToClient(result.rows[0]))
+    res.status(201).json(profileToClient(result.rows[0], req.profile.role))
   } catch (error) {
     if (client) await client.query('ROLLBACK').catch(() => {})
     next(error)
@@ -537,7 +594,7 @@ app.patch('/api/profiles/:id', async (req, res, next) => {
       patientId: old.role === 'patient' ? req.params.id : null,
       changedFields: fields,
     })
-    res.json(profileToClient(result.rows[0]))
+    res.json(profileToClient(result.rows[0], req.profile.role))
   } catch (error) { next(error) }
 })
 
@@ -557,7 +614,7 @@ app.put('/api/entities/:type/:id', async (req, res, next) => {
       return res.status(403).json({ error: 'Seu perfil não pode realizar esta operação' })
     }
     const patientId = current.rows[0]?.patient_id || payload.patientId
-    if (!(await requirePatientAccess(req, res, patientId))) return
+    if (!(await requirePatientAccess(req, res, patientId, client))) return
     if (current.rows[0] && payload.patientId && payload.patientId !== current.rows[0].patient_id) {
       return res.status(400).json({ error: 'Não é permitido transferir um registro para outro paciente' })
     }
@@ -607,7 +664,7 @@ app.delete('/api/entities/:type/:id', async (req, res, next) => {
     if (!canWriteEntity(req.profile.role, req.params.type, 'delete')) return res.status(403).json({ error: 'Seu perfil não pode excluir este tipo de registro' })
     const found = await client.query(`SELECT patient_id FROM ${config.table} WHERE id = $1`, [req.params.id])
     if (!found.rows[0]) return res.status(204).end()
-    if (!(await requirePatientAccess(req, res, found.rows[0].patient_id))) return
+    if (!(await requirePatientAccess(req, res, found.rows[0].patient_id, client))) return
     await client.query('BEGIN')
     await client.query(`DELETE FROM ${config.table} WHERE id = $1`, [req.params.id])
     await client.query(
@@ -674,7 +731,7 @@ app.get('/api/audit', async (req, res, next) => {
 app.post('/api/ai/generate', aiRateLimit, async (req, res, next) => {
   try {
     if (!process.env.GEMINI_API_KEY) return res.status(503).json({ error: 'IA não configurada no servidor' })
-    const { purpose, contents, generationConfig } = req.body || {}
+    const { purpose, contents } = req.body || {}
     const purposes = req.profile.role === 'patient'
       ? new Set(['bp_ocr', 'glucose_ocr', 'medication_ocr'])
       : req.profile.role === 'operator'
@@ -683,14 +740,54 @@ app.post('/api/ai/generate', aiRateLimit, async (req, res, next) => {
     if (!purposes.has(purpose)) return res.status(403).json({ error: 'Uso de IA não permitido para este perfil' })
     if (!Array.isArray(contents)) return res.status(400).json({ error: 'Conteúdo inválido' })
     if (JSON.stringify(contents).length > 10_000_000) return res.status(413).json({ error: 'Imagem ou conteúdo acima do limite permitido' })
+    const contentError = validateAiContents(contents)
+    if (contentError) return res.status(400).json({ error: contentError })
+    const isOcr = purpose === 'bp_ocr' || purpose === 'glucose_ocr' || purpose === 'medication_ocr'
+    const generationConfig = isOcr
+      ? { temperature: 0, maxOutputTokens: 256, response_mime_type: 'application/json' }
+      : { temperature: 0.2, maxOutputTokens: 640 }
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents, generationConfig }), signal: AbortSignal.timeout(30_000),
     })
     const data = await response.json()
     await writeAudit(req, { action: 'use', entityType: 'ai', entityId: purpose })
-    res.status(response.status).json(data)
-  } catch (error) { next(error) }
+    if (!response.ok) {
+      console.warn(`[ai] provedor retornou ${response.status} para ${purpose}`)
+      return res.status(502).json({ error: 'Serviço de IA indisponível. Tente novamente ou preencha manualmente.', code: 'AI_PROVIDER_ERROR' })
+    }
+    res.json(data)
+  } catch (error) {
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
+      return res.status(504).json({ error: 'A leitura por IA demorou mais que o esperado. Tente novamente.', code: 'AI_TIMEOUT' })
+    }
+    next(error)
+  }
 })
+
+function validateAiContents(contents) {
+  if (contents.length < 1 || contents.length > 4) return 'Conteúdo inválido'
+  for (const content of contents) {
+    if (!content || typeof content !== 'object' || !Array.isArray(content.parts) || content.parts.length > 4) {
+      return 'Estrutura de conteúdo inválida'
+    }
+    for (const part of content.parts) {
+      if (!part || typeof part !== 'object') return 'Parte de conteúdo inválida'
+      if (part.text !== undefined) {
+        if (typeof part.text !== 'string' || part.text.length > 8_000) return 'Texto de IA acima do limite permitido'
+        continue
+      }
+      const image = part.inline_data
+      if (!image || typeof image !== 'object') return 'Parte de conteúdo inválida'
+      if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(image.mime_type)) {
+        return 'Formato de arquivo não permitido para IA'
+      }
+      if (typeof image.data !== 'string' || image.data.length > 8_000_000 || !/^[A-Za-z0-9+/=]+$/.test(image.data)) {
+        return 'Dados de arquivo inválidos para IA'
+      }
+    }
+  }
+  return null
+}
 
 function validateEntityPayload(type, payload) {
   if (!isUuid(payload.patientId)) return 'Paciente inválido'
@@ -702,6 +799,8 @@ function validateEntityPayload(type, payload) {
     if (!Number.isInteger(payload.diastolic) || payload.diastolic < 20 || payload.diastolic > 200) return 'Pressão diastólica inválida'
     if (payload.heartRate != null && (!Number.isInteger(payload.heartRate) || payload.heartRate < 20 || payload.heartRate > 250)) return 'Frequência cardíaca inválida'
     if (!['ble', 'manual', 'photo'].includes(payload.source) || !isValidIsoDate(payload.measuredAt)) return 'Origem ou data da medição inválida'
+    // O valor derivado deve acompanhar a pressão mesmo quando uma medição é editada.
+    payload.meanArterialPressure = Math.round((payload.systolic + 2 * payload.diastolic) / 3)
   }
   if (type === 'glucoseMeasurement') {
     if (!Number.isInteger(payload.value) || payload.value < 10 || payload.value > 800) return 'Valor de glicose inválido'
@@ -781,7 +880,7 @@ function mapDevice(r) { return { id:r.id, patientId:r.patient_id, model:r.model,
 function mapMessage(r) { return { id:r.id, operatorId:r.operator_id, patientId:r.patient_id, fromRole:r.from_role, content:r.content, sentAt:r.sent_at, read:r.read } }
 
 const entityConfigs = {
-  measurement: { table:'measurements', map:mapMeasurement, upsert:p=>({ text:`INSERT INTO measurements (id,patient_id,device_id,systolic,diastolic,heart_rate,mean_arterial_pressure,source,measured_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(id) DO UPDATE SET systolic=EXCLUDED.systolic,diastolic=EXCLUDED.diastolic,heart_rate=EXCLUDED.heart_rate,synced_at=now() RETURNING *`, values:[p.id,p.patientId,p.deviceId||null,p.systolic,p.diastolic,p.heartRate||null,p.meanArterialPressure||null,p.source,p.measuredAt] }) },
+  measurement: { table:'measurements', map:mapMeasurement, upsert:p=>({ text:`INSERT INTO measurements (id,patient_id,device_id,systolic,diastolic,heart_rate,mean_arterial_pressure,source,measured_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(id) DO UPDATE SET systolic=EXCLUDED.systolic,diastolic=EXCLUDED.diastolic,heart_rate=EXCLUDED.heart_rate,mean_arterial_pressure=EXCLUDED.mean_arterial_pressure,source=EXCLUDED.source,measured_at=EXCLUDED.measured_at,synced_at=now() RETURNING *`, values:[p.id,p.patientId,p.deviceId||null,p.systolic,p.diastolic,p.heartRate||null,p.meanArterialPressure||null,p.source,p.measuredAt] }) },
   glucoseMeasurement: { table:'glucose_measurements', map:mapGlucose, upsert:p=>({ text:`INSERT INTO glucose_measurements (id,patient_id,device_id,value,context,source,measured_at,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(id) DO UPDATE SET value=EXCLUDED.value,context=EXCLUDED.context,notes=EXCLUDED.notes,synced_at=now() RETURNING *`, values:[p.id,p.patientId,p.deviceId||null,p.value,p.context,p.source,p.measuredAt,p.notes||null] }) },
   medication: { table:'medications', map:mapMedication, upsert:p=>({ text:`INSERT INTO medications (id,patient_id,name,dose,frequency,schedule,active,start_date,end_date,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name,dose=EXCLUDED.dose,frequency=EXCLUDED.frequency,schedule=EXCLUDED.schedule,active=EXCLUDED.active,start_date=EXCLUDED.start_date,end_date=EXCLUDED.end_date,notes=EXCLUDED.notes,updated_at=now() RETURNING *`, values:[p.id,p.patientId,p.name,p.dose,p.frequency,JSON.stringify(p.schedule||[]),p.active!==false,p.startDate||null,p.endDate||null,p.notes||null] }) },
   alert: { table:'alerts', map:mapAlert, upsert:(p,actorId)=>({ text:`INSERT INTO alerts (id,patient_id,measurement_id,glucose_measurement_id,type,rule,status,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now()) ON CONFLICT(id) DO UPDATE SET status=EXCLUDED.status,acknowledged_at=CASE WHEN EXCLUDED.status='acknowledged' THEN COALESCE(alerts.acknowledged_at,now()) ELSE alerts.acknowledged_at END,acknowledged_by=CASE WHEN EXCLUDED.status='acknowledged' THEN $9 ELSE alerts.acknowledged_by END,resolved_at=CASE WHEN EXCLUDED.status='resolved' THEN COALESCE(alerts.resolved_at,now()) ELSE alerts.resolved_at END,resolved_by=CASE WHEN EXCLUDED.status='resolved' THEN $9 ELSE alerts.resolved_by END,updated_at=now() RETURNING *`, values:[p.id,p.patientId,p.measurementId||null,p.glucoseMeasurementId||null,p.type,p.rule,p.status||'pending',p.createdAt,actorId] }) },
@@ -789,10 +888,23 @@ const entityConfigs = {
   chatMessage: { table:'chat_messages', map:mapMessage, upsert:p=>({ text:`INSERT INTO chat_messages (id,operator_id,patient_id,from_role,content,sent_at,read,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,now()) ON CONFLICT(id) DO UPDATE SET read=EXCLUDED.read,updated_at=now() RETURNING *`, values:[p.id,p.operatorId,p.patientId,p.fromRole,String(p.content||'').trim(),p.sentAt,p.read===true] }) },
 }
 
-app.use(express.static(join(__dirname, '..', 'dist'), { maxAge: '1h' }))
-app.get('/*splat', (_req, res) => res.sendFile(join(__dirname, '..', 'dist', 'index.html')))
-app.use((error, _req, res, _next) => {
-  console.error('[api]', error)
+app.use(express.static(join(__dirname, '..', 'dist'), {
+  maxAge: '1h',
+  setHeaders(res, filePath) {
+    const fileName = filePath.split('/').pop() || ''
+    if (fileName === 'index.html' || fileName === 'sw.js' || fileName === 'registerSW.js') {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+    } else if (/[-_.][A-Za-z0-9_-]{8,}\.(?:js|css|woff2|png|svg)$/i.test(fileName)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+    }
+  },
+}))
+app.get('/*splat', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+  res.sendFile(join(__dirname, '..', 'dist', 'index.html'))
+})
+app.use((error, req, res, _next) => {
+  console.error(`[api] ${req.requestId || 'sem-request-id'}`, error)
   const known = {
     '22P02': 'Identificador ou valor inválido',
     '23503': 'Registro relacionado não encontrado',
@@ -801,7 +913,7 @@ app.use((error, _req, res, _next) => {
   }
   const status = Number(error?.status) || (known[error?.code] ? 400 : 500)
   const message = status < 500 ? (known[error?.code] || error?.message || 'Requisição inválida') : 'Erro interno'
-  res.status(status).json({ error: message })
+  res.status(status).json({ error: message, requestId: req.requestId })
 })
 
 async function ensureBootstrapAdmin() {

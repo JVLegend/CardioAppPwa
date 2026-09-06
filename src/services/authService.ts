@@ -1,5 +1,5 @@
 import type { Patient } from '../models/types'
-import { ApiError } from './apiClient'
+import { ApiError, fetchWithTimeout } from './apiClient'
 
 const baseURL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
@@ -9,14 +9,14 @@ export interface AuthSessionPayload {
 }
 
 async function authRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${baseURL}${path}`, {
+  const response = await fetchWithTimeout(`${baseURL}${path}`, {
     ...init,
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...init.headers },
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...init.headers },
   })
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
-    throw new ApiError(body.error || `Falha na autenticação (${response.status})`, response.status, body.code)
+    throw new ApiError(body.error || `Falha na autenticação (${response.status})`, response.status, body.code, response.headers.get('X-Request-ID') || body.requestId)
   }
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>

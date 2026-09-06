@@ -204,6 +204,7 @@ export default function BluetoothView({ embedded = false }: Props = {}) {
             setShowManual(false)
           }}
           onCancel={() => setShowManual(false)}
+          draftKey={`pressure:${currentPatient.id}`}
         />
       )}
     </div>

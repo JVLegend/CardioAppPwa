@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useBlockingActivity } from '../services/activityState'
 import KardiaLogo from './KardiaLogo'
 import styles from './LoginView.module.css'
 
@@ -13,6 +14,11 @@ export default function LoginView() {
   const [password, setPassword] = useState('')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [localError, setLocalError] = useState('')
+
+  useBlockingActivity(
+    'login-form',
+    isLoading || email.length > 0 || password.length > 0 || passwordConfirmation.length > 0,
+  )
 
   const handleLogin = (event: FormEvent) => {
     event.preventDefault()

@@ -1,6 +1,8 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 import HomeView from './HomeView'
 import ChatView from './ChatView'
+import { isAppTab, readTabFromLocation, writeNavigationState, type AppTab } from '../navigation/navigationState'
 import styles from './MainTabView.module.css'
 
 const HistoryView = lazy(() => import('./HistoryView'))
@@ -8,9 +10,7 @@ const GlucoseView = lazy(() => import('./GlucoseView'))
 const MedicationsView = lazy(() => import('./MedicationsView'))
 const SettingsView = lazy(() => import('./SettingsView'))
 
-type Tab = 'home' | 'history' | 'glucose' | 'medications' | 'chat' | 'settings'
-
-const tabs: { id: Tab; label: string }[] = [
+const tabs: { id: AppTab; label: string }[] = [
   { id: 'home', label: 'Pressão' },
   { id: 'glucose', label: 'Glicose' },
   { id: 'history', label: 'Histórico' },
@@ -22,7 +22,7 @@ const tabs: { id: Tab; label: string }[] = [
 const ACTIVE = 'var(--cardio-red)'
 const INACTIVE = 'rgba(10, 22, 40,0.3)'
 
-const tabIcons: Record<Tab, (active: boolean) => JSX.Element> = {
+const tabIcons: Record<AppTab, (active: boolean) => JSX.Element> = {
   home: (a) => (
     <svg width="22" height="22" viewBox="0 0 24 24" fill={a ? ACTIVE : 'none'} stroke={a ? ACTIVE : INACTIVE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -59,7 +59,43 @@ const tabIcons: Record<Tab, (active: boolean) => JSX.Element> = {
 }
 
 export default function MainTabView() {
-  const [activeTab, setActiveTab] = useState<Tab>('home')
+  const { currentPatient, currentUserEmail } = useAuth()
+  const navigationScope = currentUserEmail || currentPatient?.id || 'anonymous'
+  const tabStorageKey = `kpscardio:tab:${navigationScope}`
+  const [activeTab, setActiveTab] = useState<AppTab>(() => {
+    const fromUrl = readTabFromLocation('home')
+    if (typeof window === 'undefined') return fromUrl
+    try {
+      // Um link explícito na URL vence a preferência anterior deste aparelho.
+      if (new URLSearchParams(window.location.search).has('tab')) return fromUrl
+      const saved = sessionStorage.getItem(`kpscardio:tab:${navigationScope}`)
+      return isAppTab(saved) ? saved : fromUrl
+    } catch {
+      return fromUrl
+    }
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try { sessionStorage.setItem(tabStorageKey, activeTab) } catch { /* preferência não bloqueia a navegação */ }
+    if (readTabFromLocation(activeTab) !== activeTab) writeNavigationState({ tab: activeTab, mode: 'replace' })
+  }, [activeTab, tabStorageKey])
+
+  useEffect(() => {
+    const onPopState = () => {
+      const next = readTabFromLocation('home')
+      setActiveTab(next)
+      try { sessionStorage.setItem(tabStorageKey, next) } catch { /* ignora quota */ }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [tabStorageKey])
+
+  const selectTab = (tab: AppTab) => {
+    setActiveTab(tab)
+    try { sessionStorage.setItem(tabStorageKey, tab) } catch { /* ignora quota */ }
+    writeNavigationState({ tab, mode: 'push' })
+  }
 
   const renderTab = () => {
     switch (activeTab) {
@@ -86,7 +122,9 @@ export default function MainTabView() {
           <button
             key={tab.id}
             className={`${styles.tab} ${activeTab === tab.id ? styles.active : ''}`}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => selectTab(tab.id)}
+            aria-current={activeTab === tab.id ? 'page' : undefined}
+            aria-label={`Abrir ${tab.label}`}
           >
             <span className={styles.tabIcon}>
               {tabIcons[tab.id](activeTab === tab.id)}

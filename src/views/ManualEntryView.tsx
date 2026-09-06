@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, type FormEvent } from 'react'
 import { classifyBP, classificationConfig } from '../config/theme'
+import { clearDraft, readDraft, writeDraft } from '../services/draftStorage'
+import { useBlockingActivity } from '../services/activityState'
 import styles from './ManualEntryView.module.css'
 
 interface Props {
@@ -9,6 +11,8 @@ interface Props {
   initialDiastolic?: number | null
   initialHeartRate?: number | null
   fromPhoto?: boolean
+  /** Chave local por conta/paciente para preservar números durante atualização. */
+  draftKey?: string
 }
 
 export default function ManualEntryView({
@@ -18,7 +22,9 @@ export default function ManualEntryView({
   initialDiastolic,
   initialHeartRate,
   fromPhoto,
+  draftKey,
 }: Props) {
+  useBlockingActivity(`pressure-entry:${draftKey ?? 'session'}`, true)
   const [systolic, setSystolic] = useState(initialSystolic ? String(initialSystolic) : '')
   const [diastolic, setDiastolic] = useState(initialDiastolic ? String(initialDiastolic) : '')
   const [heartRate, setHeartRate] = useState(initialHeartRate ? String(initialHeartRate) : '')
@@ -26,6 +32,33 @@ export default function ManualEntryView({
   const [saveError, setSaveError] = useState('')
   const sysRef = useRef<HTMLInputElement>(null)
   const savingRef = useRef(false)
+  const draftHydratedRef = useRef(false)
+
+  useEffect(() => {
+    draftHydratedRef.current = false
+    if (!draftKey) {
+      draftHydratedRef.current = true
+      return
+    }
+    const draft = readDraft<{ systolic?: string; diastolic?: string; heartRate?: string }>(draftKey)
+    // Uma leitura recém-lida pela IA deve prevalecer sobre um rascunho antigo;
+    // em formulário manual, o rascunho é restaurado para evitar perda de dados.
+    if (draft && !fromPhoto && initialSystolic == null && initialDiastolic == null) {
+      setSystolic(draft.systolic ?? '')
+      setDiastolic(draft.diastolic ?? '')
+      setHeartRate(draft.heartRate ?? '')
+    }
+    draftHydratedRef.current = true
+  }, [draftKey, fromPhoto, initialDiastolic, initialSystolic])
+
+  useEffect(() => {
+    if (!draftKey || !draftHydratedRef.current) return
+    const timer = window.setTimeout(() => {
+      if (systolic || diastolic || heartRate) writeDraft(draftKey, { systolic, diastolic, heartRate })
+      else clearDraft(draftKey)
+    }, 250)
+    return () => window.clearTimeout(timer)
+  }, [diastolic, draftKey, heartRate, systolic])
 
   useEffect(() => {
     if (!fromPhoto) sysRef.current?.focus()
@@ -52,6 +85,7 @@ export default function ManualEntryView({
     setSaveError('')
     try {
       await onSave(sys, dia, hr)
+      clearDraft(draftKey)
     } catch (error) {
       console.error('[pressure] falha ao registrar medição', error)
       setSaveError(error instanceof Error ? error.message : 'Não foi possível registrar a medição. Tente novamente.')
@@ -59,6 +93,11 @@ export default function ManualEntryView({
       savingRef.current = false
       setSaving(false)
     }
+  }
+
+  const handleCancel = () => {
+    clearDraft(draftKey)
+    onCancel()
   }
 
   const handleSubmit = (e: FormEvent) => {
@@ -69,7 +108,7 @@ export default function ManualEntryView({
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <button className={styles.backBtn} onClick={onCancel}>
+        <button className={styles.backBtn} onClick={handleCancel}>
           Cancelar
         </button>
         <h1 className={styles.title}>{fromPhoto ? 'Confirmar leitura' : 'Nova Medição'}</h1>

@@ -1,41 +1,99 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import type { ChatMessage } from '../models/types'
 import * as db from '../services/database'
-import { persistEntity, pullFromServer } from '../services/syncEngine'
+import { getIsOnline, onSyncStateChange, persistEntity, pullFromServer } from '../services/syncEngine'
+import { markChatReadRemote } from '../services/railwayRepository'
+import { clearDraft, readDraft, writeDraft } from '../services/draftStorage'
 import AppPageHeader from './AppPageHeader'
 import styles from './ChatView.module.css'
 
 export default function ChatView() {
-  const { currentPatient } = useAuth()
+  const { currentPatient, currentUserRole } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
+  const [online, setOnline] = useState(getIsOnline())
   const bottomRef = useRef<HTMLDivElement>(null)
+  const loadingRef = useRef(false)
 
   const operatorId = currentPatient?.operatorId ?? ''
   const patientId = currentPatient?.id ?? ''
-  const isOperator = currentPatient?.role === 'operator'
+  const draftScope = operatorId && patientId ? `chat:${operatorId}:${patientId}` : ''
+  // currentPatient pode ser o prontuário selecionado pelo médico. A autoria
+  // precisa vir da sessão autenticada, e não do paciente em foco.
+  const isOperator = currentUserRole === 'operator'
 
   useEffect(() => {
-    if (!operatorId || !patientId) return
-    loadMessages()
-    const interval = setInterval(loadMessages, 5000)
-    return () => clearInterval(interval)
-  }, [operatorId, patientId])
+    if (!draftScope) {
+      setInput('')
+      return
+    }
+    const draft = readDraft<{ input?: string }>(draftScope)
+    setInput(draft?.input ?? '')
+  }, [draftScope])
 
-  async function loadMessages() {
+  useEffect(() => {
+    if (!draftScope) return
+    const timer = window.setTimeout(() => {
+      if (input.trim()) writeDraft(draftScope, { input })
+      else clearDraft(draftScope)
+    }, 250)
+    return () => window.clearTimeout(timer)
+  }, [draftScope, input])
+
+  useEffect(() => {
+    return onSyncStateChange((next) => setOnline(next.status !== 'offline'))
+  }, [])
+
+  const loadMessages = useCallback(async () => {
+    if (!operatorId || !patientId || loadingRef.current) return
+    loadingRef.current = true
     try {
       await pullFromServer()
       const msgs = await db.fetchChatMessages(operatorId, patientId)
-      setMessages(msgs)
-      await db.markMessagesRead(operatorId, patientId, isOperator ? 'operator' : 'patient')
+      const readerRole = isOperator ? 'operator' : 'patient'
+      const unread = msgs.filter((message) => message.fromRole !== readerRole && !message.read)
+      if (unread.length > 0) {
+        try {
+          await markChatReadRemote(patientId)
+          await db.markMessagesRead(operatorId, patientId, readerRole)
+        } catch (error) {
+          // Sem rede, cada leitura vira uma operação idempotente da fila. A
+          // conversa continua correta neste aparelho e o servidor converge
+          // quando a conexão voltar.
+          await Promise.allSettled(unread.map((message) => {
+            const readMessage = { ...message, read: true }
+            return persistEntity('chatMessage', message.id, 'update', readMessage, () => db.saveChatMessage(readMessage))
+          }))
+          console.warn('[chat] leitura será sincronizada depois', error)
+        }
+      }
+      setMessages(msgs.map((message) => unread.some((item) => item.id === message.id)
+        ? { ...message, read: true }
+        : message))
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
     } catch (error) {
       console.warn('[chat] não foi possível atualizar as mensagens', error)
+    } finally {
+      loadingRef.current = false
     }
-  }
+  }, [isOperator, operatorId, patientId])
+
+  useEffect(() => {
+    if (!operatorId || !patientId) return
+    void loadMessages()
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void loadMessages()
+    }, 5000)
+    const onVisible = () => { if (document.visibilityState === 'visible') void loadMessages() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [loadMessages, operatorId, patientId])
 
   const handleSend = async () => {
     if (!input.trim() || sending) return
@@ -55,6 +113,7 @@ export default function ChatView() {
       await persistEntity('chatMessage', msg.id, 'create', msg, () => db.saveChatMessage(msg))
       setMessages((prev) => [...prev.filter((item) => item.id !== msg.id), msg])
       setInput('')
+      clearDraft(draftScope)
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
     } catch (error) {
       console.error('[chat] falha ao enviar mensagem', error)
@@ -89,7 +148,9 @@ export default function ChatView() {
     <div className={styles.container}>
       <AppPageHeader
         title="Chat"
-        subtitle={isOperator ? 'Paciente selecionado · Online' : 'Minha equipe · Online'}
+        subtitle={isOperator
+          ? `Paciente selecionado · ${online ? 'atualiza automaticamente' : 'offline'}`
+          : `Minha equipe · ${online ? 'atualiza automaticamente' : 'offline'}`}
         inset
         flush
         actions={<div className={styles.headerAvatar}>

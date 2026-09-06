@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import {
   db,
   fetchOperatorPatientStats,
-  fetchActiveAlerts,
+  fetchActiveAlertsForPatients,
 } from '../services/database'
 import type { Patient, Measurement, BPAlert } from '../models/types'
 import { BRAZIL_STATES } from '../data/brazilStates'
@@ -85,8 +85,8 @@ function fallbackInsight(agg: Aggregates): string {
 }
 
 export default function ControllerDashboardView() {
-  const { logout, currentPatient, isAdmin } = useAuth()
-  const isClinician = currentPatient?.role === 'operator'
+  const { logout, currentPatient, currentUserRole, isAdmin } = useAuth()
+  const isClinician = currentUserRole === 'operator'
   const [agg, setAgg] = useState<Aggregates | null>(null)
   const [allPatients, setAllPatients] = useState<Patient[]>([])
   const [insight, setInsight] = useState<string>('')
@@ -133,8 +133,8 @@ export default function ControllerDashboardView() {
     const inadimplentes = patients.filter((p) => p.planStatus === 'inadimplente').length
     const inTreatment = patients.filter((p) => p.inTreatmentPlan).length
 
-    const alertLists = await Promise.all(patients.map((p) => fetchActiveAlerts(p.id)))
-    const alerts = alertLists.flat()
+    const alertsByPatient = await fetchActiveAlertsForPatients(patientIds)
+    const alerts = patients.flatMap((patient) => alertsByPatient.get(patient.id) ?? [])
 
     const aggregates: Aggregates = {
       totalPatients: patients.length,

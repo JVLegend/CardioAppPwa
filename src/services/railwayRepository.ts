@@ -4,6 +4,8 @@ import { apiRequest } from './apiClient'
 export interface BootstrapPayload {
   profile: Patient
   syncCursor: string
+  /** Carteira autorizada completa, usada para revogar cache após troca de médico. */
+  authorizedPatientIds?: string[]
   patients: Patient[]
   measurements: Measurement[]
   glucoseMeasurements: GlucoseMeasurement[]
@@ -66,6 +68,13 @@ export function fetchManagedProfiles() {
 export function resetProfilePassword(profileId: string, password: string) {
   return apiRequest<{ ok: true; mustChangePassword: true }>(`/api/profiles/${encodeURIComponent(profileId)}/password`, {
     method: 'POST', body: JSON.stringify({ password }),
+  })
+}
+
+export function markChatReadRemote(patientId: string) {
+  return apiRequest<{ updated: number }>('/api/chat/read', {
+    method: 'POST',
+    body: JSON.stringify({ patientId }),
   })
 }
 

@@ -1,3 +1,5 @@
+import { useId } from 'react'
+import { useModalAccessibility } from '../hooks/useModalAccessibility'
 import KardiaLogo from './KardiaLogo'
 import styles from './DisclaimerView.module.css'
 
@@ -8,14 +10,29 @@ interface Props {
 }
 
 export default function DisclaimerView({ variant, onAccept, onClose }: Props) {
+  const titleId = useId()
+  const descriptionId = useId()
+  const dialogRef = useModalAccessibility(
+    variant === 'modal' ? (onClose ?? (() => undefined)) : (onAccept ?? (() => undefined)),
+    { closeOnEscape: variant === 'modal' },
+  )
+
   return (
-    <div className={styles.overlay}>
-      <div className={styles.sheet}>
+    <div className={styles.overlay} role="presentation">
+      <div
+        ref={dialogRef}
+        className={styles.sheet}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        tabIndex={-1}
+      >
         <header className={styles.header}>
           <div className={styles.icon}>
             <KardiaLogo size={72} variant="mark" />
           </div>
-          <h1 className={styles.title}>
+          <h1 id={titleId} className={styles.title}>
             {variant === 'onboarding' ? 'Bem-vindo ao KPS Cardio' : 'Aviso médico'}
           </h1>
           {variant === 'onboarding' && (
@@ -23,7 +40,7 @@ export default function DisclaimerView({ variant, onAccept, onClose }: Props) {
           )}
         </header>
 
-        <div className={styles.body}>
+        <div id={descriptionId} className={styles.body}>
           <p>
             O KPS Cardio é uma ferramenta de <strong>monitoramento e registro</strong>{' '}
             de medições de pressão arterial. Ele <strong>não substitui</strong>{' '}

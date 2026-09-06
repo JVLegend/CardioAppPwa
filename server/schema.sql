@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS measurements (
   synced_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS measurements_patient_time_idx ON measurements(patient_id, measured_at DESC);
+CREATE INDEX IF NOT EXISTS measurements_patient_sync_idx ON measurements(patient_id, synced_at DESC);
 
 CREATE TABLE IF NOT EXISTS glucose_measurements (
   id uuid PRIMARY KEY,
@@ -83,6 +84,7 @@ BEGIN
   END IF;
 END $$;
 CREATE INDEX IF NOT EXISTS glucose_patient_time_idx ON glucose_measurements(patient_id, measured_at DESC);
+CREATE INDEX IF NOT EXISTS glucose_patient_sync_idx ON glucose_measurements(patient_id, synced_at DESC);
 
 CREATE TABLE IF NOT EXISTS medications (
   id uuid PRIMARY KEY,
@@ -98,6 +100,7 @@ CREATE TABLE IF NOT EXISTS medications (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS medications_patient_idx ON medications(patient_id);
+CREATE INDEX IF NOT EXISTS medications_patient_updated_idx ON medications(patient_id, updated_at DESC);
 
 CREATE TABLE IF NOT EXISTS alerts (
   id uuid PRIMARY KEY,
@@ -123,6 +126,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS alerts_glucose_measurement_type_unique_idx
   ON alerts(glucose_measurement_id, type) WHERE glucose_measurement_id IS NOT NULL;
 
 ALTER TABLE alerts ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
+CREATE INDEX IF NOT EXISTS alerts_patient_updated_idx ON alerts(patient_id, updated_at DESC);
 
 CREATE TABLE IF NOT EXISTS alert_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -144,6 +148,7 @@ CREATE TABLE IF NOT EXISTS devices (
 CREATE INDEX IF NOT EXISTS devices_patient_idx ON devices(patient_id);
 
 ALTER TABLE devices ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
+CREATE INDEX IF NOT EXISTS devices_patient_updated_idx ON devices(patient_id, updated_at DESC);
 
 CREATE TABLE IF NOT EXISTS chat_messages (
   id uuid PRIMARY KEY,
@@ -158,6 +163,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 CREATE INDEX IF NOT EXISTS chat_conversation_idx ON chat_messages(operator_id, patient_id, sent_at);
 
 ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
+CREATE INDEX IF NOT EXISTS chat_patient_updated_idx ON chat_messages(patient_id, updated_at DESC);
 
 CREATE TABLE IF NOT EXISTS sync_tombstones (
   entity_type text NOT NULL,

@@ -64,6 +64,92 @@
   font-weight: 500;
 }
 
+.syncMessage {
+  padding: 0 20px 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Alteração da senha */
+.passwordForm {
+  display: grid;
+  gap: 12px;
+  padding: 16px 20px 18px;
+}
+
+.passwordField {
+  display: grid;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.passwordField input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 11px;
+  background: var(--bg-card, #fff);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 400;
+}
+
+.passwordField input:focus {
+  outline: 2px solid var(--cardio-red);
+  outline-offset: 1px;
+}
+
+.passwordActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.secondaryAction,
+.primaryAction {
+  flex: 1;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondaryAction {
+  background: var(--bg-card-hover, #eef2f6);
+  color: var(--text-primary);
+}
+
+.primaryAction {
+  background: var(--cardio-red);
+  color: #fff;
+}
+
+.secondaryAction:disabled,
+.primaryAction:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.passwordNotice {
+  color: var(--cardio-green);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.passwordNoticeStandalone {
+  padding: 0 20px 14px;
+  color: var(--cardio-green);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 /* Toggle */
 .toggle {
   width: 52px;
@@ -196,7 +282,7 @@
   max-width: 420px;
   width: 100%;
 }
-.confirmCard h3 { margin: 0 0 8px; font-size: 18px; color: var(--text-primary); }
+.confirmCard h2 { margin: 0 0 8px; font-size: 18px; color: var(--text-primary); }
 .confirmCard p { margin: 0 0 16px; font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
 .confirmRow { display: flex; gap: 8px; }
 .cancelBtn, .dangerBtn {

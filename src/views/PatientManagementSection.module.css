@@ -321,6 +321,7 @@
   font-size: 19px;
   font-weight: 700;
   color: var(--text-primary);
+  margin: 0;
 }
 
 .drawerPhone {
@@ -513,6 +514,27 @@
   align-self: center;
   margin-right: auto;
   margin-left: auto;
+}
+
+.pushHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+
+.pushHeader > div { flex: 1; }
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .pushTitle {

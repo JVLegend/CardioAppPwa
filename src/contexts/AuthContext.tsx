@@ -3,7 +3,8 @@ import type { Patient, PlanStatus, UserRole } from '../models/types'
 import { changePassword, getAuthSession, signIn, signOut, type AuthSessionPayload } from '../services/authService'
 import { clearClinicalCache, savePatient } from '../services/database'
 import { createProfileRemote, resetProfilePassword as resetProfilePasswordRemote } from '../services/railwayRepository'
-import { processPendingOperations, pullFromServer } from '../services/syncEngine'
+import { processPendingOperations, pullFromServer, setSyncOwner } from '../services/syncEngine'
+import { setReminderOwner } from '../services/reminderService'
 
 export interface CreatePatientProfileInput {
   name: string
@@ -29,7 +30,7 @@ interface AuthContextType {
   currentPatient: Patient | null
   errorMessage: string | null
   login: (email: string, password: string) => Promise<void>
-  updatePassword: (password: string) => Promise<void>
+  updatePassword: (password: string, currentPassword?: string) => Promise<void>
   clearError: () => void
   logout: () => Promise<void>
   selectPatient: (patient: Patient | null) => void
@@ -52,6 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const clearSessionState = useCallback(() => {
+    setSyncOwner(null)
+    setReminderOwner(null)
     setIsAuthenticated(false)
     setMustChangePassword(false)
     setSelfProfile(null)
@@ -62,8 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const finalizeProfile = useCallback(async (profile: Patient) => {
     const cacheOwner = localStorage.getItem(CACHE_OWNER_KEY)
-    if (cacheOwner !== profile.id) await clearClinicalCache()
+    if (cacheOwner !== profile.id) await clearClinicalCache({ ownerId: profile.id })
     localStorage.setItem(CACHE_OWNER_KEY, profile.id)
+    setSyncOwner(profile.id)
+    setReminderOwner(profile.id)
     await savePatient(profile)
     setSelfProfile(profile)
     setCurrentPatient(profile)
@@ -83,6 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const applySession = useCallback(async ({ profile, mustChangePassword: mustChange }: AuthSessionPayload) => {
     setCurrentUserEmail(profile.email ?? null)
     if (mustChange) {
+      // Enquanto a senha provisória não for trocada, não há sessão clínica
+      // ativa para autorizar cache, fila ou lembretes.
+      setSyncOwner(null)
+      setReminderOwner(null)
       setPendingProfile(profile)
       setMustChangePassword(true)
       setIsAuthenticated(false)
@@ -104,7 +113,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (status !== 401) setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar a sessão')
       })
       .finally(() => { if (active) setIsLoading(false) })
-    const expired = () => clearSessionState()
+    const expired = () => {
+      clearSessionState()
+      setErrorMessage('Sua sessão expirou. Entre novamente para continuar.')
+    }
     window.addEventListener('kpscardio:session-expired', expired)
     return () => { active = false; window.removeEventListener('kpscardio:session-expired', expired) }
   }, [applySession, clearSessionState])
@@ -130,23 +142,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const updatePassword = async (password: string) => {
-    setIsLoading(true)
+  const updatePassword = async (password: string, currentPassword?: string) => {
+    // No primeiro acesso a tela inteira deve aguardar a troca. Em Ajustes,
+    // porém, manter a tela montada permite mostrar erro/sucesso no próprio
+    // formulário sem transformar uma ação curta em logout visual.
+    const blockAppWhileLoading = !isAuthenticated
+    if (blockAppWhileLoading) setIsLoading(true)
     setErrorMessage(null)
     try {
-      const session = await changePassword(password)
+      const session = await changePassword(password, currentPassword)
       await finalizeProfile(pendingProfile || session.profile)
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível atualizar a senha')
       throw error
     } finally {
-      setIsLoading(false)
+      if (blockAppWhileLoading) setIsLoading(false)
     }
   }
 
   const logout = async () => {
+    const ownerId = selfProfile?.id ?? pendingProfile?.id ?? null
+    // Dê uma última oportunidade para entregar alterações pendentes enquanto a
+    // sessão ainda está autenticada. Se estiver offline, a fila fica isolada
+    // pelo ownerId e poderá ser retomada quando a mesma conta voltar.
+    try { await processPendingOperations() } catch { /* o estado local será encerrado mesmo sem rede */ }
     try { await signOut() } catch { /* o estado local deve ser encerrado mesmo sem rede */ }
-    await clearClinicalCache()
+    await clearClinicalCache({ ownerId })
     localStorage.removeItem(CACHE_OWNER_KEY)
     clearSessionState()
   }

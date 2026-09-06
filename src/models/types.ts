@@ -85,12 +85,17 @@ export interface BPDevice {
 
 export interface SyncOperation {
   id: string
+  /** Conta autenticada que criou a operação. Impede enviar dados de outra conta. */
+  ownerId: string
   entityType: string
   entityId: string
   operation: 'create' | 'update' | 'delete'
   payload?: string
   createdAt: string
   attempts: number
+  lastAttemptAt?: string
+  nextAttemptAt?: string
+  lastError?: string
 }
 
 export interface ChatMessage {

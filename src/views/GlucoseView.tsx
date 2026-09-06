@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import * as db from '../services/database'
-import { persistEntity } from '../services/syncEngine'
+import { onSyncStateChange, persistEntity } from '../services/syncEngine'
 import { readGlucoseFromImage, MissingGeminiKeyError } from '../services/glucoseOcr'
+import { prepareImageForAi } from '../services/imageProcessing'
+import { useBlockingActivity } from '../services/activityState'
+import { clearDraft, readDraft, writeDraft } from '../services/draftStorage'
 import type { GlucoseMeasurement, MealContext, MeasurementSource } from '../models/types'
 import AppPageHeader from './AppPageHeader'
 import {
@@ -40,15 +43,56 @@ export default function GlucoseView() {
   const cameraRef = useRef<HTMLInputElement>(null)
   const valueRef = useRef<HTMLInputElement>(null)
   const deleteCancelRef = useRef<HTMLButtonElement>(null)
+  const deleteModalRef = useRef<HTMLDivElement>(null)
   const savingRef = useRef(false)
+  const deletingRef = useRef(false)
+  const draftHydratedRef = useRef(false)
+  const draftScope = currentPatient?.id ? `glucose:${currentPatient.id}` : ''
 
-  const loadHistory = async () => {
-    if (!currentPatient) return
-    const all = await db.fetchAllGlucose(currentPatient.id)
-    setHistory(all)
-  }
+  useBlockingActivity(
+    `glucose-entry:${currentPatient?.id ?? 'session'}`,
+    showEntry || ocrLoading || saving,
+  )
 
-  useEffect(() => { loadHistory() }, [currentPatient?.id])
+  useEffect(() => {
+    draftHydratedRef.current = false
+    if (!draftScope) return
+    const draft = readDraft<{ value?: string; unit?: GlucoseUnit; context?: MealContext; open?: boolean }>(draftScope)
+    if (draft) {
+      setValue(draft.value ?? '')
+      setUnit(draft.unit === 'mmol/L' ? 'mmol/L' : 'mg/dL')
+      setContext(contextOptions.some((option) => option.id === draft.context) ? draft.context! : 'jejum')
+      setShowEntry(draft.open === true)
+    }
+    draftHydratedRef.current = true
+  }, [draftScope])
+
+  useEffect(() => {
+    if (!draftScope || !draftHydratedRef.current) return
+    const timer = window.setTimeout(() => {
+      if (showEntry && (value || fromPhoto)) {
+        writeDraft(draftScope, { value, unit, context, open: true })
+      } else if (!showEntry) {
+        clearDraft(draftScope)
+      }
+    }, 250)
+    return () => window.clearTimeout(timer)
+  }, [context, draftScope, fromPhoto, showEntry, unit, value])
+
+  useEffect(() => {
+    const patientId = currentPatient?.id
+    if (!patientId) return
+    let active = true
+    const refresh = async () => {
+      const all = await db.fetchAllGlucose(patientId)
+      if (active) setHistory(all)
+    }
+    void refresh()
+    const unsubscribe = onSyncStateChange((next) => {
+      if (next.status === 'idle') void refresh()
+    })
+    return () => { active = false; unsubscribe() }
+  }, [currentPatient?.id])
 
   useEffect(() => {
     if (showEntry && !fromPhoto) {
@@ -58,32 +102,51 @@ export default function GlucoseView() {
 
   useEffect(() => {
     if (!pendingDelete) return
+    const previousFocus = document.activeElement as HTMLElement | null
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     deleteCancelRef.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !deleting) setPendingDelete(null)
+      if (event.key === 'Escape' && !deletingRef.current) setPendingDelete(null)
+      if (event.key !== 'Tab' || !deleteModalRef.current) return
+      const focusable = Array.from(deleteModalRef.current.querySelectorAll<HTMLElement>(
+        'button, a[href], input, textarea, select, [tabindex]:not([tabindex="-1"])'
+      )).filter((element) => !element.hasAttribute('disabled'))
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', onKeyDown)
+      if (previousFocus?.isConnected) previousFocus.focus()
     }
-  }, [pendingDelete, deleting])
+  }, [pendingDelete])
 
   const enteredValue = Number(value) || 0
   const num = unit === 'mmol/L' ? Math.round(enteredValue * MMOL_TO_MG_DL) : enteredValue
+  // Mantém a validação do estado alinhada aos limites mostrados no input;
+  // sem essa checagem um valor como 0,1 mmol/L poderia ser arredondado para
+  // 2 mg/dL e ainda passar apenas porque a conversão é inteira.
   const isValid = Number.isFinite(enteredValue)
-    && enteredValue > 0
-    && (unit === 'mmol/L' || Number.isInteger(enteredValue))
-    && num >= MIN_GLUCOSE_MG_DL
-    && num <= MAX_GLUCOSE_MG_DL
+    && (unit === 'mmol/L'
+      ? enteredValue >= 0.6 && enteredValue <= 44.4
+      : Number.isInteger(enteredValue) && num >= MIN_GLUCOSE_MG_DL && num <= MAX_GLUCOSE_MG_DL)
 
   const classification = isValid ? classifyGlucose(num, context) : null
 
   const resetForm = () => {
     setValue(''); setUnit('mg/dL'); setContext('jejum'); setSource('manual')
     setFromPhoto(false); setOcrError(''); setSaveError('')
+    clearDraft(draftScope)
   }
 
   const saveReading = async () => {
@@ -118,6 +181,7 @@ export default function GlucoseView() {
       )
 
       setHistory((current) => [reading, ...current.filter((item) => item.id !== reading.id)])
+      clearDraft(draftScope)
       resetForm()
       setShowEntry(false)
     } catch (error) {
@@ -141,15 +205,8 @@ export default function GlucoseView() {
     setOcrLoading(true)
     setOcrError('')
     try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = (ev) => resolve(ev.target?.result as string)
-        reader.onerror = () => reject(reader.error)
-        reader.readAsDataURL(file)
-      })
-      const base64 = dataUrl.split(',')[1]
-      const mimeType = file.type || 'image/jpeg'
-      const reading = await readGlucoseFromImage(base64, mimeType)
+      const prepared = await prepareImageForAi(file)
+      const reading = await readGlucoseFromImage(prepared.base64, prepared.mimeType)
       if (reading.value === null) {
         setOcrError('A IA não conseguiu ler o número. Tente outra foto ou registre manualmente.')
       } else {
@@ -174,15 +231,19 @@ export default function GlucoseView() {
 
   const confirmDelete = async () => {
     if (!pendingDelete || deleting) return
+    deletingRef.current = true
     setDeleting(true)
     setDeleteError('')
     try {
       await persistEntity('glucoseMeasurement', pendingDelete.id, 'delete', undefined, () => db.deleteGlucoseMeasurement(pendingDelete.id))
-      await loadHistory()
+      const updatedHistory = await db.fetchAllGlucose(currentPatient?.id ?? '')
+      setHistory(updatedHistory)
+      clearDraft(draftScope)
       setPendingDelete(null)
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Não foi possível apagar a medição.')
     } finally {
+      deletingRef.current = false
       setDeleting(false)
     }
   }
@@ -401,6 +462,7 @@ export default function GlucoseView() {
           }}
         >
           <div
+            ref={deleteModalRef}
             className={styles.deleteModal}
             role="alertdialog"
             aria-modal="true"

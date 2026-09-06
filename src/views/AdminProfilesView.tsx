@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useAuth, type CreatePatientProfileInput } from '../contexts/AuthContext'
 import type { Patient, PlanStatus, UserRole } from '../models/types'
 import { fetchManagedProfiles, type ManagedProfile } from '../services/railwayRepository'
+import { useBlockingActivity } from '../services/activityState'
 import styles from './AdminProfilesView.module.css'
 
 interface Props {
@@ -55,6 +56,21 @@ export default function AdminProfilesView({ onBack }: Props) {
   const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('')
   const [resetting, setResetting] = useState(false)
   const [resetNotice, setResetNotice] = useState('')
+
+  const formHasUnsavedData = saving
+    || form.name.trim().length > 0
+    || form.email.trim().length > 0
+    || form.password.length > 0
+    || form.phone.trim().length > 0
+    || form.role !== 'patient'
+    || form.birthDate.length > 0
+    || form.state.trim().length > 0
+    || form.operatorId.length > 0
+    || form.comorbidities.trim().length > 0
+    || form.planStatus !== 'pendente'
+    || form.inTreatmentPlan
+  useBlockingActivity('admin-profile-form', formHasUnsavedData)
+  useBlockingActivity('admin-password-reset', resetTarget !== null || resetting)
 
   const loadProfiles = useCallback(async () => {
     if (!currentPatient) return

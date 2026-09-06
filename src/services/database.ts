@@ -10,6 +10,12 @@ import type {
   ChatMessage,
 } from '../models/types'
 
+function localDateKey(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
 class KPSCardioDatabase extends Dexie {
   measurements!: Table<Measurement, string>
   glucoseMeasurements!: Table<GlucoseMeasurement, string>
@@ -49,6 +55,23 @@ class KPSCardioDatabase extends Dexie {
       syncOperations: 'id, entityType, createdAt, attempts',
       chatMessages: 'id, operatorId, patientId, sentAt, read',
     })
+    this.version(4).stores({
+      measurements: 'id, [patientId+measuredAt], patientId, measuredAt, source',
+      glucoseMeasurements: 'id, [patientId+measuredAt], patientId, measuredAt, context, source',
+      medications: 'id, patientId, active',
+      alerts: 'id, [patientId+status], patientId, status, type, createdAt',
+      devices: 'id, patientId',
+      patients: 'id, userId, operatorId',
+      syncOperations: 'id, [ownerId+entityType], ownerId, entityType, entityId, createdAt, attempts, nextAttemptAt',
+      chatMessages: 'id, [operatorId+patientId], operatorId, patientId, sentAt, read',
+    }).upgrade(async (tx) => {
+      const legacyOwner = typeof localStorage !== 'undefined'
+        ? localStorage.getItem('kpscardio:cache-owner') || 'legacy'
+        : 'legacy'
+      await tx.table('syncOperations').toCollection().modify((operation) => {
+        if (!operation.ownerId) operation.ownerId = legacyOwner
+      })
+    })
   }
 }
 
@@ -60,18 +83,21 @@ export async function saveMeasurement(m: Measurement) {
 }
 
 export async function fetchAllMeasurements(patientId: string): Promise<Measurement[]> {
-  return db.measurements
+  const rows = await db.measurements
     .where('patientId')
     .equals(patientId)
-    .reverse()
     .sortBy('measuredAt')
+  return rows.reverse()
 }
 
 export async function fetchTodayMeasurements(patientId: string): Promise<Measurement[]> {
   const startOfDay = new Date()
   startOfDay.setHours(0, 0, 0, 0)
-  const all = await fetchAllMeasurements(patientId)
-  return all.filter((m) => new Date(m.measuredAt) >= startOfDay)
+  return db.measurements
+    .where('[patientId+measuredAt]')
+    .between([patientId, startOfDay.toISOString()], [patientId, '\uffff'])
+    .reverse()
+    .toArray()
 }
 
 export async function fetchMeasurementsByDays(
@@ -80,21 +106,32 @@ export async function fetchMeasurementsByDays(
 ): Promise<Measurement[]> {
   const since = new Date()
   since.setDate(since.getDate() - days)
-  const all = await fetchAllMeasurements(patientId)
-  return all.filter((m) => new Date(m.measuredAt) >= since)
+  return db.measurements
+    .where('[patientId+measuredAt]')
+    .between([patientId, since.toISOString()], [patientId, '\uffff'])
+    .reverse()
+    .toArray()
 }
 
 export async function fetchRecentMeasurements(
   patientId: string,
   limit: number
 ): Promise<Measurement[]> {
-  const all = await fetchAllMeasurements(patientId)
-  return all.slice(0, limit)
+  return db.measurements
+    .where('[patientId+measuredAt]')
+    .between([patientId, ''], [patientId, '\uffff'])
+    .reverse()
+    .limit(Math.max(0, limit))
+    .toArray()
 }
 
 export async function fetchStreak(patientId: string): Promise<number> {
   const all = await fetchAllMeasurements(patientId)
   if (all.length === 0) return 0
+
+  const measuredDays = new Set(
+    all.map((measurement) => localDateKey(new Date(measurement.measuredAt)))
+  )
 
   let streak = 0
   const today = new Date()
@@ -103,10 +140,8 @@ export async function fetchStreak(patientId: string): Promise<number> {
   for (let i = 0; i < 365; i++) {
     const day = new Date(today)
     day.setDate(day.getDate() - i)
-    const dayStr = day.toISOString().split('T')[0]
-    const hasReading = all.some(
-      (m) => new Date(m.measuredAt).toISOString().split('T')[0] === dayStr
-    )
+    const dayStr = localDateKey(day)
+    const hasReading = measuredDays.has(dayStr)
     if (hasReading) {
       streak++
     } else {
@@ -140,26 +175,35 @@ export async function fetchOperatorPatientStats(patientIds: string[]): Promise<{
   const measuredLast3Days = new Set<string>()
   const activeMedicationCount = new Map<string, number>()
 
-  await Promise.all(
-    patientIds.map(async (pid) => {
-      const [latest, meds] = await Promise.all([
-        fetchLatestMeasurementForPatient(pid),
-        fetchMedications(pid),
-      ])
-      if (latest) {
-        latestMeasurements.set(pid, latest)
-        const measuredAt = new Date(latest.measuredAt)
-        if (measuredAt >= today) measuredToday.add(pid)
-        if (measuredAt >= threeDaysAgo) measuredLast3Days.add(pid)
-      }
-      const activeCount = meds.filter((m) => {
-        if (!m.active) return false
-        if (m.endDate && new Date(m.endDate) < today) return false
-        return true
-      }).length
-      activeMedicationCount.set(pid, activeCount)
-    })
-  )
+  if (patientIds.length === 0) return { latestMeasurements, measuredToday, activeMedicationCount, measuredLast3Days }
+
+  // Uma leitura de cada tabela é muito mais barata que duas consultas por
+  // paciente, sobretudo no painel da operadora com uma carteira grande.
+  const [measurements, medications] = await Promise.all([
+    db.measurements.where('patientId').anyOf(patientIds).toArray(),
+    db.medications.where('patientId').anyOf(patientIds).toArray(),
+  ])
+  for (const measurement of measurements) {
+    const previous = latestMeasurements.get(measurement.patientId)
+    if (!previous || Date.parse(measurement.measuredAt) > Date.parse(previous.measuredAt)) {
+      latestMeasurements.set(measurement.patientId, measurement)
+    }
+  }
+  for (const [pid, latest] of latestMeasurements) {
+    const measuredAt = new Date(latest.measuredAt)
+    if (measuredAt >= today) measuredToday.add(pid)
+    if (measuredAt >= threeDaysAgo) measuredLast3Days.add(pid)
+  }
+  const patientIdSet = new Set(patientIds)
+  const activeByPatient = new Map<string, number>()
+  for (const medication of medications) {
+    if (!medication.active || !patientIdSet.has(medication.patientId)) continue
+    if (medication.endDate && medication.endDate < localDateKey(today)) continue
+    activeByPatient.set(medication.patientId, (activeByPatient.get(medication.patientId) || 0) + 1)
+  }
+  for (const pid of patientIds) {
+    activeMedicationCount.set(pid, activeByPatient.get(pid) || 0)
+  }
 
   return { latestMeasurements, measuredToday, activeMedicationCount, measuredLast3Days }
 }
@@ -170,18 +214,36 @@ export async function saveGlucoseMeasurement(g: GlucoseMeasurement) {
 }
 
 export async function fetchAllGlucose(patientId: string): Promise<GlucoseMeasurement[]> {
-  return db.glucoseMeasurements
+  const rows = await db.glucoseMeasurements
     .where('patientId')
     .equals(patientId)
-    .reverse()
     .sortBy('measuredAt')
+  return rows.reverse()
+}
+
+export async function fetchLatestGlucoseForPatients(
+  patientIds: string[]
+): Promise<Map<string, GlucoseMeasurement>> {
+  const latest = new Map<string, GlucoseMeasurement>()
+  if (patientIds.length === 0) return latest
+  const rows = await db.glucoseMeasurements.where('patientId').anyOf(patientIds).toArray()
+  for (const row of rows) {
+    const previous = latest.get(row.patientId)
+    if (!previous || Date.parse(row.measuredAt) > Date.parse(previous.measuredAt)) {
+      latest.set(row.patientId, row)
+    }
+  }
+  return latest
 }
 
 export async function fetchTodayGlucose(patientId: string): Promise<GlucoseMeasurement[]> {
   const startOfDay = new Date()
   startOfDay.setHours(0, 0, 0, 0)
-  const all = await fetchAllGlucose(patientId)
-  return all.filter((g) => new Date(g.measuredAt) >= startOfDay)
+  return db.glucoseMeasurements
+    .where('[patientId+measuredAt]')
+    .between([patientId, startOfDay.toISOString()], [patientId, '\uffff'])
+    .reverse()
+    .toArray()
 }
 
 export async function deleteGlucoseMeasurement(id: string) {
@@ -208,8 +270,24 @@ export async function saveAlert(a: BPAlert) {
 
 export async function fetchActiveAlerts(patientId: string): Promise<BPAlert[]> {
   return db.alerts
-    .where({ patientId, status: 'pending' })
+    .where('[patientId+status]')
+    .equals([patientId, 'pending'])
     .toArray()
+}
+
+export async function fetchActiveAlertsForPatients(
+  patientIds: string[]
+): Promise<Map<string, BPAlert[]>> {
+  const grouped = new Map<string, BPAlert[]>()
+  if (patientIds.length === 0) return grouped
+  const rows = await db.alerts.where('patientId').anyOf(patientIds).toArray()
+  for (const row of rows) {
+    if (row.status !== 'pending') continue
+    const list = grouped.get(row.patientId) || []
+    list.push(row)
+    grouped.set(row.patientId, list)
+  }
+  return grouped
 }
 
 export async function acknowledgeAlert(id: string) {
@@ -291,22 +369,71 @@ export async function fetchUnreadCountForPatient(
 }
 
 // ---- Sync queue helpers ----
+export class SyncQueueFullError extends Error {
+  constructor() {
+    super('A fila offline está cheia. Conecte-se à internet e tente novamente antes de registrar outra alteração.')
+    this.name = 'SyncQueueFullError'
+  }
+}
+
+const MAX_SYNC_QUEUE_SIZE = 500
+
+/**
+ * Guarda uma operação por entidade e conta. Atualizações sucessivas da mesma
+ * medição substituem a operação anterior; exclusões eliminam operações
+ * anteriores da entidade. Assim, um aparelho offline não cresce a fila sem
+ * limite ao editar o mesmo registro.
+ */
 export async function saveSyncOperation(op: SyncOperation) {
-  const count = await db.syncOperations.count()
-  if (count >= 500) return
+  if (!op.ownerId) throw new Error('Não foi possível identificar a conta da alteração offline.')
+  const existing = await db.syncOperations
+    .where('ownerId')
+    .equals(op.ownerId)
+    .filter((item) => item.entityType === op.entityType && item.entityId === op.entityId)
+    .toArray()
+  const isNewEntity = existing.length === 0
+  const ownerCount = await db.syncOperations.where('ownerId').equals(op.ownerId).count()
+  if (isNewEntity && ownerCount >= MAX_SYNC_QUEUE_SIZE) throw new SyncQueueFullError()
+
+  if (existing.length > 0) {
+    await db.syncOperations.bulkDelete(existing.map((item) => item.id))
+  }
   await db.syncOperations.put(op)
 }
 
-export async function fetchPendingSyncOperations(): Promise<SyncOperation[]> {
-  return db.syncOperations.where('attempts').below(20).sortBy('createdAt')
+export async function fetchPendingSyncOperations(ownerId?: string | null): Promise<SyncOperation[]> {
+  if (!ownerId) return []
+  const now = Date.now()
+  return db.syncOperations
+    .where('ownerId')
+    .equals(ownerId)
+    .filter((operation) => operation.attempts < 20 && (!operation.nextAttemptAt || Date.parse(operation.nextAttemptAt) <= now))
+    .sortBy('createdAt')
 }
 
-export async function countPendingSyncOperations(): Promise<number> {
-  return db.syncOperations.where('attempts').below(20).count()
+export async function fetchSyncOperations(ownerId?: string | null): Promise<SyncOperation[]> {
+  if (!ownerId) return []
+  return db.syncOperations.where('ownerId').equals(ownerId).sortBy('createdAt')
 }
 
-export async function countFailedSyncOperations(): Promise<number> {
-  return db.syncOperations.where('attempts').aboveOrEqual(20).count()
+export async function countPendingSyncOperations(ownerId?: string | null): Promise<number> {
+  if (!ownerId) return 0
+  return db.syncOperations
+    .where('ownerId')
+    .equals(ownerId)
+    // Inclui operações em backoff: a tela precisa deixar claro que ainda há
+    // dados aguardando envio, mesmo quando a próxima tentativa está agendada.
+    .filter((operation) => operation.attempts < 20)
+    .count()
+}
+
+export async function countFailedSyncOperations(ownerId?: string | null): Promise<number> {
+  if (!ownerId) return 0
+  return db.syncOperations
+    .where('ownerId')
+    .equals(ownerId)
+    .filter((operation) => operation.attempts >= 20)
+    .count()
 }
 
 export async function deleteSyncOperation(id: string) {
@@ -316,8 +443,38 @@ export async function deleteSyncOperation(id: string) {
 export async function incrementSyncAttempts(id: string) {
   const op = await db.syncOperations.get(id)
   if (op) {
-    await db.syncOperations.update(id, { attempts: op.attempts + 1 })
+    const attempts = op.attempts + 1
+    const delayMs = Math.min(60 * 60_000, 2 ** Math.min(attempts, 10) * 1_000)
+    await db.syncOperations.update(id, {
+      attempts,
+      lastAttemptAt: new Date().toISOString(),
+      nextAttemptAt: attempts >= 20 ? undefined : new Date(Date.now() + delayMs).toISOString(),
+      lastError: 'Não foi possível enviar ao Railway; nova tentativa será feita automaticamente.',
+    })
   }
+}
+
+export async function markSyncOperationFailed(id: string, errorMessage?: string) {
+  await db.syncOperations.update(id, {
+    attempts: 20,
+    lastAttemptAt: new Date().toISOString(),
+    nextAttemptAt: undefined,
+    lastError: errorMessage || 'A alteração não pôde ser enviada ao Railway.',
+  })
+}
+
+export async function resetFailedSyncOperations(ownerId?: string | null) {
+  if (!ownerId) return
+  const failed = await db.syncOperations
+    .where('ownerId')
+    .equals(ownerId)
+    .filter((operation) => operation.attempts >= 20)
+    .toArray()
+  await Promise.all(failed.map((operation) => db.syncOperations.update(operation.id, {
+    attempts: 0,
+    nextAttemptAt: undefined,
+    lastError: undefined,
+  })))
 }
 
 // ---- Account deletion (LGPD art. 18 / App Review 5.1.1(v)) ----
@@ -339,10 +496,14 @@ export async function wipeAccountData() {
   localStorage.removeItem('kpscardio_disclaimer_accepted')
   localStorage.removeItem('kpscardio:last-sync')
   localStorage.removeItem('kpscardio:cache-owner')
+  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+    const key = localStorage.key(index)
+    if (key?.startsWith('kpscardio:last-sync:') || key?.startsWith('kpscardio:draft:')) localStorage.removeItem(key)
+  }
 }
 
 /** Evita vazamento de dados entre contas no mesmo navegador sem apagar o aceite legal. */
-export async function clearClinicalCache() {
+export async function clearClinicalCache(options: { ownerId?: string | null } = {}) {
   await Promise.all([
     db.measurements.clear(),
     db.glucoseMeasurements.clear(),
@@ -351,7 +512,14 @@ export async function clearClinicalCache() {
     db.devices.clear(),
     db.patients.clear(),
     db.chatMessages.clear(),
-    db.syncOperations.clear(),
   ])
   localStorage.removeItem('kpscardio:last-sync')
+  if (options.ownerId) {
+    localStorage.removeItem(`kpscardio:last-sync:${options.ownerId}`)
+  } else {
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index)
+      if (key?.startsWith('kpscardio:last-sync:')) localStorage.removeItem(key)
+    }
+  }
 }
