@@ -71,6 +71,7 @@ O serviço de sincronização usa um cursor por conta, uma pequena janela de
 sobreposição e promessas compartilhadas para impedir pulls concorrentes. O
 servidor continua sendo a fonte de verdade; o cache local é apresentado antes
 da rede para evitar tela vazia em conexões lentas.
+
 ## Compatibilidade Gemini (revisão local de 08/10/2026)
 
 O modelo padrão continua `gemini-3.5-flash-lite`. O servidor omite `temperature`

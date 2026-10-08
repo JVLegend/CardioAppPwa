@@ -1,41 +1,37 @@
-# Validação local — 08/10/2026
+# Validação da correção Gemini sobre main remoto — 08/10/2026
 
-Base: `3c251ca`. Branch: `fix/gemini-model-compatibility`.
+Base remota confirmada em leitura: `2a998dcf0684d61f5475dc0986c64143f3f50397`.
+Branch local: `fix/gemini-compatibility-main`.
 
-- `npm run check`: passou (tipos, suíte inicial de 98 testes, offline e build).
-- `npm test` após acrescentar testes do handler: 100/100 passaram.
-- `npm run test:security:http`: 39 grupos passaram em PostgreSQL temporário.
+Correções reaplicadas sem conflitos: `65fa305` e `215c59a`, equivalentes às
+correções originais `5beadba` e `d5d1198`. A versão já validada sobre a base
+local anterior continua preservada no checkout `cardioapp-gemini-review`.
+Os 14 commits entre main remoto e `3c251ca` NÃO fazem parte desta branch.
+O ancestral comum com aquela base é exatamente `2a998dc`.
+
+## Validação nesta base
+
+- `npm run check`: passou, incluindo tipos, 46/46 testes e build Vite/PWA.
+- Revisão independente: sem findings; repetiu 29/29 testes Gemini/arquitetura.
 - `git diff --check`: passou.
-- Lint: projeto não define comando/configuração de lint.
+- Lint: main não oferece comando/configuração de lint.
+- Suítes offline/HTTP de segurança do checkout anterior não existem em main;
+  seus resultados anteriores não são atribuídos à nova branch.
 
-Fetch simulado valida os payloads serializados para OCR e resumo, mantendo
-imagens, conteúdo, endpoint/modelo, tokens, MIME e contratos de erro.
-Testes incluem modelos 2.5 Flash/Flash-Lite, padrão 3.5 Flash-Lite, aliases e
-ID futuro desconhecido. Não houve conexão Gemini nem dados reais.
+Os testes Gemini executam o handler desta base com fetch simulado e verificam
+JSON REST serializado, endpoint/modelo, imagens, ordem do conteúdo, MIME,
+limites de tokens, sucesso, resposta vazia/inválida, erro upstream e timeout.
+Overrides 2.5 preservam temperature 0; aliases e IDs desconhecidos omitem
+sampling. Não houve dados reais, chamadas Gemini ou teste pago de qualidade.
 
-Um teste antigo de arquitetura precisou apontar para o novo módulo do servidor;
-a primeira falha foi corrigida e a suíte repetida passou. Nenhuma falha pendente.
+## Escopo e limitações
 
-CI: este checkout não contém `.github/workflows`. Existem configurações
-Railway/Vercel; vínculos de hospedagem externos não foram verificados.
-Entrega somente local, sem push, PR, deploy ou merge.
+O diff contém somente o módulo Gemini, chamada do handler, testes, ajuste do
+teste de arquitetura e documentação. Não altera lockfile, dependências,
+autenticação, schema, Railway, Vercel nem escolhe outro modelo. Não há
+dependência material das mudanças preexistentes excluídas.
 
-Risco residual: overrides desconhecidos omitem sampling; confirmar capacidade
-e qualidade antes de publicar com um nome não classificado. Não foi avaliada
-precisão clínica em respostas reais. O modelo padrão não mudou.
-
-## Revisão independente final
-
-A revisão encontrou que prefixos numéricos antigos podiam classificar nomes
-desconhecidos como legados. Corrigido com allowlist de famílias reconhecidas;
-`gemini-3-flash-latest`, `gemini-3.5-future` e `gemini-2.99-future` agora omitem
-sampling e estão na matriz do handler/payload REST serializado. `temperature: 0`
-continua preservado sem teste de truthiness para 2.5 e seus previews reconhecidos.
-Gemini 3.5 Flash conserva o override anterior: a documentação o distingue dos
-modelos que ignoram sampling, descrevendo sampling como desaconselhado.
-Fonte: https://ai.google.dev/gemini-api/docs/whats-new-gemini-3.5
-
-Depois da correção, `npm run check` passou: 104 testes, tipos, offline e build.
-Revisor independente reexecutou 20 testes do módulo/handler, todos passaram.
-Não identificou novo finding. A allowlist requer manutenção deliberada ao
-adotar famílias novas; nenhum modelo é escolhido automaticamente.
+Este patch não incorpora nem corrige as diferenças de segurança existentes
+entre main e o checkout local anterior; elas precisam de revisão própria.
+O preview Vercel permanece potencial ao receber push e conserva proxy para
+API de produção. Nenhum push, PR, preview, deploy ou merge foi feito no Cardio.
