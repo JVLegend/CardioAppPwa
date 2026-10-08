@@ -1,4 +1,5 @@
 import express from 'express'
+import { requestGemini } from './gemini-request.mjs'
 import helmet from 'helmet'
 import { rateLimit } from 'express-rate-limit'
 import pg from 'pg'
@@ -742,13 +743,7 @@ app.post('/api/ai/generate', aiRateLimit, async (req, res, next) => {
     if (JSON.stringify(contents).length > 10_000_000) return res.status(413).json({ error: 'Imagem ou conteúdo acima do limite permitido' })
     const contentError = validateAiContents(contents)
     if (contentError) return res.status(400).json({ error: contentError })
-    const isOcr = purpose === 'bp_ocr' || purpose === 'glucose_ocr' || purpose === 'medication_ocr'
-    const generationConfig = isOcr
-      ? { temperature: 0, maxOutputTokens: 256, response_mime_type: 'application/json' }
-      : { temperature: 0.2, maxOutputTokens: 640 }
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents, generationConfig }), signal: AbortSignal.timeout(30_000),
-    })
+    const response = await requestGemini({ model: geminiModel, purpose, contents, apiKey: process.env.GEMINI_API_KEY })
     const data = await response.json()
     await writeAudit(req, { action: 'use', entityType: 'ai', entityId: purpose })
     if (!response.ok) {
