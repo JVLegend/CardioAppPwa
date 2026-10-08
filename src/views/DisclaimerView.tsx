@@ -62,6 +62,10 @@ export default function DisclaimerView({ variant, onAccept, onClose }: Props) {
             Sempre converse com seu médico antes de alterar medicações.
           </p>
           <p className={styles.footnote}>
+            Pacientes menores de 18 anos só podem utilizar o serviço com autorização
+            previamente verificada e registrada do responsável legal.
+          </p>
+          <p className={styles.footnote}>
             Ao continuar você aceita nossos{' '}
             <a href="/terms.html" target="_blank" rel="noreferrer">Termos de Uso</a>{' '}e a{' '}
             <a href="/privacy.html" target="_blank" rel="noreferrer">Política de Privacidade</a>.

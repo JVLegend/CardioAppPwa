@@ -59,6 +59,19 @@ PostgreSQL do Railway. O navegador recebe somente um cookie de sessão `HttpOnly
   confirmação da senha atual.
 - Uma redefinição revoga todas as sessões anteriores do usuário e entra na auditoria.
 
+## Pacientes menores de 18 anos
+
+O cadastro de paciente exige data de nascimento. Para menores de 18 anos, a API
+também exige autorização verificada do responsável legal, independentemente da
+interface usada. São registrados nome, vínculo, contato, método e data da
+autorização, versão do termo, operador que conferiu e horário do registro.
+
+A prova fica em `guardian_consents`, com histórico de substituição/revogação, e
+o evento entra em `audit_logs` sem copiar os dados pessoais para o log. Menores
+sem autorização ativa não recebem sessão clínica. Cadastros legados aparecem
+como **Autorização pendente** em **Gerenciar perfis**, onde podem ser
+regularizados pelo médico responsável ou pela operadora.
+
 ## Sincronização e recuperação
 
 Alterações feitas sem rede são gravadas junto com uma operação na fila local.

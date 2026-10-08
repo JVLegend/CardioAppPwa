@@ -16,6 +16,8 @@ export interface Patient {
   phone?: string
   state?: string
   createdAt?: string
+  guardianConsentRequired?: boolean
+  guardianConsentRecordedAt?: string | null
   role: UserRole
   comorbidities?: string[]
   planStatus?: PlanStatus

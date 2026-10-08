@@ -18,6 +18,24 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE INDEX IF NOT EXISTS profiles_operator_idx ON profiles(operator_id);
 CREATE INDEX IF NOT EXISTS profiles_role_idx ON profiles(role);
 
+CREATE TABLE IF NOT EXISTS guardian_consents (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  guardian_name text NOT NULL,
+  guardian_relationship text NOT NULL,
+  guardian_contact text NOT NULL,
+  consent_method text NOT NULL CHECK (consent_method IN ('authenticated_digital', 'in_person', 'recorded_call', 'signed_document')),
+  consent_version text NOT NULL,
+  consented_at timestamptz NOT NULL,
+  recorded_by uuid REFERENCES profiles(id) ON DELETE SET NULL,
+  recorded_at timestamptz NOT NULL DEFAULT now(),
+  revoked_at timestamptz
+);
+CREATE UNIQUE INDEX IF NOT EXISTS guardian_consents_active_patient_idx
+  ON guardian_consents(patient_id) WHERE revoked_at IS NULL;
+CREATE INDEX IF NOT EXISTS guardian_consents_patient_time_idx
+  ON guardian_consents(patient_id, recorded_at DESC);
+
 CREATE TABLE IF NOT EXISTS auth_credentials (
   user_id uuid PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
   password_hash text NOT NULL,

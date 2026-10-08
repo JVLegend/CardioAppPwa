@@ -125,6 +125,31 @@
   gap: 14px;
 }
 
+.guardianPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 2px 0;
+  padding: 16px;
+  border: 1px solid rgba(197, 160, 80, 0.35);
+  border-radius: 12px;
+  background: var(--kps-gold-pale);
+}
+
+.guardianPanel legend {
+  padding: 0 6px;
+  color: var(--kps-navy);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.guardianPanel p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .formGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -330,6 +355,16 @@
 }
 
 .passwordButton:hover { border-color: var(--kps-gold); }
+
+.consentOk,
+.consentPending {
+  font-size: 10px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.consentOk { color: #166534; }
+.consentPending { color: #991B1B; }
 
 .resetForm {
   display: flex;
