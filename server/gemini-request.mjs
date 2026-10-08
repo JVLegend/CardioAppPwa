@@ -2,13 +2,13 @@
 // future generations. Preserve it for older explicit model overrides (e.g. 2.5).
 // https://ai.google.dev/gemini-api/docs/generate-content/whats-new-gemini-3.6
 function omitsSampling(model) {
-  if (model === 'gemini-flash-latest' || model === 'gemini-flash-lite-latest') return true
-  if (/^gemini-3\.5-flash-lite(?:-|$)/.test(model)) return true
-  const version = /^gemini-(\d+)(?:\.(\d+))?(?:-|$)/.exec(model)
-  // Unknown/rolling names are not evidence of legacy sampling support.
-  // Do not rewrite the selected model or retry against a different one.
-  if (!version) return true
-  return Number(version[1]) > 3 || (Number(version[1]) === 3 && Number(version[2]) >= 6)
+  // Only recognized legacy families demonstrate sampling support. Numeric
+  // prefixes alone (e.g. gemini-2.99-future) do not establish capabilities.
+  // Rolling aliases and unclassified names use provider defaults.
+  // 3.5 Flash still describes sampling as not recommended, rather than ignored:
+  // https://ai.google.dev/gemini-api/docs/whats-new-gemini-3.5
+  const legacy = /^(?:gemini-1\.5-(?:flash|pro)|gemini-2\.0-flash(?:-lite)?|gemini-2\.5-(?:flash(?:-lite)?|pro)|gemini-3-(?:flash|pro)|gemini-3\.1-(?:pro|flash-lite)|gemini-3\.5-flash)(?:-(?:\d{3}|preview(?:-\d{2}-(?:\d{2}|\d{4}))?|exp(?:-\d{4})?))?$/
+  return !legacy.test(model)
 }
 
 export function buildGeminiPayload(model, purpose, contents) {

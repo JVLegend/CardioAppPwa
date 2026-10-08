@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { buildGeminiPayload, requestGemini } from './gemini-request.mjs'
 
 const contents = [{ role: 'user', parts: [{ text: 'Exemplo sintético' }] }]
-for (const model of ['gemini-3.5-flash-lite', 'gemini-3.5-flash-lite-preview', 'gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-4-flash', 'gemini-flash-latest', 'gemini-next-flash']) {
+for (const model of ['gemini-3.5-flash-lite', 'gemini-3.5-flash-lite-preview', 'gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-4-flash', 'gemini-flash-latest', 'gemini-next-flash', 'gemini-3-flash-latest', 'gemini-3.5-future', 'gemini-2.99-future']) {
   test(`${model}: omits deprecated sampling for OCR and summary`, () => {
     for (const purpose of ['bp_ocr', 'glucose_ocr', 'medication_ocr', 'daily_insight']) {
       const payload = buildGeminiPayload(model, purpose, contents)
@@ -15,7 +15,7 @@ for (const model of ['gemini-3.5-flash-lite', 'gemini-3.5-flash-lite-preview', '
     }
   })
 }
-for (const model of ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.5-flash-lite', 'gemini-3.1-pro-preview', 'gemini-3.5-flash']) {
+for (const model of ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.5-flash-lite', 'gemini-2.5-flash-preview-09-2025', 'gemini-3.1-pro-preview', 'gemini-3.5-flash']) {
   test(`${model}: preserves existing sampling for explicit legacy override`, () => {
     assert.equal(buildGeminiPayload(model, 'bp_ocr', contents).generationConfig.temperature, 0)
     assert.equal(buildGeminiPayload(model, 'daily_insight', contents).generationConfig.temperature, 0.2)
@@ -65,7 +65,7 @@ function routeHarness(provider, model = 'gemini-3.5-flash-lite') {
 }
 test('actual OCR/summary handler preserves successful, empty and invalid-JSON provider response contracts', async () => {
   const imageContents = [{ role: 'user', parts: [{ text: 'Imagem sintética' }, { inlineData: { mimeType: 'image/png', data: 'c3ludGhldGlj' } }] }]
-  for (const model of ['gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-next-flash']) {
+  for (const model of ['gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-next-flash', 'gemini-3-flash-latest', 'gemini-3.5-future', 'gemini-2.99-future']) {
     for (const purpose of ['bp_ocr', 'glucose_ocr', 'medication_ocr', 'daily_insight']) {
       for (const data of [{}, { candidates: [{ content: { parts: [{ text: 'synthetic non-JSON' }] } }] }, { candidates: [{ content: { parts: [{ text: '{"synthetic":true}' }] } }] }]) {
         const h = routeHarness(() => Response.json(data), model)

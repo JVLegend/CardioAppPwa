@@ -23,3 +23,19 @@ Entrega somente local, sem push, PR, deploy ou merge.
 Risco residual: overrides desconhecidos omitem sampling; confirmar capacidade
 e qualidade antes de publicar com um nome não classificado. Não foi avaliada
 precisão clínica em respostas reais. O modelo padrão não mudou.
+
+## Revisão independente final
+
+A revisão encontrou que prefixos numéricos antigos podiam classificar nomes
+desconhecidos como legados. Corrigido com allowlist de famílias reconhecidas;
+`gemini-3-flash-latest`, `gemini-3.5-future` e `gemini-2.99-future` agora omitem
+sampling e estão na matriz do handler/payload REST serializado. `temperature: 0`
+continua preservado sem teste de truthiness para 2.5 e seus previews reconhecidos.
+Gemini 3.5 Flash conserva o override anterior: a documentação o distingue dos
+modelos que ignoram sampling, descrevendo sampling como desaconselhado.
+Fonte: https://ai.google.dev/gemini-api/docs/whats-new-gemini-3.5
+
+Depois da correção, `npm run check` passou: 104 testes, tipos, offline e build.
+Revisor independente reexecutou 20 testes do módulo/handler, todos passaram.
+Não identificou novo finding. A allowlist requer manutenção deliberada ao
+adotar famílias novas; nenhum modelo é escolhido automaticamente.
