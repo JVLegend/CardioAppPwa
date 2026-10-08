@@ -71,3 +71,21 @@ O serviço de sincronização usa um cursor por conta, uma pequena janela de
 sobreposição e promessas compartilhadas para impedir pulls concorrentes. O
 servidor continua sendo a fonte de verdade; o cache local é apresentado antes
 da rede para evitar tela vazia em conexões lentas.
+## Compatibilidade Gemini (revisão local de 08/10/2026)
+
+O modelo padrão continua `gemini-3.5-flash-lite`. O servidor omite `temperature`
+nesse modelo, em Gemini 3.6+, nos aliases móveis Flash/Flash-Lite e em nomes
+não classificados. Overrides explícitos legados, incluindo Gemini 2.5,
+preservam `temperature: 0` para OCR e `0.2` para resumo. Um override de nome
+desconhecido conserva endpoint/modelo e usa a amostragem padrão do provedor;
+antes de publicar com esse override, confirmar suas capacidades e qualidade.
+Nenhum modelo é substituído e nenhuma tentativa usa outro modelo.
+
+OCR mantém MIME JSON e 256 tokens; resumo mantém 640 tokens. Conteúdo, imagens,
+timeout, auditoria e contratos de erro permanecem iguais. `npm test` verifica
+payload REST e handler com fetch simulado, sem dados reais ou chamadas pagas.
+Esses testes não medem precisão clínica nem qualidade das respostas da IA.
+
+Fonte: https://ai.google.dev/gemini-api/docs/generate-content/whats-new-gemini-3.6
+Gemini 2.5 continua usando `thinkingBudget`; esta revisão não migra modelos
+nem configurações de thinking. Não houve publicação de produção.

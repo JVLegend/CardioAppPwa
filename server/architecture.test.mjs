@@ -75,16 +75,18 @@ test('chat usa o papel da sessão e persiste leitura no servidor', async () => {
 })
 
 test('limites de rede, cache e IA ficam no servidor', async () => {
-  const [client, server, app] = await Promise.all([
+  const [client, server, app, gemini] = await Promise.all([
     readFile(join(process.cwd(), 'src', 'services', 'apiClient.ts'), 'utf8'),
     readFile(join(process.cwd(), 'server', 'index.mjs'), 'utf8'),
     readFile(join(process.cwd(), 'src', 'AppErrorBoundary.tsx'), 'utf8'),
+    readFile(join(process.cwd(), 'server', 'gemini-request.mjs'), 'utf8'),
   ])
 
   assert.match(client, /DEFAULT_TIMEOUT_MS = 15_000/)
   assert.match(client, /Cache-Control': 'no-store'/)
   assert.match(server, /X-Request-ID/)
-  assert.match(server, /const generationConfig = isOcr/)
+  assert.match(server, /requestGemini\(\{ model: geminiModel, purpose, contents/)
+  assert.match(gemini, /const generationConfig = isOcr/)
   assert.match(app, /O KPS Cardio precisa ser atualizado/)
 })
 
