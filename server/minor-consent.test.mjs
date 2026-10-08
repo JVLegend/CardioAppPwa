@@ -8,6 +8,7 @@ const validConsent = {
   relationship: 'Mãe',
   contact: 'maria@example.com',
   method: 'authenticated_digital',
+  evidenceReference: 'ACEITE-2026-001',
   consentedAt: '2026-10-08',
   confirmed: true,
 }
@@ -34,6 +35,7 @@ test('normaliza campos sem armazenar a confirmação transitória', () => {
     relationship: 'Mãe',
     contact: 'maria@example.com',
     method: 'authenticated_digital',
+    evidenceReference: 'ACEITE-2026-001',
     consentedAt: '2026-10-08T12:00:00.000Z',
   })
 })

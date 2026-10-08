@@ -30,6 +30,7 @@ interface FormState {
   guardianRelationship: string
   guardianContact: string
   guardianConsentMethod: 'authenticated_digital' | 'in_person' | 'recorded_call' | 'signed_document'
+  guardianEvidenceReference: string
   guardianConsentedAt: string
   guardianConsentConfirmed: boolean
 }
@@ -50,6 +51,7 @@ const EMPTY_FORM: FormState = {
   guardianRelationship: '',
   guardianContact: '',
   guardianConsentMethod: 'authenticated_digital',
+  guardianEvidenceReference: '',
   guardianConsentedAt: new Date().toISOString().slice(0, 10),
   guardianConsentConfirmed: false,
 }
@@ -100,6 +102,7 @@ export default function AdminProfilesView({ onBack }: Props) {
     || form.guardianName.trim().length > 0
     || form.guardianRelationship.trim().length > 0
     || form.guardianContact.trim().length > 0
+    || form.guardianEvidenceReference.trim().length > 0
     || form.guardianConsentConfirmed
   useBlockingActivity('admin-profile-form', formHasUnsavedData)
   useBlockingActivity('admin-password-reset', resetTarget !== null || resetting)
@@ -153,6 +156,7 @@ export default function AdminProfilesView({ onBack }: Props) {
         relationship: form.guardianRelationship,
         contact: form.guardianContact,
         method: form.guardianConsentMethod,
+        evidenceReference: form.guardianEvidenceReference,
         consentedAt: form.guardianConsentedAt,
         confirmed: form.guardianConsentConfirmed,
       } : undefined,
@@ -344,6 +348,11 @@ export default function AdminProfilesView({ onBack }: Props) {
                         <input type="date" value={form.guardianConsentedAt} onChange={(event) => updateField('guardianConsentedAt', event.target.value)} max={new Date().toISOString().slice(0, 10)} required />
                       </label>
                     </div>
+                    <label className={styles.field}>
+                      <span>Protocolo ou referência da evidência *</span>
+                      <input value={form.guardianEvidenceReference} onChange={(event) => updateField('guardianEvidenceReference', event.target.value)} placeholder="Ex.: documento 001, ligação 123 ou aceite digital 456" required />
+                      <small>Registre a referência interna; não inclua o arquivo ou conteúdo clínico.</small>
+                    </label>
                     <label className={styles.checkField}>
                       <input type="checkbox" checked={form.guardianConsentConfirmed} onChange={(event) => updateField('guardianConsentConfirmed', event.target.checked)} required />
                       <span>Confirmo que verifiquei a identidade e o vínculo do responsável e que ele autorizou o uso e o tratamento dos dados de saúde do menor conforme os Termos e a Política de Privacidade.</span>
@@ -540,6 +549,7 @@ function GuardianConsentForm({ profile, onCancel, onRecorded }: {
     relationship: '',
     contact: '',
     method: 'authenticated_digital',
+    evidenceReference: '',
     consentedAt: new Date().toISOString().slice(0, 10),
     confirmed: false,
   })
@@ -603,6 +613,11 @@ function GuardianConsentForm({ profile, onCancel, onRecorded }: {
           <input type="date" value={consent.consentedAt} onChange={(event) => update('consentedAt', event.target.value)} max={new Date().toISOString().slice(0, 10)} required />
         </label>
       </div>
+      <label className={styles.field}>
+        <span>Protocolo ou referência da evidência *</span>
+        <input value={consent.evidenceReference} onChange={(event) => update('evidenceReference', event.target.value)} placeholder="Ex.: documento 001, ligação 123 ou aceite digital 456" required />
+        <small>Registre a referência interna; não inclua o arquivo ou conteúdo clínico.</small>
+      </label>
       <label className={styles.checkField}>
         <input type="checkbox" checked={consent.confirmed} onChange={(event) => update('confirmed', event.target.checked)} required />
         <span>Confirmo que verifiquei a identidade e o vínculo do responsável e que ele autorizou o tratamento dos dados de saúde do menor.</span>

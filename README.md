@@ -63,8 +63,9 @@ PostgreSQL do Railway. O navegador recebe somente um cookie de sessão `HttpOnly
 
 O cadastro de paciente exige data de nascimento. Para menores de 18 anos, a API
 também exige autorização verificada do responsável legal, independentemente da
-interface usada. São registrados nome, vínculo, contato, método e data da
-autorização, versão do termo, operador que conferiu e horário do registro.
+interface usada. São registrados nome, vínculo, contato, método, referência da
+evidência e data da autorização, versão do termo, operador que conferiu e
+horário do registro.
 
 A prova fica em `guardian_consents`, com histórico de substituição/revogação, e
 o evento entra em `audit_logs` sem copiar os dados pessoais para o log. Menores

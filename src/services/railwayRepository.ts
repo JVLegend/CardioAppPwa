@@ -57,6 +57,7 @@ export interface GuardianConsentInput {
   relationship: string
   contact: string
   method: 'authenticated_digital' | 'in_person' | 'recorded_call' | 'signed_document'
+  evidenceReference: string
   consentedAt: string
   confirmed: boolean
 }

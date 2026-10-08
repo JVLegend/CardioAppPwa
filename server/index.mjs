@@ -535,10 +535,10 @@ app.post('/api/profiles', async (req, res, next) => {
       const consent = normalizeGuardianConsent(guardianConsent)
       await client.query(
         `INSERT INTO guardian_consents
-          (patient_id,guardian_name,guardian_relationship,guardian_contact,consent_method,consent_version,consented_at,recorded_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          (patient_id,guardian_name,guardian_relationship,guardian_contact,consent_method,evidence_reference,consent_version,consented_at,recorded_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
         [createdUser.id, consent.guardianName, consent.relationship, consent.contact, consent.method,
-          GUARDIAN_CONSENT_VERSION, consent.consentedAt, req.profile.id]
+          consent.evidenceReference, GUARDIAN_CONSENT_VERSION, consent.consentedAt, req.profile.id]
       )
       createdUser.guardian_consent_recorded_at = new Date().toISOString()
     }
@@ -555,7 +555,7 @@ app.post('/api/profiles', async (req, res, next) => {
     if (patientIsMinor) {
       await writeAudit(req, {
         action: 'guardian_consent_recorded', entityType: 'guardian_consent', entityId: createdUser.id,
-        patientId: createdUser.id, changedFields: ['consentVersion', 'consentMethod', 'consentedAt'],
+        patientId: createdUser.id, changedFields: ['consentVersion', 'consentMethod', 'evidenceReference', 'consentedAt'],
       }, client)
     }
     await client.query('COMMIT')
@@ -601,14 +601,14 @@ app.post('/api/profiles/:id/guardian-consent', async (req, res, next) => {
     await client.query('UPDATE guardian_consents SET revoked_at=now() WHERE patient_id=$1 AND revoked_at IS NULL', [patientId])
     const inserted = await client.query(
       `INSERT INTO guardian_consents
-        (patient_id,guardian_name,guardian_relationship,guardian_contact,consent_method,consent_version,consented_at,recorded_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING recorded_at`,
+        (patient_id,guardian_name,guardian_relationship,guardian_contact,consent_method,evidence_reference,consent_version,consented_at,recorded_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING recorded_at`,
       [patientId, consent.guardianName, consent.relationship, consent.contact, consent.method,
-        GUARDIAN_CONSENT_VERSION, consent.consentedAt, req.profile.id]
+        consent.evidenceReference, GUARDIAN_CONSENT_VERSION, consent.consentedAt, req.profile.id]
     )
     await writeAudit(req, {
       action: 'guardian_consent_recorded', entityType: 'guardian_consent', entityId: patientId,
-      patientId, changedFields: ['consentVersion', 'consentMethod', 'consentedAt'],
+      patientId, changedFields: ['consentVersion', 'consentMethod', 'evidenceReference', 'consentedAt'],
     }, client)
     await client.query('COMMIT')
     transactionStarted = false

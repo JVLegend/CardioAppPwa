@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS guardian_consents (
   guardian_relationship text NOT NULL,
   guardian_contact text NOT NULL,
   consent_method text NOT NULL CHECK (consent_method IN ('authenticated_digital', 'in_person', 'recorded_call', 'signed_document')),
+  evidence_reference text NOT NULL,
   consent_version text NOT NULL,
   consented_at timestamptz NOT NULL,
   recorded_by uuid REFERENCES profiles(id) ON DELETE SET NULL,
