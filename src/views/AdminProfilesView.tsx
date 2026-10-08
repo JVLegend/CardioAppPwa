@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useAuth, type CreatePatientProfileInput } from '../contexts/AuthContext'
 import type { Patient, PlanStatus, UserRole } from '../models/types'
-import { fetchManagedProfiles, type ManagedProfile } from '../services/railwayRepository'
+import {
+  fetchManagedProfiles,
+  recordGuardianConsent,
+  type GuardianConsentInput,
+  type ManagedProfile,
+} from '../services/railwayRepository'
 import { useBlockingActivity } from '../services/activityState'
 import styles from './AdminProfilesView.module.css'
 
@@ -21,6 +26,13 @@ interface FormState {
   comorbidities: string
   planStatus: PlanStatus
   inTreatmentPlan: boolean
+  guardianName: string
+  guardianRelationship: string
+  guardianContact: string
+  guardianConsentMethod: 'authenticated_digital' | 'in_person' | 'recorded_call' | 'signed_document'
+  guardianEvidenceReference: string
+  guardianConsentedAt: string
+  guardianConsentConfirmed: boolean
 }
 
 const EMPTY_FORM: FormState = {
@@ -35,6 +47,22 @@ const EMPTY_FORM: FormState = {
   comorbidities: '',
   planStatus: 'pendente',
   inTreatmentPlan: false,
+  guardianName: '',
+  guardianRelationship: '',
+  guardianContact: '',
+  guardianConsentMethod: 'authenticated_digital',
+  guardianEvidenceReference: '',
+  guardianConsentedAt: new Date().toISOString().slice(0, 10),
+  guardianConsentConfirmed: false,
+}
+
+function isMinorBirthDate(birthDate: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return false
+  const [year, month, day] = birthDate.split('-').map(Number)
+  const today = new Date()
+  let age = today.getFullYear() - year
+  if (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)) age -= 1
+  return age >= 0 && age < 18
 }
 
 function roleLabel(role: UserRole) {
@@ -56,6 +84,8 @@ export default function AdminProfilesView({ onBack }: Props) {
   const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('')
   const [resetting, setResetting] = useState(false)
   const [resetNotice, setResetNotice] = useState('')
+  const [consentTarget, setConsentTarget] = useState<ManagedProfile | null>(null)
+  const patientIsMinor = form.role === 'patient' && isMinorBirthDate(form.birthDate)
 
   const formHasUnsavedData = saving
     || form.name.trim().length > 0
@@ -69,6 +99,11 @@ export default function AdminProfilesView({ onBack }: Props) {
     || form.comorbidities.trim().length > 0
     || form.planStatus !== 'pendente'
     || form.inTreatmentPlan
+    || form.guardianName.trim().length > 0
+    || form.guardianRelationship.trim().length > 0
+    || form.guardianContact.trim().length > 0
+    || form.guardianEvidenceReference.trim().length > 0
+    || form.guardianConsentConfirmed
   useBlockingActivity('admin-profile-form', formHasUnsavedData)
   useBlockingActivity('admin-password-reset', resetTarget !== null || resetting)
 
@@ -116,6 +151,15 @@ export default function AdminProfilesView({ onBack }: Props) {
           : undefined,
       planStatus: form.role === 'patient' ? form.planStatus : undefined,
       inTreatmentPlan: form.role === 'patient' ? form.inTreatmentPlan : undefined,
+      guardianConsent: patientIsMinor ? {
+        guardianName: form.guardianName,
+        relationship: form.guardianRelationship,
+        contact: form.guardianContact,
+        method: form.guardianConsentMethod,
+        evidenceReference: form.guardianEvidenceReference,
+        consentedAt: form.guardianConsentedAt,
+        confirmed: form.guardianConsentConfirmed,
+      } : undefined,
     }
 
     try {
@@ -260,13 +304,61 @@ export default function AdminProfilesView({ onBack }: Props) {
             {form.role === 'patient' && (
               <>
                 <label className={styles.field}>
-                  <span>Data de nascimento</span>
+                  <span>Data de nascimento *</span>
                   <input
                     type="date"
                     value={form.birthDate}
                     onChange={(event) => updateField('birthDate', event.target.value)}
+                    max={new Date().toISOString().slice(0, 10)}
+                    required
                   />
                 </label>
+                {patientIsMinor && (
+                  <fieldset className={styles.guardianPanel}>
+                    <legend>Autorização do responsável legal</legend>
+                    <p>
+                      Este paciente é menor de 18 anos. Registre a autorização verificada antes de criar o acesso.
+                    </p>
+                    <div className={styles.formGrid}>
+                      <label className={styles.field}>
+                        <span>Nome completo do responsável *</span>
+                        <input value={form.guardianName} onChange={(event) => updateField('guardianName', event.target.value)} required />
+                      </label>
+                      <label className={styles.field}>
+                        <span>Vínculo com o paciente *</span>
+                        <input value={form.guardianRelationship} onChange={(event) => updateField('guardianRelationship', event.target.value)} placeholder="Mãe, pai, tutor..." required />
+                      </label>
+                    </div>
+                    <label className={styles.field}>
+                      <span>Telefone ou e-mail do responsável *</span>
+                      <input value={form.guardianContact} onChange={(event) => updateField('guardianContact', event.target.value)} required />
+                    </label>
+                    <div className={styles.formGrid}>
+                      <label className={styles.field}>
+                        <span>Como a autorização foi verificada? *</span>
+                        <select value={form.guardianConsentMethod} onChange={(event) => updateField('guardianConsentMethod', event.target.value as FormState['guardianConsentMethod'])} required>
+                          <option value="authenticated_digital">Aceite digital autenticado</option>
+                          <option value="signed_document">Documento assinado</option>
+                          <option value="in_person">Verificação presencial</option>
+                          <option value="recorded_call">Ligação gravada</option>
+                        </select>
+                      </label>
+                      <label className={styles.field}>
+                        <span>Data da autorização *</span>
+                        <input type="date" value={form.guardianConsentedAt} onChange={(event) => updateField('guardianConsentedAt', event.target.value)} max={new Date().toISOString().slice(0, 10)} required />
+                      </label>
+                    </div>
+                    <label className={styles.field}>
+                      <span>Protocolo ou referência da evidência *</span>
+                      <input value={form.guardianEvidenceReference} onChange={(event) => updateField('guardianEvidenceReference', event.target.value)} placeholder="Ex.: documento 001, ligação 123 ou aceite digital 456" required />
+                      <small>Registre a referência interna; não inclua o arquivo ou conteúdo clínico.</small>
+                    </label>
+                    <label className={styles.checkField}>
+                      <input type="checkbox" checked={form.guardianConsentConfirmed} onChange={(event) => updateField('guardianConsentConfirmed', event.target.checked)} required />
+                      <span>Confirmo que verifiquei a identidade e o vínculo do responsável e que ele autorizou o uso e o tratamento dos dados de saúde do menor conforme os Termos e a Política de Privacidade.</span>
+                    </label>
+                  </fieldset>
+                )}
                 <label className={styles.field}>
                   <span>UF</span>
                   <input
@@ -365,6 +457,21 @@ export default function AdminProfilesView({ onBack }: Props) {
                   </div>
                   <div className={styles.profileActions}>
                     <span className={styles.profileStatus}>{roleLabel(profile.role)}</span>
+                    {profile.guardianConsentRequired && profile.guardianConsentRecordedAt && (
+                      <span className={styles.consentOk}>Responsável verificado</span>
+                    )}
+                    {profile.guardianConsentRequired && !profile.guardianConsentRecordedAt && (
+                      <>
+                        <span className={styles.consentPending}>Autorização pendente</span>
+                        <button
+                          className={styles.passwordButton}
+                          type="button"
+                          onClick={() => { setConsentTarget(profile); setResetTarget(null); setError('') }}
+                        >
+                          Registrar responsável
+                        </button>
+                      </>
+                    )}
                     <button
                       className={styles.passwordButton}
                       type="button"
@@ -385,6 +492,18 @@ export default function AdminProfilesView({ onBack }: Props) {
           )}
 
           {resetNotice && <div className={styles.success}>{resetNotice}</div>}
+
+          {consentTarget && (
+            <GuardianConsentForm
+              profile={consentTarget}
+              onCancel={() => setConsentTarget(null)}
+              onRecorded={async () => {
+                setResetNotice(`Autorização do responsável por ${consentTarget.name} registrada com sucesso.`)
+                setConsentTarget(null)
+                await loadProfiles()
+              }}
+            />
+          )}
 
           {resetTarget && (
             <form className={styles.resetForm} onSubmit={handlePasswordReset}>
@@ -417,5 +536,96 @@ export default function AdminProfilesView({ onBack }: Props) {
         O cadastro é criado no KPS Cardio e fica disponível, conforme as permissões, em qualquer dispositivo autorizado.
       </p>
     </main>
+  )
+}
+
+function GuardianConsentForm({ profile, onCancel, onRecorded }: {
+  profile: ManagedProfile
+  onCancel: () => void
+  onRecorded: () => Promise<void>
+}) {
+  const [consent, setConsent] = useState<GuardianConsentInput>({
+    guardianName: '',
+    relationship: '',
+    contact: '',
+    method: 'authenticated_digital',
+    evidenceReference: '',
+    consentedAt: new Date().toISOString().slice(0, 10),
+    confirmed: false,
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  useBlockingActivity(`guardian-consent:${profile.id}`, true)
+
+  const update = <K extends keyof GuardianConsentInput>(key: K, value: GuardianConsentInput[K]) => {
+    setConsent((previous) => ({ ...previous, [key]: value }))
+  }
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    setSaving(true)
+    setError('')
+    try {
+      await recordGuardianConsent(profile.id, consent)
+      await onRecorded()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível registrar a autorização.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form className={styles.resetForm} onSubmit={submit}>
+      <div className={styles.resetHeader}>
+        <div>
+          <strong>Autorização do responsável legal</strong>
+          <span>{profile.name} · nascimento {profile.birthDate ? new Date(`${profile.birthDate}T12:00:00`).toLocaleDateString('pt-BR') : 'não informado'}</span>
+        </div>
+        <button type="button" onClick={onCancel} aria-label="Cancelar autorização">×</button>
+      </div>
+      <div className={styles.formGrid}>
+        <label className={styles.field}>
+          <span>Nome completo *</span>
+          <input value={consent.guardianName} onChange={(event) => update('guardianName', event.target.value)} required />
+        </label>
+        <label className={styles.field}>
+          <span>Vínculo *</span>
+          <input value={consent.relationship} onChange={(event) => update('relationship', event.target.value)} placeholder="Mãe, pai, tutor..." required />
+        </label>
+      </div>
+      <label className={styles.field}>
+        <span>Telefone ou e-mail *</span>
+        <input value={consent.contact} onChange={(event) => update('contact', event.target.value)} required />
+      </label>
+      <div className={styles.formGrid}>
+        <label className={styles.field}>
+          <span>Método de verificação *</span>
+          <select value={consent.method} onChange={(event) => update('method', event.target.value as GuardianConsentInput['method'])}>
+            <option value="authenticated_digital">Aceite digital autenticado</option>
+            <option value="signed_document">Documento assinado</option>
+            <option value="in_person">Verificação presencial</option>
+            <option value="recorded_call">Ligação gravada</option>
+          </select>
+        </label>
+        <label className={styles.field}>
+          <span>Data da autorização *</span>
+          <input type="date" value={consent.consentedAt} onChange={(event) => update('consentedAt', event.target.value)} max={new Date().toISOString().slice(0, 10)} required />
+        </label>
+      </div>
+      <label className={styles.field}>
+        <span>Protocolo ou referência da evidência *</span>
+        <input value={consent.evidenceReference} onChange={(event) => update('evidenceReference', event.target.value)} placeholder="Ex.: documento 001, ligação 123 ou aceite digital 456" required />
+        <small>Registre a referência interna; não inclua o arquivo ou conteúdo clínico.</small>
+      </label>
+      <label className={styles.checkField}>
+        <input type="checkbox" checked={consent.confirmed} onChange={(event) => update('confirmed', event.target.checked)} required />
+        <span>Confirmo que verifiquei a identidade e o vínculo do responsável e que ele autorizou o tratamento dos dados de saúde do menor.</span>
+      </label>
+      {error && <div className={styles.error} role="alert">{error}</div>}
+      <button className={styles.primaryButton} type="submit" disabled={saving}>
+        {saving ? 'Registrando...' : 'Registrar autorização verificada'}
+      </button>
+    </form>
   )
 }

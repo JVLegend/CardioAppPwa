@@ -21,6 +21,13 @@ import {
 } from './policy.mjs'
 import { evaluateGlucoseAlerts, evaluateMeasurementAlerts } from './clinical-rules.mjs'
 import {
+  GUARDIAN_CONSENT_VERSION,
+  ageOnDate,
+  isMinor,
+  normalizeGuardianConsent,
+  validateGuardianConsent,
+} from './minor-consent.mjs'
+import {
   SESSION_COOKIE,
   clearSessionCookie,
   createSessionToken,
@@ -108,16 +115,22 @@ async function authenticate(req, res, next) {
     if (!token) return res.status(401).json({ error: 'Sessão expirada. Entre novamente.' })
     const tokenHash = hashSessionToken(token)
     const result = await pool.query(
-      `SELECT p.*, c.must_change_password, s.last_seen_at
+      `SELECT p.*, c.must_change_password, s.last_seen_at, gc.recorded_at AS guardian_consent_recorded_at
        FROM auth_sessions s
        JOIN profiles p ON p.id=s.user_id
        JOIN auth_credentials c ON c.user_id=p.id
+       LEFT JOIN guardian_consents gc ON gc.patient_id=p.id AND gc.revoked_at IS NULL
        WHERE s.token_hash=$1 AND s.expires_at>now() AND c.disabled_at IS NULL`,
       [tokenHash]
     )
     if (!result.rows[0]) {
       res.setHeader('Set-Cookie', clearSessionCookie(secureCookies))
       return res.status(401).json({ error: 'Sessão expirada. Entre novamente.' })
+    }
+    if (result.rows[0].role === 'patient' && isMinor(String(result.rows[0].birth_date || '')) && !result.rows[0].guardian_consent_recorded_at) {
+      await pool.query('DELETE FROM auth_sessions WHERE user_id=$1', [result.rows[0].id])
+      res.setHeader('Set-Cookie', clearSessionCookie(secureCookies))
+      return res.status(403).json({ error: 'Acesso aguardando autorização verificada do responsável legal', code: 'GUARDIAN_CONSENT_REQUIRED' })
     }
     req.sessionTokenHash = tokenHash
     req.profile = result.rows[0]
@@ -152,6 +165,8 @@ function profileToClient(row, viewerRole = row.role) {
     planStatus: row.plan_status,
     inTreatmentPlan: row.in_treatment_plan,
     createdAt: row.created_at,
+    guardianConsentRequired: row.role === 'patient' && isMinor(String(row.birth_date || '')),
+    guardianConsentRecordedAt: row.guardian_consent_recorded_at || null,
   }
   // Situação financeira só é necessária ao painel da operadora. O médico não
   // deve receber esse campo pela API apenas porque a tela o oculta.
@@ -253,8 +268,10 @@ app.post('/api/auth/login', requireServices, loginRateLimit, async (req, res, ne
       return res.status(401).json({ error: 'E-mail ou senha incorretos' })
     }
     const result = await pool.query(
-      `SELECT p.*, c.password_hash, c.must_change_password, c.failed_attempts, c.locked_until, c.disabled_at
+      `SELECT p.*, c.password_hash, c.must_change_password, c.failed_attempts, c.locked_until, c.disabled_at,
+         gc.recorded_at AS guardian_consent_recorded_at
        FROM profiles p JOIN auth_credentials c ON c.user_id=p.id
+       LEFT JOIN guardian_consents gc ON gc.patient_id=p.id AND gc.revoked_at IS NULL
        WHERE lower(p.email)=lower($1)`,
       [email]
     )
@@ -274,6 +291,9 @@ app.post('/api/auth/login', requireServices, loginRateLimit, async (req, res, ne
     }
     if (account.locked_until && new Date(account.locked_until) > new Date()) {
       return res.status(429).json({ error: 'Conta temporariamente bloqueada. Tente novamente em 15 minutos.' })
+    }
+    if (account.role === 'patient' && isMinor(String(account.birth_date || '')) && !account.guardian_consent_recorded_at) {
+      return res.status(403).json({ error: 'Acesso aguardando autorização verificada do responsável legal', code: 'GUARDIAN_CONSENT_REQUIRED' })
     }
 
     const maxAgeSeconds = account.role === 'patient' ? 30 * 24 * 60 * 60 : 12 * 60 * 60
@@ -443,14 +463,18 @@ app.get('/api/profiles', async (req, res, next) => {
     if (!['operator', 'controller'].includes(req.profile.role)) return res.status(403).json({ error: 'Perfil sem permissão para gerenciar acessos' })
     const result = req.profile.role === 'controller'
       ? await pool.query(
-          `SELECT p.*, c.must_change_password,c.last_login_at,(c.user_id IS NOT NULL) AS credential_configured
+          `SELECT p.*, c.must_change_password,c.last_login_at,(c.user_id IS NOT NULL) AS credential_configured,
+             gc.recorded_at AS guardian_consent_recorded_at
            FROM profiles p LEFT JOIN auth_credentials c ON c.user_id=p.id
+           LEFT JOIN guardian_consents gc ON gc.patient_id=p.id AND gc.revoked_at IS NULL
            WHERE p.id<>$1 ORDER BY p.created_at DESC`,
           [req.profile.id]
         )
       : await pool.query(
-          `SELECT p.*, c.must_change_password,c.last_login_at,(c.user_id IS NOT NULL) AS credential_configured
+          `SELECT p.*, c.must_change_password,c.last_login_at,(c.user_id IS NOT NULL) AS credential_configured,
+             gc.recorded_at AS guardian_consent_recorded_at
            FROM profiles p LEFT JOIN auth_credentials c ON c.user_id=p.id
+           LEFT JOIN guardian_consents gc ON gc.patient_id=p.id AND gc.revoked_at IS NULL
            WHERE p.role='patient' AND p.operator_id=$1 ORDER BY p.created_at DESC`,
           [req.profile.id]
         )
@@ -465,7 +489,7 @@ app.get('/api/profiles', async (req, res, next) => {
 
 app.post('/api/profiles', async (req, res, next) => {
   if (!['operator', 'controller'].includes(req.profile.role)) return res.status(403).json({ error: 'Perfil sem permissão para criar usuários' })
-  const { email, password, name, role, phone, birthDate, state, comorbidities, planStatus, inTreatmentPlan, operatorId } = req.body || {}
+  const { email, password, name, role, phone, birthDate, state, comorbidities, planStatus, inTreatmentPlan, operatorId, guardianConsent } = req.body || {}
   const normalizedEmail = String(email || '').trim().toLowerCase()
   const normalizedName = String(name || '').trim()
   if (!/^\S+@\S+\.\S+$/.test(normalizedEmail) || !normalizedName || normalizedName.length > 160 || typeof password !== 'string' || !isUserRole(role)) {
@@ -476,6 +500,15 @@ app.post('/api/profiles', async (req, res, next) => {
   if (passwordError) return res.status(400).json({ error: passwordError })
   if (!isValidState(state)) return res.status(400).json({ error: 'UF inválida' })
   if (!isValidIsoDate(birthDate)) return res.status(400).json({ error: 'Data de nascimento inválida' })
+  if (role === 'patient' && !birthDate) return res.status(400).json({ error: 'A data de nascimento é obrigatória para pacientes' })
+  if (role === 'patient' && (ageOnDate(birthDate) == null || ageOnDate(birthDate) < 0)) return res.status(400).json({ error: 'A data de nascimento não pode estar no futuro' })
+  const patientIsMinor = role === 'patient' && isMinor(birthDate)
+  if (patientIsMinor) {
+    const consentError = validateGuardianConsent(guardianConsent)
+    if (consentError) return res.status(400).json({ error: consentError, code: 'GUARDIAN_CONSENT_REQUIRED' })
+  } else if (guardianConsent != null) {
+    return res.status(400).json({ error: 'Dados do responsável devem ser informados somente para pacientes menores de 18 anos' })
+  }
   if (phone != null && String(phone).length > 40) return res.status(400).json({ error: 'Telefone inválido' })
   if (comorbidities != null && (!Array.isArray(comorbidities) || comorbidities.length > 50 || comorbidities.some((item) => typeof item !== 'string' || item.length > 120))) {
     return res.status(400).json({ error: 'Lista de comorbidades inválida' })
@@ -498,6 +531,17 @@ app.post('/api/profiles', async (req, res, next) => {
       [normalizedEmail, normalizedName, role, linkedOperator, phone || null, birthDate || null, state || null, comorbidities || [], safePlanStatus, Boolean(inTreatmentPlan)]
     )
     const createdUser = result.rows[0]
+    if (patientIsMinor) {
+      const consent = normalizeGuardianConsent(guardianConsent)
+      await client.query(
+        `INSERT INTO guardian_consents
+          (patient_id,guardian_name,guardian_relationship,guardian_contact,consent_method,evidence_reference,consent_version,consented_at,recorded_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [createdUser.id, consent.guardianName, consent.relationship, consent.contact, consent.method,
+          consent.evidenceReference, GUARDIAN_CONSENT_VERSION, consent.consentedAt, req.profile.id]
+      )
+      createdUser.guardian_consent_recorded_at = new Date().toISOString()
+    }
     await client.query(
       `INSERT INTO auth_credentials (user_id,password_hash,must_change_password)
        VALUES ($1,$2,true)`,
@@ -508,12 +552,71 @@ app.post('/api/profiles', async (req, res, next) => {
       patientId: role === 'patient' ? createdUser.id : null,
       changedFields: ['email', 'name', 'role', 'operatorId'],
     }, client)
+    if (patientIsMinor) {
+      await writeAudit(req, {
+        action: 'guardian_consent_recorded', entityType: 'guardian_consent', entityId: createdUser.id,
+        patientId: createdUser.id, changedFields: ['consentVersion', 'consentMethod', 'evidenceReference', 'consentedAt'],
+      }, client)
+    }
     await client.query('COMMIT')
     res.status(201).json(profileToClient(result.rows[0], req.profile.role))
   } catch (error) {
     if (client) await client.query('ROLLBACK').catch(() => {})
     next(error)
   } finally {
+    client?.release()
+  }
+})
+
+app.post('/api/profiles/:id/guardian-consent', async (req, res, next) => {
+  if (!['operator', 'controller'].includes(req.profile.role)) return res.status(403).json({ error: 'Perfil sem permissão para registrar autorização' })
+  if (!isUuid(req.params.id)) return res.status(400).json({ error: 'Identificador de paciente inválido' })
+  const consentError = validateGuardianConsent(req.body || {})
+  if (consentError) return res.status(400).json({ error: consentError, code: 'GUARDIAN_CONSENT_REQUIRED' })
+  let client
+  let transactionStarted = false
+  try {
+    client = await pool.connect()
+    await client.query('BEGIN')
+    transactionStarted = true
+    const patientId = req.params.id.toLowerCase()
+    const result = await client.query("SELECT * FROM profiles WHERE id=$1 AND role='patient' FOR UPDATE", [patientId])
+    const patient = result.rows[0]
+    if (!patient) {
+      await client.query('ROLLBACK')
+      transactionStarted = false
+      return res.status(404).json({ error: 'Paciente não encontrado' })
+    }
+    if (!(await requirePatientAccess(req, res, patientId, client))) {
+      await client.query('ROLLBACK')
+      transactionStarted = false
+      return
+    }
+    if (!isMinor(String(patient.birth_date || ''))) {
+      await client.query('ROLLBACK')
+      transactionStarted = false
+      return res.status(400).json({ error: 'A autorização do responsável se aplica somente a pacientes menores de 18 anos' })
+    }
+    const consent = normalizeGuardianConsent(req.body)
+    await client.query('UPDATE guardian_consents SET revoked_at=now() WHERE patient_id=$1 AND revoked_at IS NULL', [patientId])
+    const inserted = await client.query(
+      `INSERT INTO guardian_consents
+        (patient_id,guardian_name,guardian_relationship,guardian_contact,consent_method,evidence_reference,consent_version,consented_at,recorded_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING recorded_at`,
+      [patientId, consent.guardianName, consent.relationship, consent.contact, consent.method,
+        consent.evidenceReference, GUARDIAN_CONSENT_VERSION, consent.consentedAt, req.profile.id]
+    )
+    await writeAudit(req, {
+      action: 'guardian_consent_recorded', entityType: 'guardian_consent', entityId: patientId,
+      patientId, changedFields: ['consentVersion', 'consentMethod', 'evidenceReference', 'consentedAt'],
+    }, client)
+    await client.query('COMMIT')
+    transactionStarted = false
+    res.status(201).json({ ok: true, recordedAt: inserted.rows[0].recorded_at, consentVersion: GUARDIAN_CONSENT_VERSION })
+  } catch (error) {
+    next(error)
+  } finally {
+    if (transactionStarted) await client.query('ROLLBACK').catch(() => {})
     client?.release()
   }
 })
@@ -573,6 +676,16 @@ app.patch('/api/profiles/:id', async (req, res, next) => {
       if (!clinician.rowCount) return res.status(400).json({ error: 'Médico responsável não encontrado' })
     }
     const old = current.rows[0]
+    if (req.profile.role === 'patient' && Object.hasOwn(body, 'birthDate') && body.birthDate !== String(old.birth_date || '')) {
+      return res.status(403).json({ error: 'A data de nascimento deve ser corrigida pela equipe responsável' })
+    }
+    const resultingBirthDate = Object.hasOwn(body, 'birthDate') ? body.birthDate : String(old.birth_date || '')
+    if (old.role === 'patient' && isMinor(resultingBirthDate) && !isMinor(String(old.birth_date || ''))) {
+      const activeConsent = await pool.query('SELECT 1 FROM guardian_consents WHERE patient_id=$1 AND revoked_at IS NULL', [req.params.id])
+      if (!activeConsent.rowCount) {
+        return res.status(409).json({ error: 'Registre a autorização do responsável antes de alterar o cadastro para menor de 18 anos', code: 'GUARDIAN_CONSENT_REQUIRED' })
+      }
+    }
     const read = (key, fallback) => Object.hasOwn(body, key) ? body[key] : fallback
     const result = await pool.query(
       `UPDATE profiles SET name=$2, phone=$3, birth_date=$4, state=$5, comorbidities=$6,

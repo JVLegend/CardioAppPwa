@@ -49,6 +49,17 @@ export interface CreateRemoteProfileInput {
   planStatus?: Patient['planStatus']
   inTreatmentPlan?: boolean
   operatorId?: string
+  guardianConsent?: GuardianConsentInput
+}
+
+export interface GuardianConsentInput {
+  guardianName: string
+  relationship: string
+  contact: string
+  method: 'authenticated_digital' | 'in_person' | 'recorded_call' | 'signed_document'
+  evidenceReference: string
+  consentedAt: string
+  confirmed: boolean
 }
 
 export function createProfileRemote(input: CreateRemoteProfileInput) {
@@ -59,6 +70,13 @@ export interface ManagedProfile extends Patient {
   credentialConfigured: boolean
   mustChangePassword: boolean
   lastLoginAt?: string
+}
+
+export function recordGuardianConsent(profileId: string, consent: GuardianConsentInput) {
+  return apiRequest<{ ok: true; recordedAt: string; consentVersion: string }>(
+    `/api/profiles/${encodeURIComponent(profileId)}/guardian-consent`,
+    { method: 'POST', body: JSON.stringify(consent) },
+  )
 }
 
 export function fetchManagedProfiles() {

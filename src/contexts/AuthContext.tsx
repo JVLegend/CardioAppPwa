@@ -3,6 +3,7 @@ import type { Patient, PlanStatus, UserRole } from '../models/types'
 import { changePassword, getAuthSession, signIn, signOut, type AuthSessionPayload } from '../services/authService'
 import { clearClinicalCache, savePatient } from '../services/database'
 import { createProfileRemote, resetProfilePassword as resetProfilePasswordRemote } from '../services/railwayRepository'
+import type { GuardianConsentInput } from '../services/railwayRepository'
 import { processPendingOperations, pullFromServer, setSyncOwner } from '../services/syncEngine'
 import { setReminderOwner } from '../services/reminderService'
 
@@ -18,6 +19,7 @@ export interface CreatePatientProfileInput {
   planStatus?: PlanStatus
   inTreatmentPlan?: boolean
   operatorId?: string
+  guardianConsent?: GuardianConsentInput
 }
 
 interface AuthContextType {
